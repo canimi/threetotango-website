@@ -69,7 +69,7 @@
   },
   "quizTeaser": {
     "title": "Which one are you?",
-    "sub": "Six questions. One verdict. Luka will not be consulted.",
+    "sub": "Seven questions. One verdict. Luka will not be consulted.",
     "cta": "Take the quiz"
   },
   "newsletter": {
@@ -132,5 +132,43 @@
   "finalCta": {
     "title": "Your turn to join the household",
     "sub": "Luka has already filed an objection."
+  },
+  "quiz": {
+    "pageTitle": "Which cat are you?",
+    "pageDesc": "Seven questions. One verdict. Find out if you are a Luka, a Budy or a Caddy.",
+    "title": "Which cat are you?",
+    "intro": "Seven questions about your habits. No wrong answers, only revealing ones. Luka will not be consulted.",
+    "start": "Start the quiz",
+    "noscript": "The quiz needs JavaScript. No JavaScript, no problem. Pick your verdict directly:",
+    "progress": "Question",
+    "of": "of",
+    "back": "Back",
+    "progressLabel": "Quiz progress",
+    "retake": "Retake quiz",
+    "youAre": "You're a",
+    "downloadCard": "Download your card",
+    "cardAlt": "Your result card, 9:16 format for Instagram Stories",
+    "shareHint": "Post it to your Story and tag us. Then see what the AI makes of you.",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "share": "Share",
+    "shareText": "I took the Three To Tango quiz. Verdict:",
+    "results": {
+      "luka": {
+        "line1": "You are clever, selective and slightly suspicious of everyone, including this quiz.",
+        "line2": "You want attention, but only when you ordered it. Anything else is an ambush.",
+        "line3": "You have a plan. You do not share the plan. You may be sitting on the bookshelf."
+      },
+      "budy": {
+        "line1": "You have thoughts and you are going to share every one of them. Right now.",
+        "line2": "You love people, snacks and people with snacks. Silence makes you nervous.",
+        "line3": "Your phone battery and your group chat are both at risk."
+      },
+      "caddy": {
+        "line1": "You are deeply unbothered. The world is on fire; you are on a rug.",
+        "line2": "Your home is your kingdom and your calendar is mostly naps.",
+        "line3": "You rarely react. When you do, people remember it for years."
+      }
+    }
   }
 }

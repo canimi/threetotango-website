@@ -1,0 +1,154 @@
+---
+import Base from '../../layouts/Base.astro';
+import { characters } from '../../data/characters';
+import { quizCats, type QuizCat } from '../../data/quiz';
+import { t } from '../../i18n/t';
+
+export function getStaticPaths() {
+  return quizCats.map((result) => ({ params: { result } }));
+}
+
+const id = Astro.params.result as QuizCat;
+const c = characters[id];
+const lines = [1, 2, 3].map((n) => t(`quiz.results.${id}.line${n}`));
+const verdict = `${t('quiz.youAre')} ${c.name}.`;
+const path = `/quiz/${id}`;
+const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').href;
+const card = `/img/quiz/${id}-card.jpg`;
+---
+
+<Base
+  title={`${verdict} ${c.nickname} | ${t('brand.name')}`}
+  description={lines[0]}
+  path={path}
+  ogImage={`/img/quiz/${id}-og.jpg`}
+>
+  <div class="container wrap" style={`--accent:${c.color}`}>
+    <p class="kicker">{t('quiz.title')}</p>
+    <h1>{verdict}</h1>
+    <p class="nick">{c.nickname}</p>
+    <img
+      class="portrait"
+      src={c.portrait}
+      width="320"
+      height="320"
+      alt={`${t('cats.portraitAlt')} ${c.name}`}
+    />
+    <ul class="lines">{lines.map((l) => <li>{l}</li>)}</ul>
+
+    <a class="btn cta" href="/tango-me">{t('cta.tangoFree')}</a>
+    <p class="hint">{t('quiz.shareHint')}</p>
+
+    <div class="actions" data-share data-url={shareUrl} data-text={`${t('quiz.shareText')} ${c.name}.`} data-copied={t('quiz.copied')}>
+      <a class="btn" href={card} download={`three-to-tango-${id}-card.jpg`}>{t('quiz.downloadCard')}</a>
+      <button type="button" class="btn" data-copy>{t('quiz.copyLink')}</button>
+      <button type="button" class="btn" data-native hidden>{t('quiz.share')}</button>
+    </div>
+    <p class="status" role="status" data-status></p>
+
+    <img
+      class="card"
+      src={card}
+      width="270"
+      height="480"
+      loading="lazy"
+      alt={t('quiz.cardAlt')}
+      onerror="this.hidden=true"
+    />
+
+    <p><a href="/quiz">{t('quiz.retake')}</a></p>
+  </div>
+</Base>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-share]');
+  if (box) {
+    const { url = '', text = '', copied = '' } = box.dataset;
+    const status = document.querySelector<HTMLElement>('[data-status]')!;
+    box.querySelector('[data-copy]')!.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        status.textContent = copied;
+      } catch {
+        window.prompt('', url);
+      }
+    });
+    const native = box.querySelector<HTMLElement>('[data-native]')!;
+    if (typeof navigator.share === 'function') {
+      native.hidden = false;
+      native.addEventListener('click', () => {
+        navigator.share({ title: document.title, text, url }).catch(() => {});
+      });
+    }
+  }
+</script>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+    text-align: center;
+  }
+  .kicker {
+    margin: 0;
+    color: var(--c-ink-2);
+    font-weight: 600;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    margin-block: var(--space-1) 0;
+  }
+  .nick {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    border-block-end: 4px solid var(--accent);
+    display: inline-block;
+  }
+  .portrait {
+    display: block;
+    margin-inline: auto;
+    max-inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+    border: 4px solid var(--accent);
+  }
+  .lines {
+    list-style: none;
+    padding: 0;
+    max-inline-size: 36rem;
+    margin-inline: auto;
+    margin-block: var(--space-3);
+  }
+  .lines li {
+    margin-block-end: var(--space-1);
+  }
+  .cta {
+    font-size: 1.25rem;
+  }
+  .hint {
+    color: var(--c-ink-2);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    justify-content: center;
+  }
+  button.btn {
+    border: 0;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .status {
+    min-block-size: 1.5rem;
+    color: var(--c-ink-2);
+  }
+  .card {
+    max-inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+  }
+  [hidden] {
+    display: none !important;
+  }
+</style>

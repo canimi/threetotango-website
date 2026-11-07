@@ -1,0 +1,21 @@
+---
+import Base from '../../layouts/Base.astro';
+import QuizApp from '../../components/QuizApp.astro';
+import { t } from '../../i18n/t';
+---
+
+<Base title={`${t('quiz.pageTitle')} | ${t('brand.name')}`} description={t('quiz.pageDesc')} path="/quiz">
+  <div class="container wrap">
+    <h1>{t('quiz.title')}</h1>
+    <QuizApp />
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+  }
+  h1 {
+    text-align: center;
+  }
+</style>

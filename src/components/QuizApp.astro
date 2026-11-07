@@ -1,0 +1,164 @@
+---
+import { questions, quizCats } from '../data/quiz';
+import { characters } from '../data/characters';
+import { t } from '../i18n/t';
+---
+
+<div
+  class="quiz"
+  data-quiz
+  data-questions={JSON.stringify(questions)}
+  data-label-progress={t('quiz.progress')}
+  data-label-of={t('quiz.of')}
+>
+  <section class="start" data-start>
+    <p>{t('quiz.intro')}</p>
+    <button type="button" class="btn" data-start-btn>{t('quiz.start')}</button>
+    <noscript>
+      <p>{t('quiz.noscript')}</p>
+      <ul>
+        {
+          quizCats.map((id) => (
+            <li>
+              <a href={`/quiz/${id}`}>{characters[id].name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </noscript>
+  </section>
+
+  <section class="play" data-play hidden aria-live="polite">
+    <p class="progress-text" data-progress-text></p>
+    <progress
+      class="bar"
+      data-progress
+      max={questions.length}
+      value="0"
+      aria-label={t('quiz.progressLabel')}></progress>
+    <h2 class="q" data-q tabindex="-1"></h2>
+    <div class="answers" data-answers></div>
+    <button type="button" class="back" data-back>&larr; {t('quiz.back')}</button>
+  </section>
+</div>
+
+<script>
+  import { scoreQuiz } from '../lib/quiz-score';
+  import type { QuizQuestion } from '../data/quiz';
+
+  const root = document.querySelector<HTMLElement>('[data-quiz]');
+  if (root) {
+    const qs: QuizQuestion[] = JSON.parse(root.dataset.questions ?? '[]');
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const start = $('[data-start]');
+    const play = $('[data-play]');
+    const text = $('[data-progress-text]');
+    const bar = $<HTMLProgressElement>('[data-progress]');
+    const q = $('[data-q]');
+    const list = $('[data-answers]');
+    const back = $<HTMLButtonElement>('[data-back]');
+    const picks: number[] = [];
+    const { labelProgress = '', labelOf = '' } = root.dataset;
+
+    const render = () => {
+      const i = picks.length;
+      const cur = qs[i];
+      text.textContent = `${labelProgress} ${i + 1} ${labelOf} ${qs.length}`;
+      bar.value = i + 1;
+      q.textContent = cur.text;
+      list.replaceChildren(
+        ...cur.answers.map((a, idx) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'answer';
+          b.textContent = a.text;
+          b.addEventListener('click', () => {
+            picks.push(idx);
+            if (picks.length === qs.length) {
+              location.assign(`/quiz/${scoreQuiz(picks)}`);
+            } else {
+              render();
+            }
+          });
+          return b;
+        }),
+      );
+      back.hidden = i === 0;
+      q.focus();
+    };
+
+    $('[data-start-btn]').addEventListener('click', () => {
+      start.hidden = true;
+      play.hidden = false;
+      render();
+    });
+    back.addEventListener('click', () => {
+      if (picks.length > 0) {
+        picks.pop();
+        render();
+      }
+    });
+  }
+</script>
+
+<style>
+  .quiz {
+    max-inline-size: 40rem;
+    margin-inline: auto;
+  }
+  .start {
+    text-align: center;
+  }
+  .start ul {
+    list-style: none;
+    padding: 0;
+  }
+  .progress-text {
+    margin: 0;
+    color: var(--c-ink-2);
+    font-weight: 600;
+  }
+  .bar {
+    inline-size: 100%;
+    block-size: 0.6rem;
+    accent-color: var(--c-mustard);
+  }
+  .q {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin-block: var(--space-3) var(--space-2);
+  }
+  .q:focus {
+    outline: none;
+  }
+  .answers {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .answer {
+    text-align: start;
+    padding: var(--space-2);
+    border: 2px solid var(--c-ink);
+    border-radius: var(--radius-card);
+    background: var(--c-cream);
+    color: var(--c-ink);
+    font: inherit;
+    cursor: pointer;
+  }
+  .answer:hover,
+  .answer:focus-visible {
+    background: var(--c-mustard);
+  }
+  .back {
+    margin-block-start: var(--space-2);
+    background: none;
+    border: 0;
+    color: var(--c-ink-2);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  [hidden] {
+    display: none !important;
+  }
+</style>
