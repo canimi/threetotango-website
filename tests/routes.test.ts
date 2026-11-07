@@ -41,6 +41,24 @@ describe('built routes', () => {
       for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/cats/${id}`);
       expect(page()).toContain('data-characters="nora budy"');
     });
+    it('puts latest episodes directly after the hero, before the household', () => {
+      const h = page();
+      const i = (needle: string) => h.indexOf(needle);
+      expect(i('class="hero')).toBeGreaterThan(-1);
+      expect(i('id="episodes"')).toBeGreaterThan(i('class="hero'));
+      expect(i('id="household"')).toBeGreaterThan(i('id="episodes"'));
+      expect(i('Which one are you?')).toBeGreaterThan(i('id="household"'));
+      expect(h).toContain('See all episodes');
+    });
+    it('shows no before/after slider or missing placeholder images', () => {
+      expect(page()).not.toContain('type="range"');
+      expect(page()).not.toContain('/img/tango/');
+      expect(page()).not.toContain('/img/cats/');
+      expect(page()).not.toContain('hero-poster');
+    });
+    it('uses the ref sheets as cat portraits', () => {
+      for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/img/refs/${id}.webp`);
+    });
     it('does not embed an iframe before tap', () => {
       expect(page()).not.toContain('<iframe');
     });
@@ -51,13 +69,11 @@ describe('built routes', () => {
   });
 
   describe('gift and subscribe', () => {
-    it('gift page has the form, preview and unsubscribe line', () => {
+    it('gift page has the form and unsubscribe line', () => {
       const p = html('gift/index.html');
       expect(p).toContain('data-source="gift"');
       expect(p).toContain('autocomplete="one-time-code"');
       expect(p).toContain('inputmode="numeric"');
-      expect(p).toContain('/img/gift/preview.webp');
-      expect(p).toMatch(/width="960"[^>]*height="540"|height="540"[^>]*width="960"/);
       expect(p).toContain('Unsubscribe anytime');
       expect(p).toContain('Check your inbox — your gift is on its way');
     });

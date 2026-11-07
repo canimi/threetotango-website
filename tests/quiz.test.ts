@@ -65,10 +65,10 @@ describe('built quiz pages', () => {
     expect(h).toContain('data-start-btn');
     expect(h).toContain('Seven questions');
   });
-  it.each(['luka', 'budy', 'caddy'])('result page %s has OG image, card link and CTA', (id) => {
+  it.each(['luka', 'budy', 'caddy'])('result page %s has portrait OG image and CTA', (id) => {
     const h = read(`quiz/${id}/index.html`);
-    expect(h).toContain(`/img/quiz/${id}-og.jpg`);
-    expect(h).toContain(`/img/quiz/${id}-card.jpg`);
+    expect(h).toContain(`/img/refs/${id}.webp`);
+    expect(h).not.toContain('/img/quiz/');
     expect(h).toContain('href="/tango-me"');
     expect(h).toContain('href="/quiz"');
   });

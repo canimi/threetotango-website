@@ -10,12 +10,12 @@ const { id } = Astro.props;
 const c = characters[id];
 ---
 
-<article class="card" style={`--accent:${c.color}`} data-gif={c.gif} data-still={c.portrait}>
+<article class="card" style={`--accent:${c.color};--pos:${c.portraitPos};--zoom:${c.portraitZoom}`}>
   <a href={`/cats/${id}`} class="media" aria-label={`${t('household.meet')}: ${c.name}`}>
     <img
       src={c.portrait}
-      width="320"
-      height="320"
+      width="600"
+      height="600"
       loading="lazy"
       alt={`${t('cats.portraitAlt')} ${c.name}`}
     />
@@ -27,20 +27,6 @@ const c = characters[id];
   </div>
 </article>
 
-<script>
-  document.querySelectorAll<HTMLElement>('.card[data-gif]').forEach((card) => {
-    const img = card.querySelector('img');
-    if (!img) return;
-    const play = () => (img.src = card.dataset.gif!);
-    const stop = () => (img.src = card.dataset.still!);
-    card.addEventListener('mouseenter', play);
-    card.addEventListener('mouseleave', stop);
-    card.addEventListener('focusin', play);
-    card.addEventListener('focusout', stop);
-    card.addEventListener('touchstart', play, { passive: true });
-  });
-</script>
-
 <style>
   .card {
     background: #fff;
@@ -48,9 +34,24 @@ const c = characters[id];
     border-block-start: 8px solid var(--accent);
     overflow: hidden;
     box-shadow: 0 2px 0 rgb(59 42 26 / 12%);
+    transition: transform 0.15s ease;
+  }
+  .card:hover,
+  .card:focus-within {
+    transform: translateY(-4px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card {
+      transition: none;
+    }
+    .card:hover,
+    .card:focus-within {
+      transform: none;
+    }
   }
   .media {
     display: block;
+    overflow: hidden;
   }
   img {
     display: block;
@@ -58,6 +59,9 @@ const c = characters[id];
     block-size: auto;
     aspect-ratio: 1;
     object-fit: cover;
+    object-position: var(--pos);
+    transform: scale(var(--zoom, 1));
+    transform-origin: var(--pos);
     background: var(--c-caddy);
   }
   .body {

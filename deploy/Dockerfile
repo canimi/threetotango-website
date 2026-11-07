@@ -8,7 +8,11 @@ COPY . .
 ARG EPISODES_API_URL=""
 ARG PUBLIC_UMAMI_ID=""
 ENV EPISODES_API_URL=$EPISODES_API_URL \
-    PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID
+    PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID \
+    EPISODES_FILE=/tmp/episodes.json
+# Remote ADD re-downloads the feed on every build and busts the layer cache when its content
+# changes, so a Portainer webhook redeploy never reuses a stale "npm run build" layer.
+ADD https://n8n.canimi.app/webhook/ttw-episodes /tmp/episodes.json
 RUN npm run build
 
 # Stage 2: serve with nginx

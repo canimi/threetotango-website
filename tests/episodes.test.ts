@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   fetchEpisodes,
@@ -73,6 +76,40 @@ describe('fetchEpisodes', () => {
     const fn = vi.fn(async () => okResponse(list));
     const res = await fetchEpisodes('http://x', fn as unknown as typeof fetch);
     expect(res.map((e) => e.id)).toEqual(['new', 'mid', 'old']);
+  });
+});
+
+describe('fetchEpisodes with EPISODES_FILE', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttw-ep-'));
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('reads and sorts from the file without fetching', async () => {
+    const f = join(dir, 'ok.json');
+    writeFileSync(f, JSON.stringify([ep({ id: 'a', publishedAt: '2026-01-01T00:00:00Z' }), ep({ id: 'b', publishedAt: '2026-02-01T00:00:00Z' })]));
+    const fn = vi.fn();
+    const res = await fetchEpisodes('http://x', fn as unknown as typeof fetch, f);
+    expect(res.map((e) => e.id)).toEqual(['b', 'a']);
+    expect(fn).not.toHaveBeenCalled();
+  });
+  it('falls back to the URL when the file is missing', async () => {
+    const fn = vi.fn(async () => okResponse([ep({ id: 'net' })]));
+    const res = await fetchEpisodes('http://x', fn as unknown as typeof fetch, join(dir, 'nope.json'));
+    expect(res.map((e) => e.id)).toEqual(['net']);
+  });
+  it('falls back to the URL when the file is not valid JSON or not an array', async () => {
+    const bad = join(dir, 'bad.json');
+    writeFileSync(bad, '{oops');
+    const obj = join(dir, 'obj.json');
+    writeFileSync(obj, '{"a":1}');
+    const fn = vi.fn(async () => okResponse([ep({ id: 'net' })]));
+    for (const f of [bad, obj])
+      expect((await fetchEpisodes('http://x', fn as unknown as typeof fetch, f)).map((e) => e.id)).toEqual(['net']);
+  });
+  it('returns [] (never throws) when file is unreadable and no url', async () => {
+    expect(await fetchEpisodes(undefined, fetch, join(dir, 'nope.json'))).toEqual([]);
   });
 });
 

@@ -21,10 +21,10 @@ const list = filterByCharacter(await getEpisodes(), id);
   path={`/cats/${id}`}
   ogImage={c.portrait}
 >
-  <div class="container wrap" style={`--accent:${c.color}`}>
+  <div class="container wrap" style={`--accent:${c.color};--pos:${c.portraitPos};--zoom:${c.portraitZoom}`}>
     <p><a href="/cats">&larr; {t('cats.back')}</a></p>
     <div class="top">
-      <img src={c.portrait} width="480" height="480" alt={`${t('cats.portraitAlt')} ${c.name}`} />
+      <div class="pic"><img src={c.portrait} width="720" height="720" alt={`${t('cats.portraitAlt')} ${c.name}`} /></div>
       <div>
         <h1>{c.name}</h1>
         <p class="nick">{c.nickname}</p>
@@ -56,14 +56,21 @@ const list = filterByCharacter(await getEpisodes(), id);
       align-items: start;
     }
   }
+  .pic {
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border-block-start: 10px solid var(--accent);
+    background: var(--c-caddy);
+  }
   img {
+    display: block;
     inline-size: 100%;
     block-size: auto;
     aspect-ratio: 1;
     object-fit: cover;
-    border-radius: var(--radius-card);
-    border-block-start: 10px solid var(--accent);
-    background: var(--c-caddy);
+    object-position: var(--pos);
+    transform: scale(var(--zoom, 1));
+    transform-origin: var(--pos);
   }
   .nick {
     font-weight: 600;

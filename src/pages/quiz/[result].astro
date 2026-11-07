@@ -14,47 +14,36 @@ const lines = [1, 2, 3].map((n) => t(`quiz.results.${id}.line${n}`));
 const verdict = `${t('quiz.youAre')} ${c.name}.`;
 const path = `/quiz/${id}`;
 const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').href;
-const card = `/img/quiz/${id}-card.jpg`;
 ---
 
 <Base
   title={`${verdict} ${c.nickname} | ${t('brand.name')}`}
   description={lines[0]}
   path={path}
-  ogImage={`/img/quiz/${id}-og.jpg`}
+  ogImage={c.portrait}
 >
-  <div class="container wrap" style={`--accent:${c.color}`}>
+  <div class="container wrap" style={`--accent:${c.color};--pos:${c.portraitPos};--zoom:${c.portraitZoom}`}>
     <p class="kicker">{t('quiz.title')}</p>
     <h1>{verdict}</h1>
     <p class="nick">{c.nickname}</p>
+    <div class="portrait">
     <img
-      class="portrait"
-      src={c.portrait}
-      width="320"
-      height="320"
-      alt={`${t('cats.portraitAlt')} ${c.name}`}
-    />
+        src={c.portrait}
+        width="480"
+        height="480"
+        alt={`${t('cats.portraitAlt')} ${c.name}`}
+      />
+    </div>
     <ul class="lines">{lines.map((l) => <li>{l}</li>)}</ul>
 
     <a class="btn cta" href="/tango-me">{t('cta.tangoFree')}</a>
     <p class="hint">{t('quiz.shareHint')}</p>
 
     <div class="actions" data-share data-url={shareUrl} data-text={`${t('quiz.shareText')} ${c.name}.`} data-copied={t('quiz.copied')}>
-      <a class="btn" href={card} download={`three-to-tango-${id}-card.jpg`}>{t('quiz.downloadCard')}</a>
       <button type="button" class="btn" data-copy>{t('quiz.copyLink')}</button>
       <button type="button" class="btn" data-native hidden>{t('quiz.share')}</button>
     </div>
     <p class="status" role="status" data-status></p>
-
-    <img
-      class="card"
-      src={card}
-      width="270"
-      height="480"
-      loading="lazy"
-      alt={t('quiz.cardAlt')}
-      onerror="this.hidden=true"
-    />
 
     <p><a href="/quiz">{t('quiz.retake')}</a></p>
   </div>
@@ -105,12 +94,21 @@ const card = `/img/quiz/${id}-card.jpg`;
     display: inline-block;
   }
   .portrait {
-    display: block;
     margin-inline: auto;
-    max-inline-size: 100%;
-    block-size: auto;
+    inline-size: min(100%, 20rem);
+    overflow: hidden;
     border-radius: var(--radius-card);
     border: 4px solid var(--accent);
+  }
+  .portrait img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: var(--pos);
+    transform: scale(var(--zoom, 1));
+    transform-origin: var(--pos);
   }
   .lines {
     list-style: none;
@@ -142,11 +140,6 @@ const card = `/img/quiz/${id}-card.jpg`;
   .status {
     min-block-size: 1.5rem;
     color: var(--c-ink-2);
-  }
-  .card {
-    max-inline-size: 100%;
-    block-size: auto;
-    border-radius: var(--radius-card);
   }
   [hidden] {
     display: none !important;

@@ -3,7 +3,6 @@ import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import CharacterCard from '../components/CharacterCard.astro';
 import EpisodeGrid from '../components/EpisodeGrid.astro';
-import BeforeAfter from '../components/BeforeAfter.astro';
 import SubscribeForm from '../components/SubscribeForm.astro';
 import { characterIds } from '../data/characters';
 import { latestWithHero } from '../lib/episodes';
@@ -13,11 +12,18 @@ import { t } from '../i18n/t';
 const episodes = await getEpisodes();
 const hero = latestWithHero(episodes);
 const latest = episodes[0];
+const recent = episodes.slice(0, 8);
 const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
 ---
 
 <Base title={`${t('brand.name')}: ${t('brand.promise')}`} description={t('brand.promise')} path="/">
-  <Hero heroFile={hero?.heroMp4Path ? basename(hero.heroMp4Path) : null} {latestHref} />
+  <Hero latest={latest ?? null} {hero} heroFile={hero?.heroMp4Path ? basename(hero.heroMp4Path) : null} {latestHref} />
+
+  <section class="container block" id="episodes">
+    <h2>{t('episodes.title')}</h2>
+    <EpisodeGrid episodes={recent} filters={false} />
+    <p class="center"><a class="btn" href="/episodes">{t('episodes.seeAll')}</a></p>
+  </section>
 
   <section class="container block" id="household">
     <h2>{t('household.title')}</h2>
@@ -27,18 +33,14 @@ const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
     </div>
   </section>
 
-  <section class="showcase">
-    <div class="container block">
-      <h2>{t('showcase.title')}</h2>
-      <p class="sub">{t('showcase.sub')}</p>
-      <BeforeAfter />
-      <p class="center"><a class="btn" href="/tango-me">{t('common.tryFree')}</a></p>
+  <section class="band">
+    <div class="container band-in">
+      <div>
+        <h2>{t('showcase.bandTitle')}</h2>
+        <p>{t('showcase.sub')}</p>
+      </div>
+      <a class="btn" href="/tango-me">{t('common.tryFree')}</a>
     </div>
-  </section>
-
-  <section class="container block" id="episodes">
-    <h2>{t('episodes.title')}</h2>
-    <EpisodeGrid episodes={episodes} />
   </section>
 
   <section class="quiz">
@@ -88,10 +90,29 @@ const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
     gap: var(--space-3);
   }
-  .showcase,
   .quiz {
     background: var(--c-caddy);
     text-align: center;
+  }
+  .band {
+    background: var(--c-mustard);
+    color: var(--c-ink);
+  }
+  .band-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+  }
+  .band h2,
+  .band p {
+    margin-block: 0 var(--space-1);
+  }
+  .band .btn {
+    background: var(--c-cream);
+    border: 3px solid var(--c-ink);
   }
   .center {
     text-align: center;

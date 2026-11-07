@@ -9,16 +9,6 @@ import { t } from '../i18n/t';
     <h1>{t('gift.title')}</h1>
     <p class="sub">{t('gift.sub')}</p>
 
-    <img
-      class="preview"
-      data-preview
-      src="/img/gift/preview.webp"
-      alt={t('gift.previewAlt')}
-      width="960"
-      height="540"
-      decoding="async"
-    />
-
     <h2>{t('gift.youGet')}</h2>
     <ul class="gets">
       <li>{t('gift.item1')}</li>
@@ -31,16 +21,6 @@ import { t } from '../i18n/t';
   </section>
 </Base>
 
-<script>
-  // The preview asset may not exist yet; hide the broken image instead of showing an error icon.
-  const img = document.querySelector<HTMLImageElement>('[data-preview]');
-  if (img) {
-    const hide = () => (img.hidden = true);
-    if (img.complete && img.naturalWidth === 0) hide();
-    img.addEventListener('error', hide);
-  }
-</script>
-
 <style>
   .gift {
     padding-block: var(--space-4);
@@ -49,12 +29,6 @@ import { t } from '../i18n/t';
   .sub {
     color: var(--c-ink-2);
     margin-block: 0 var(--space-3);
-  }
-  .preview {
-    max-inline-size: 100%;
-    block-size: auto;
-    border-radius: var(--radius-card, 1rem);
-    margin-block-end: var(--space-3);
   }
   .gets {
     display: inline-block;

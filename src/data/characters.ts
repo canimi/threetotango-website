@@ -8,7 +8,8 @@ export interface Character {
   loves: string[];
   hates: string[];
   portrait: string;
-  gif: string;
+  portraitPos: string;
+  portraitZoom: number;
 }
 
 export const characters: Record<CharacterId, Character> = {
@@ -19,8 +20,9 @@ export const characters: Record<CharacterId, Character> = {
     oneLiner: 'Solves every lock in the house. Still thinks your hand is a trap.',
     loves: ['High places', 'Solving problems', 'Attention, on her terms', 'Budy'],
     hates: ['Being petted uninvited', 'Traps (everything Nora does)', 'Being fooled'],
-    portrait: '/img/cats/luka.webp',
-    gif: '/img/cats/luka.gif',
+    portrait: '/img/refs/luka.webp',
+    portraitPos: '92% 30%',
+    portraitZoom: 1.8,
   },
   budy: {
     name: 'Budy',
@@ -29,8 +31,9 @@ export const characters: Record<CharacterId, Character> = {
     oneLiner: 'Has an opinion about breakfast. Shares it. Continuously.',
     loves: ['Food', 'Lettuce', "Nora's lap", 'Luka', 'Talking'],
     hates: ['Empty bowls', 'Being ignored (looking at you, Caddy)'],
-    portrait: '/img/cats/budy.webp',
-    gif: '/img/cats/budy.gif',
+    portrait: '/img/refs/budy.webp',
+    portraitPos: '82% 95%',
+    portraitZoom: 1.8,
   },
   caddy: {
     name: 'Caddy',
@@ -39,8 +42,9 @@ export const characters: Record<CharacterId, Character> = {
     oneLiner: 'Fifteen years old. Has seen it all. Is grooming through it.',
     loves: ['Her sheepskin rug', 'Sunbeams', 'Naps', 'Grooming'],
     hates: ['Play', "Budy's antics", 'Surprises'],
-    portrait: '/img/cats/caddy.webp',
-    gif: '/img/cats/caddy.gif',
+    portrait: '/img/refs/caddy.webp',
+    portraitPos: '88% 95%',
+    portraitZoom: 1.8,
   },
   nora: {
     name: 'Nora',
@@ -49,8 +53,9 @@ export const characters: Record<CharacterId, Character> = {
     oneLiner: 'Works from home. Loses every single round. Never raises her voice.',
     loves: ['Her cats', 'A quiet work block', 'Coffee'],
     hates: ['Nothing she would admit to', 'Mysterious silence from the kitchen'],
-    portrait: '/img/cats/nora.webp',
-    gif: '/img/cats/nora.gif',
+    portrait: '/img/refs/nora.webp',
+    portraitPos: '85% 25%',
+    portraitZoom: 1.2,
   },
 };
 

@@ -6,8 +6,9 @@ import { t } from '../i18n/t';
 
 interface Props {
   episodes: Episode[];
+  filters?: boolean;
 }
-const { episodes } = Astro.props;
+const { episodes, filters = true } = Astro.props;
 ---
 
 {
@@ -15,6 +16,7 @@ const { episodes } = Astro.props;
     <p>{t('episodes.empty')}</p>
   ) : (
     <>
+      {filters && (
       <div class="chips" role="group" aria-label={t('episodes.filterLabel')}>
         <button type="button" class="chip" data-filter="all" aria-pressed="true">
           {t('common.all')}
@@ -25,6 +27,7 @@ const { episodes } = Astro.props;
           </button>
         ))}
       </div>
+      )}
       <div class="grid" data-episode-grid>
         {episodes.map((e) => (
           <EpisodeCard episode={e} />

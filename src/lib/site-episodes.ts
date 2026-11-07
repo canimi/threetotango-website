@@ -4,7 +4,11 @@ let cache: Promise<Episode[]> | undefined;
 
 /** Build-time episode list, fetched once per build. */
 export function getEpisodes(): Promise<Episode[]> {
-  cache ??= fetchEpisodes(process.env.EPISODES_API_URL ?? import.meta.env.EPISODES_API_URL);
+  cache ??= fetchEpisodes(
+    process.env.EPISODES_API_URL ?? import.meta.env.EPISODES_API_URL,
+    fetch,
+    process.env.EPISODES_FILE,
+  );
   return cache;
 }
 

@@ -3,6 +3,8 @@
 # Umami analytics is optional and lives in docker-compose.umami.yml (see deploy/README.md).
 services:
   ttw-web:
+    # Always rebuild on (re)deploy so new episode data is baked into the static site.
+    pull_policy: build
     build:
       context: .
       dockerfile: deploy/Dockerfile

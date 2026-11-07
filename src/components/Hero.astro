@@ -1,11 +1,19 @@
 ---
 import { t } from '../i18n/t';
 
+import type { Episode } from '../lib/episodes';
+
 interface Props {
+  /** Newest episode overall (poster image fallback). */
+  latest: Episode | null;
+  /** Newest episode that has a hero mp4. */
+  hero: Episode | null;
   heroFile: string | null;
   latestHref: string;
 }
-const { heroFile, latestHref } = Astro.props;
+const { latest, hero, heroFile, latestHref } = Astro.props;
+const shown = hero && heroFile ? hero : latest;
+const thumb = shown?.thumbnailUrl || undefined;
 ---
 
 <section class="hero">
@@ -20,27 +28,43 @@ const { heroFile, latestHref } = Astro.props;
     </div>
     <div class="phone">
       {
-        heroFile ? (
+        hero && heroFile ? (
           <video
+            data-hero-video
             autoplay
             muted
             loop
             playsinline
             preload="metadata"
-            poster="/img/hero-poster.webp"
+            poster={thumb}
             width="360"
             height="640"
             aria-label={t('hero.videoLabel')}
           >
             <source src={`/media/hero/${heroFile}`} type="video/mp4" />
           </video>
+        ) : thumb ? (
+          <a class="fill" href={latestHref} aria-label={`${t('common.watchLatest')}: ${shown?.title ?? ''}`}>
+            <img src={thumb} width="360" height="640" alt={`${t('episodes.thumbAlt')} ${shown?.title ?? ''}`} />
+          </a>
         ) : (
-          <img src="/img/hero-poster.webp" width="360" height="640" alt={t('hero.posterAlt')} />
+          <a class="fill ph" href={latestHref}>
+            <span>{shown?.title ?? t('brand.name')}</span>
+          </a>
         )
       }
     </div>
   </div>
 </section>
+
+<script>
+  const v = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  if (v && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    v.removeAttribute('autoplay');
+    v.pause();
+    v.controls = true;
+  }
+</script>
 
 <style>
   .hero {
@@ -81,6 +105,21 @@ const { heroFile, latestHref } = Astro.props;
     border-radius: 2.2rem;
     overflow: hidden;
     background: var(--c-caddy);
+  }
+  .fill {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+  .ph {
+    display: grid;
+    place-items: center;
+    padding: var(--space-2);
+    background: var(--c-mustard);
+    color: var(--c-ink);
+    font: 600 1.4rem var(--font-display);
+    text-align: center;
+    text-decoration: none;
   }
   .phone :global(video),
   .phone :global(img) {

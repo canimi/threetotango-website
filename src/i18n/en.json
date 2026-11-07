@@ -47,6 +47,7 @@
     "meet": "Full profile"
   },
   "showcase": {
+    "bandTitle": "Your cat. Our sofa. Total chaos.",
     "title": "Tango Me",
     "sub": "Upload your photo. Join the household as a plush 3D character. First one is free.",
     "before": "Your photo",
@@ -62,6 +63,7 @@
     "pageTitle": "Episodes",
     "pageDesc": "Every Three To Tango episode, no words needed.",
     "all": "All episodes",
+    "seeAll": "See all episodes",
     "starring": "Starring",
     "prev": "Previous episode",
     "next": "Next episode",
