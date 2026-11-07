@@ -94,3 +94,13 @@ create table if not exists ip_attempts (
   count   int not null default 0,
   primary key (ip_hash, day)
 );
+
+-- Session tokens for verified emails: client gets 32 random bytes base64url; DB stores only its sha256 hex (token_hash); expires after 24 h.
+create table if not exists sessions (
+  token_hash text primary key,
+  email      text not null,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create index if not exists sessions_expires_idx on sessions (expires_at);
+create index if not exists sessions_email_idx on sessions (lower(email));
