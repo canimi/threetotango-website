@@ -1,0 +1,22 @@
+:root {
+  --c-mustard: #e3a21a;
+  --c-mustard-dark: #d99a14;
+  --c-cream: #fff6e5;
+  --c-ink: #3b2a1a;
+  --c-ink-2: #5a4632;
+  --c-luka: #8a9bb0;
+  --c-budy: #e07b39;
+  --c-caddy: #f3ede4;
+
+  --radius-card: 20px;
+  --radius-pill: 999px;
+
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --max-width: 72rem;
+}

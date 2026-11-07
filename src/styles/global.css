@@ -1,0 +1,109 @@
+@import './tokens.css';
+
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/fredoka-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/fredoka-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/nunito-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/nunito-latin-600-normal.woff2') format('woff2');
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-cream);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+main {
+  flex: 1;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin-block: 0 var(--space-2);
+}
+
+a {
+  color: var(--c-ink);
+  text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--c-ink);
+  outline-offset: 3px;
+}
+
+.container {
+  inline-size: 100%;
+  max-inline-size: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-2);
+}
+
+.btn {
+  display: inline-block;
+  padding-block: 0.65rem;
+  padding-inline: 1.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--c-mustard);
+  color: var(--c-ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-decoration: none;
+}
+.btn:hover {
+  background: var(--c-mustard-dark);
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-2);
+  inset-block-start: -4rem;
+  padding: var(--space-1) var(--space-2);
+  background: var(--c-cream);
+  border-radius: var(--radius-pill);
+}
+.skip-link:focus {
+  inset-block-start: var(--space-1);
+}

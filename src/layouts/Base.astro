@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { t } from '../i18n/t';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  path: string;
+}
+
+const { title, description, ogImage = '/img/og-default.jpg', path } = Astro.props;
+const site = Astro.site ?? new URL('https://threetotango.canimi.app');
+const canonical = new URL(path, site).href;
+const ogUrl = new URL(ogImage, site).href;
+const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/fredoka-latin-600-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={t('brand.name')} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    {
+      umamiId && (
+        <script defer src="https://stats.canimi.app/script.js" data-website-id={umamiId} />
+      )
+    }
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t('meta.skip')}</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

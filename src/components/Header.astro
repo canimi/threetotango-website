@@ -1,0 +1,62 @@
+---
+import { t } from '../i18n/t';
+
+const links = [
+  { href: '/episodes', label: t('nav.episodes') },
+  { href: '/cats', label: t('nav.cats') },
+  { href: '/quiz', label: t('nav.quiz') },
+];
+---
+
+<header class="site-header">
+  <div class="container bar">
+    <a class="wordmark" href="/" aria-label={t('nav.home')}>Three <strong>To</strong> Tango</a>
+    <nav aria-label={t('nav.main')}>
+      <ul>
+        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+    <a class="btn" href="/tango-me">{t('cta.tangoFree')}</a>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    background: var(--c-cream);
+    border-block-end: 2px solid var(--c-mustard);
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    padding-block: var(--space-2);
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.5rem;
+    text-decoration: none;
+    margin-inline-end: auto;
+  }
+  .wordmark strong {
+    font-weight: 600;
+    background: var(--c-mustard);
+    padding-inline: 0.3em;
+    border-radius: 0.4em;
+  }
+  ul {
+    display: flex;
+    gap: var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav a {
+    font-weight: 600;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+</style>

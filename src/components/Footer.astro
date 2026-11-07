@@ -1,0 +1,53 @@
+---
+import { t } from '../i18n/t';
+
+const social = [
+  { href: 'https://www.instagram.com/threetotangocats', label: t('footer.instagram') },
+  { href: 'https://www.youtube.com/@ThreeToTangoCats', label: t('footer.youtube') },
+];
+const pages = [
+  { href: '/privacy', label: t('footer.privacy') },
+  { href: '/contact', label: t('footer.contact') },
+];
+---
+
+<footer class="site-footer">
+  <div class="container inner">
+    <p class="ai">{t('footer.aiNote')}</p>
+    <ul>
+      {social.map((l) => <li><a href={l.href} rel="noopener" target="_blank">{l.label}</a></li>)}
+      {pages.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+    </ul>
+    <p class="copy">&copy; {new Date().getFullYear()} {t('footer.copyright')}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-block-start: var(--space-4);
+    padding-block: var(--space-3);
+    background: var(--c-mustard);
+    color: var(--c-ink);
+  }
+  .inner {
+    display: grid;
+    gap: var(--space-1);
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  a {
+    font-weight: 600;
+  }
+  p {
+    margin: 0;
+  }
+  .copy {
+    font-size: 0.875rem;
+  }
+</style>

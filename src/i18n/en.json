@@ -1,0 +1,27 @@
+{
+  "brand": {
+    "name": "Three To Tango",
+    "promise": "Nora lives her best life. Her three cats have other plans."
+  },
+  "cta": {
+    "tangoFree": "Tango me, free"
+  },
+  "nav": {
+    "main": "Main navigation",
+    "episodes": "Episodes",
+    "cats": "The Cats",
+    "quiz": "Quiz",
+    "home": "Three To Tango home"
+  },
+  "footer": {
+    "instagram": "Instagram",
+    "youtube": "YouTube",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "aiNote": "Made with AI, openly. Every episode is created with AI tools.",
+    "copyright": "Three To Tango"
+  },
+  "meta": {
+    "skip": "Skip to content"
+  }
+}
