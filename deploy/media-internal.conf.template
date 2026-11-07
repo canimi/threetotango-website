@@ -1,6 +1,6 @@
 # Internal WebDAV-style media endpoint (port 8081, never published, cloudflared only routes to :80).
 # Rendered by the nginx image entrypoint (envsubst) into /etc/nginx/conf.d/media-internal.conf.
-# Only ${TTW_MEDIA_KEY} is substituted; nginx $variables are left alone.
+# Only the TTW_MEDIA_KEY environment variable is substituted; nginx variables are left alone.
 server {
     listen 8081;
     server_name _;
@@ -18,6 +18,11 @@ server {
     }
     if ($http_x_ttw_key != "${TTW_MEDIA_KEY}") {
         return 401;
+    }
+
+    # A bare DELETE on the root must never wipe the whole volume.
+    location = /media/ {
+        return 405;
     }
 
     location /media/ {

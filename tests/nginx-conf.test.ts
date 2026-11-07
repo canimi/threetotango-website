@@ -60,3 +60,17 @@ describe('internal media endpoint (8081)', () => {
     expect(conf).toMatch(/location \^~ \/media\/uploads\/ \{\s*return 404;/);
   });
 });
+
+describe('proxy key (R13)', () => {
+  const p = readFileSync('deploy/ttw-proxy.inc.template', 'utf8');
+  it('sets X-TTW-Proxy-Key from env on proxied requests', () => {
+    expect(p).toContain('proxy_set_header X-TTW-Proxy-Key "${TTW_PROXY_KEY}";');
+  });
+  it('every proxy location includes the rendered proxy snippet', () => {
+    expect(conf.match(/include \/etc\/nginx\/conf\.d\/ttw-proxy\.inc;/g)?.length).toBe(6);
+  });
+  it('media root cannot be deleted', () => {
+    const m = readFileSync('deploy/media-internal.conf.template', 'utf8');
+    expect(m).toMatch(/location = \/media\/ \{\s*return 405;/);
+  });
+});

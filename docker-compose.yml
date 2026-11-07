@@ -14,6 +14,8 @@ services:
     restart: unless-stopped
     environment:
       # Shared secret n8n sends as X-TTW-Key when PUT/DELETE-ing to http://ttw-web:8081/media/...
+      # Shared secret nginx adds as X-TTW-Proxy-Key on every request to n8n webhooks.
+      TTW_PROXY_KEY: ${TTW_PROXY_KEY:?set TTW_PROXY_KEY}
       TTW_MEDIA_KEY: ${TTW_MEDIA_KEY:?set TTW_MEDIA_KEY}
     volumes:
       - ttw_media:/usr/share/nginx/media
@@ -32,6 +34,7 @@ services:
 
 volumes:
   ttw_media:
+    name: ttw_media
 
 networks:
   n8n:
