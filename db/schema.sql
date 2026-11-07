@@ -64,6 +64,7 @@ create index if not exists generations_ip_created_idx on generations (ip_hash, c
 create index if not exists generations_created_idx on generations (created_at);
 create index if not exists generations_expires_idx on generations (expires_at);
 create index if not exists generations_status_idx on generations (status) where status in ('queued','running');
+create unique index if not exists generations_free_use_uq on generations (lower(email)) where free_use_consumed;
 create index if not exists generations_gallery_idx on generations (created_at desc) where gallery_opt_in and status = 'done';
 
 create table if not exists waitlist (
@@ -75,7 +76,11 @@ create table if not exists waitlist (
 );
 create index if not exists waitlist_email_idx on waitlist (lower(email));
 create index if not exists waitlist_created_idx on waitlist (created_at);
+create unique index if not exists waitlist_signup_uq on waitlist (lower(email), kind, coalesce(generation_id, ''));
 
+-- Contract: no seed row. The Tango Me pipeline must run
+--   insert into daily_budget(day) values (current_date) on conflict do nothing
+-- before the atomic reserve update.
 create table if not exists daily_budget (
   day               date primary key,
   spent_usd         numeric(8,4) not null default 0,
