@@ -1,10 +1,102 @@
 ---
 import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import CharacterCard from '../components/CharacterCard.astro';
+import EpisodeGrid from '../components/EpisodeGrid.astro';
+import BeforeAfter from '../components/BeforeAfter.astro';
+import { characterIds } from '../data/characters';
+import { latestWithHero } from '../lib/episodes';
+import { getEpisodes, basename } from '../lib/site-episodes';
 import { t } from '../i18n/t';
+
+const episodes = await getEpisodes();
+const hero = latestWithHero(episodes);
+const latest = episodes[0];
+const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
 ---
 
-<Base title={t('brand.name')} description={t('brand.promise')} path="/">
-  <section class="container">
-    <h1>{t('brand.promise')}</h1>
+<Base title={`${t('brand.name')}: ${t('brand.promise')}`} description={t('brand.promise')} path="/">
+  <Hero heroFile={hero?.heroMp4Path ? basename(hero.heroMp4Path) : null} {latestHref} />
+
+  <section class="container block" id="household">
+    <h2>{t('household.title')}</h2>
+    <p class="sub">{t('household.sub')}</p>
+    <div class="cards">
+      {characterIds.map((id) => <CharacterCard id={id} />)}
+    </div>
+  </section>
+
+  <section class="showcase">
+    <div class="container block">
+      <h2>{t('showcase.title')}</h2>
+      <p class="sub">{t('showcase.sub')}</p>
+      <BeforeAfter />
+      <p class="center"><a class="btn" href="/tango-me">{t('common.tryFree')}</a></p>
+    </div>
+  </section>
+
+  <section class="container block" id="episodes">
+    <h2>{t('episodes.title')}</h2>
+    <EpisodeGrid episodes={episodes} />
+  </section>
+
+  <section class="quiz">
+    <div class="container block">
+      <h2>{t('quizTeaser.title')}</h2>
+      <p class="sub">{t('quizTeaser.sub')}</p>
+      <a class="btn" href="/quiz">{t('quizTeaser.cta')}</a>
+    </div>
+  </section>
+
+  <section class="container block newsletter">
+    <h2>{t('newsletter.title')}</h2>
+    <p class="lead">{t('newsletter.sub')}</p>
+    <p class="sub">{t('newsletter.body')}</p>
+    <a class="btn" href="/gift">{t('newsletter.cta')}</a>
+  </section>
+
+  <section class="container block bts">
+    <h2>{t('bts.teaserTitle')}</h2>
+    <p class="sub">{t('bts.teaserSub')}</p>
+    <a class="btn" href="/behind-the-scenes">{t('bts.teaserCta')}</a>
+  </section>
+
+  <section class="container block final">
+    <h2>{t('finalCta.title')}</h2>
+    <p class="sub">{t('finalCta.sub')}</p>
+    <a class="btn" href="/tango-me">{t('cta.tangoFree')}</a>
   </section>
 </Base>
+
+<style>
+  .block {
+    padding-block: var(--space-4);
+  }
+  .sub {
+    color: var(--c-ink-2);
+    margin-block: 0 var(--space-3);
+  }
+  .lead {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin-block: 0 var(--space-1);
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-3);
+  }
+  .showcase,
+  .quiz {
+    background: var(--c-caddy);
+    text-align: center;
+  }
+  .center {
+    text-align: center;
+    margin-block-start: var(--space-3);
+  }
+  .final,
+  .newsletter {
+    text-align: center;
+  }
+</style>

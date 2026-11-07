@@ -1,0 +1,92 @@
+---
+import { t } from '../i18n/t';
+
+interface Props {
+  heroFile: string | null;
+  latestHref: string;
+}
+const { heroFile, latestHref } = Astro.props;
+---
+
+<section class="hero">
+  <div class="container grid">
+    <div class="copy">
+      <h1>{t('brand.promise')}</h1>
+      <p class="sub">{t('hero.sub')}</p>
+      <div class="actions">
+        <a class="btn" href={latestHref}>{t('common.watchLatest')}</a>
+        <a class="btn alt" href="/tango-me">{t('common.tangoShort')}</a>
+      </div>
+    </div>
+    <div class="phone">
+      {
+        heroFile ? (
+          <video
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            poster="/img/hero-poster.webp"
+            width="360"
+            height="640"
+            aria-label={t('hero.videoLabel')}
+          >
+            <source src={`/media/hero/${heroFile}`} type="video/mp4" />
+          </video>
+        ) : (
+          <img src="/img/hero-poster.webp" width="360" height="640" alt={t('hero.posterAlt')} />
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: var(--space-4);
+  }
+  .grid {
+    display: grid;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  @media (min-width: 52rem) {
+    .grid {
+      grid-template-columns: 1.2fr 1fr;
+    }
+  }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+  }
+  .sub {
+    color: var(--c-ink-2);
+    font-size: 1.15rem;
+    margin-block: 0 var(--space-3);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .alt {
+    background: var(--c-cream);
+    border: 3px solid var(--c-mustard);
+  }
+  .phone {
+    justify-self: center;
+    inline-size: min(100%, 18rem);
+    aspect-ratio: 9 / 16;
+    border: 10px solid var(--c-ink);
+    border-radius: 2.2rem;
+    overflow: hidden;
+    background: var(--c-caddy);
+  }
+  .phone :global(video),
+  .phone :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+</style>

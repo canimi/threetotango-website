@@ -23,5 +23,114 @@
   },
   "meta": {
     "skip": "Skip to content"
+  },
+  "common": {
+    "tangoShort": "Tango me",
+    "tryFree": "Try it free",
+    "watchLatest": "Watch latest",
+    "watch": "Watch",
+    "playEpisode": "Play episode",
+    "openInstagram": "Watch on Instagram",
+    "all": "All",
+    "latestOnYoutube": "YouTube"
+  },
+  "hero": {
+    "posterAlt": "Nora at her laptop while three cats take over the desk",
+    "videoLabel": "Latest episode preview, looping without sound",
+    "sub": "A wordless 3D cat comedy for people who live with the evidence."
+  },
+  "household": {
+    "title": "The household",
+    "sub": "One human. Three cats. Zero chance of a quiet workday.",
+    "loves": "Loves",
+    "hates": "Hates",
+    "meet": "Full profile"
+  },
+  "showcase": {
+    "title": "Tango Me",
+    "sub": "Upload your photo. Join the household as a plush 3D character. First one is free.",
+    "before": "Your photo",
+    "after": "You, in the show",
+    "sliderLabel": "Compare original photo and 3D version",
+    "beforeAlt": "Example original photo",
+    "afterAlt": "Example 3D version in the Three To Tango style"
+  },
+  "episodes": {
+    "title": "Latest episodes",
+    "filterLabel": "Filter episodes by cat",
+    "empty": "New episodes are loading. Check back soon.",
+    "pageTitle": "Episodes",
+    "pageDesc": "Every Three To Tango episode, no words needed.",
+    "all": "All episodes",
+    "starring": "Starring",
+    "prev": "Previous episode",
+    "next": "Next episode",
+    "thumbAlt": "Thumbnail for"
+  },
+  "quizTeaser": {
+    "title": "Which one are you?",
+    "sub": "Six questions. One verdict. Luka will not be consulted.",
+    "cta": "Take the quiz"
+  },
+  "newsletter": {
+    "title": "Weekly report from Luka",
+    "sub": "She thinks you're a suspect.",
+    "body": "One short email a week: new episodes, behind-the-scenes, and a free GIF pack as a thank you.",
+    "cta": "Get the free GIF"
+  },
+  "bts": {
+    "teaserTitle": "Behind the scenes",
+    "teaserSub": "How one person and a lot of AI tools make a cat sitcom.",
+    "teaserCta": "See how it's made",
+    "title": "Behind the scenes",
+    "desc": "How Three To Tango is made, and what AI has to do with it.",
+    "intro": "Three To Tango is made by one creator, using AI tools for the episodes and the artwork. No studio, no animators, no cat actors. The cats are not real. The chaos is relatable.",
+    "h1": "What AI does here",
+    "p1": "AI tools generate the images and video clips. A human writes every gag, picks every take, and edits the episodes together.",
+    "h2": "What stays human",
+    "p2": "The characters, the humour, the timing and the decision to leave Caddy alone on her rug. Those are on purpose.",
+    "h3": "Why we say so",
+    "p3": "You should know how it is made. We will keep saying it, on every product and every page."
+  },
+  "cats": {
+    "pageTitle": "The Cats",
+    "pageDesc": "Meet Luka, Budy, Caddy and Nora.",
+    "intro": "Three cats and the human who lives with them.",
+    "loves": "Loves",
+    "hates": "Hates",
+    "episodesWith": "Episodes with",
+    "noEpisodes": "No episodes yet.",
+    "back": "All cats",
+    "portraitAlt": "Portrait of"
+  },
+  "links": {
+    "title": "Links",
+    "desc": "Everything Three To Tango in one place.",
+    "latest": "Latest episode",
+    "quiz": "Which cat are you?",
+    "gift": "Get the free GIF",
+    "tango": "Tango me, free"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "desc": "Privacy information for Three To Tango.",
+    "body": "This page is a placeholder. The full privacy information will be published here before launch. Questions in the meantime? Send us a message on Instagram."
+  },
+  "contact": {
+    "title": "Contact",
+    "desc": "Get in touch with Three To Tango.",
+    "body": "The fastest way to reach us is a direct message on Instagram.",
+    "cta": "Message us on Instagram"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "desc": "This page does not exist.",
+    "h1": "404. Luka pushed this page off the table.",
+    "body": "She made eye contact while doing it. The page is gone. Let's go home.",
+    "cta": "Back to the household"
+  },
+  "finalCta": {
+    "title": "Your turn to join the household",
+    "sub": "Luka has already filed an objection."
   }
 }

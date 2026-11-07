@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import { social } from '../data/social';
+import { getEpisodes } from '../lib/site-episodes';
+import { t } from '../i18n/t';
+
+const latest = (await getEpisodes())[0];
+const items = [
+  { href: '/tango-me', label: t('links.tango'), primary: true },
+  { href: latest ? `/episodes/${latest.slug}` : '/episodes', label: t('links.latest') },
+  { href: '/quiz', label: t('links.quiz') },
+  { href: '/gift', label: t('links.gift') },
+  { href: social.youtube, label: t('footer.youtube'), external: true },
+  { href: social.instagram, label: t('footer.instagram'), external: true },
+];
+---
+
+<Base title={`${t('links.title')} | ${t('brand.name')}`} description={t('links.desc')} path="/links">
+  <div class="container wrap">
+    <h1>{t('brand.name')}</h1>
+    <ul>
+      {
+        items.map((i) => (
+          <li>
+            <a
+              class:list={['big', { primary: i.primary }]}
+              href={i.href}
+              {...(i.external ? { target: '_blank', rel: 'noopener' } : {})}
+            >
+              {i.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+    max-inline-size: 28rem;
+    text-align: center;
+  }
+  ul {
+    display: grid;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .big {
+    display: block;
+    padding-block: 1.1rem;
+    border: 3px solid var(--c-mustard);
+    border-radius: var(--radius-card);
+    background: var(--c-cream);
+    font: 600 1.25rem var(--font-display);
+    text-decoration: none;
+  }
+  .big:hover,
+  .primary {
+    background: var(--c-mustard);
+  }
+</style>

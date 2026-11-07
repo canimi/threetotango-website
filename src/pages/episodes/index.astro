@@ -1,0 +1,21 @@
+---
+import Base from '../../layouts/Base.astro';
+import EpisodeGrid from '../../components/EpisodeGrid.astro';
+import { getEpisodes } from '../../lib/site-episodes';
+import { t } from '../../i18n/t';
+
+const episodes = await getEpisodes();
+---
+
+<Base title={`${t('episodes.pageTitle')} | ${t('brand.name')}`} description={t('episodes.pageDesc')} path="/episodes">
+  <div class="container wrap">
+    <h1>{t('episodes.all')}</h1>
+    <EpisodeGrid episodes={episodes} />
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+  }
+</style>

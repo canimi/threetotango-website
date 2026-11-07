@@ -1,0 +1,79 @@
+---
+import type { Episode } from '../lib/episodes';
+import { filterIds, characters } from '../data/characters';
+import EpisodeCard from './EpisodeCard.astro';
+import { t } from '../i18n/t';
+
+interface Props {
+  episodes: Episode[];
+}
+const { episodes } = Astro.props;
+---
+
+{
+  episodes.length === 0 ? (
+    <p>{t('episodes.empty')}</p>
+  ) : (
+    <>
+      <div class="chips" role="group" aria-label={t('episodes.filterLabel')}>
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">
+          {t('common.all')}
+        </button>
+        {filterIds.map((id) => (
+          <button type="button" class="chip" data-filter={id} aria-pressed="false">
+            {characters[id].name}
+          </button>
+        ))}
+      </div>
+      <div class="grid" data-episode-grid>
+        {episodes.map((e) => (
+          <EpisodeCard episode={e} />
+        ))}
+      </div>
+    </>
+  )
+}
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('.chip[data-filter]');
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      const f = chip.dataset.filter!;
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      document.querySelectorAll<HTMLElement>('[data-episode-grid] .ep').forEach((card) => {
+        const list = (card.dataset.characters ?? '').split(' ');
+        card.hidden = f !== 'all' && !list.includes(f);
+      });
+    }),
+  );
+</script>
+
+<style>
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-block-end: var(--space-3);
+  }
+  .chip {
+    padding-block: 0.4rem;
+    padding-inline: 1.1rem;
+    border: 2px solid var(--c-mustard);
+    border-radius: var(--radius-pill);
+    background: var(--c-cream);
+    color: var(--c-ink);
+    font: 600 1rem var(--font-body);
+    cursor: pointer;
+  }
+  .chip[aria-pressed='true'] {
+    background: var(--c-mustard);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3);
+  }
+  .grid :global(.ep[hidden]) {
+    display: none;
+  }
+</style>

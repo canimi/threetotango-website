@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import { t } from '../i18n/t';
+---
+
+<Base title={`${t('bts.title')} | ${t('brand.name')}`} description={t('bts.desc')} path="/behind-the-scenes">
+  <div class="container wrap">
+    <h1>{t('bts.title')}</h1>
+    <p class="lead">{t('bts.intro')}</p>
+    <h2>{t('bts.h1')}</h2>
+    <p>{t('bts.p1')}</p>
+    <h2>{t('bts.h2')}</h2>
+    <p>{t('bts.p2')}</p>
+    <h2>{t('bts.h3')}</h2>
+    <p>{t('bts.p3')}</p>
+    <p><a class="btn" href="/tango-me">{t('cta.tangoFree')}</a></p>
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+    max-inline-size: 42rem;
+  }
+  .lead {
+    font-size: 1.2rem;
+  }
+</style>

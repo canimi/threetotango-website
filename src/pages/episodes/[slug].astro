@@ -1,0 +1,65 @@
+---
+import Base from '../../layouts/Base.astro';
+import EpisodeCard from '../../components/EpisodeCard.astro';
+import { characters } from '../../data/characters';
+import { getEpisodes } from '../../lib/site-episodes';
+import { t } from '../../i18n/t';
+
+export async function getStaticPaths() {
+  const list = await getEpisodes();
+  return list.map((episode, i) => ({
+    params: { slug: episode.slug },
+    props: { episode, newer: list[i - 1] ?? null, older: list[i + 1] ?? null },
+  }));
+}
+
+const { episode: e, newer, older } = Astro.props;
+---
+
+<Base
+  title={`${e.title} | ${t('brand.name')}`}
+  description={e.description}
+  path={`/episodes/${e.slug}`}
+  ogImage={e.thumbnailUrl}
+>
+  <div class="container wrap">
+    <h1>{e.title}</h1>
+    <p>{e.description}</p>
+    <p class="cast">
+      {t('episodes.starring')}:
+      {e.characters.map((c) => <a href={`/cats/${c}`}>{characters[c].name}</a>)}
+    </p>
+    <div class="player"><EpisodeCard episode={e} detailLink={false} /></div>
+    <p class="cta"><a class="btn" href="/tango-me">{t('cta.tangoFree')}</a></p>
+    <nav class="pn" aria-label={t('episodes.all')}>
+      {older ? <a href={`/episodes/${older.slug}`}>&larr; {t('episodes.prev')}: {older.title}</a> : <span />}
+      {newer ? <a href={`/episodes/${newer.slug}`}>{t('episodes.next')}: {newer.title} &rarr;</a> : <span />}
+    </nav>
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+    max-inline-size: 36rem;
+  }
+  .cast {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    font-weight: 600;
+  }
+  .player {
+    margin-block: var(--space-3);
+  }
+  .cta {
+    text-align: center;
+  }
+  .pn {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    font-weight: 600;
+  }
+</style>

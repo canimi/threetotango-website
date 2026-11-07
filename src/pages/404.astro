@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import { t } from '../i18n/t';
+---
+
+<Base title={`${t('notFound.title')} | ${t('brand.name')}`} description={t('notFound.desc')} path="/404">
+  <div class="container wrap">
+    <h1>{t('notFound.h1')}</h1>
+    <p>{t('notFound.body')}</p>
+    <p><a class="btn" href="/">{t('notFound.cta')}</a></p>
+  </div>
+</Base>
+
+<style>
+  .wrap {
+    padding-block: var(--space-4);
+    max-inline-size: 42rem;
+    text-align: center;
+  }
+</style>

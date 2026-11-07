@@ -1,0 +1,77 @@
+---
+import type { CharacterId } from '../lib/episodes';
+import { characters } from '../data/characters';
+import { t } from '../i18n/t';
+
+interface Props {
+  id: CharacterId;
+}
+const { id } = Astro.props;
+const c = characters[id];
+---
+
+<article class="card" style={`--accent:${c.color}`} data-gif={c.gif} data-still={c.portrait}>
+  <a href={`/cats/${id}`} class="media" aria-label={`${t('household.meet')}: ${c.name}`}>
+    <img
+      src={c.portrait}
+      width="320"
+      height="320"
+      loading="lazy"
+      alt={`${t('cats.portraitAlt')} ${c.name}`}
+    />
+  </a>
+  <div class="body">
+    <h3>{c.name}</h3>
+    <p class="nick">{c.nickname}</p>
+    <p>{c.oneLiner}</p>
+  </div>
+</article>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.card[data-gif]').forEach((card) => {
+    const img = card.querySelector('img');
+    if (!img) return;
+    const play = () => (img.src = card.dataset.gif!);
+    const stop = () => (img.src = card.dataset.still!);
+    card.addEventListener('mouseenter', play);
+    card.addEventListener('mouseleave', stop);
+    card.addEventListener('focusin', play);
+    card.addEventListener('focusout', stop);
+    card.addEventListener('touchstart', play, { passive: true });
+  });
+</script>
+
+<style>
+  .card {
+    background: #fff;
+    border-radius: var(--radius-card);
+    border-block-start: 8px solid var(--accent);
+    overflow: hidden;
+    box-shadow: 0 2px 0 rgb(59 42 26 / 12%);
+  }
+  .media {
+    display: block;
+  }
+  img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--c-caddy);
+  }
+  .body {
+    padding: var(--space-2);
+  }
+  h3 {
+    margin-block-end: 0;
+  }
+  .nick {
+    margin-block: 0 var(--space-1);
+    font-weight: 600;
+    color: var(--c-ink-2);
+  }
+  p {
+    margin-block: 0;
+  }
+</style>

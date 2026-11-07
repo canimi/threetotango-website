@@ -1,0 +1,128 @@
+---
+import type { Episode } from '../lib/episodes';
+import { t } from '../i18n/t';
+
+interface Props {
+  episode: Episode;
+  detailLink?: boolean;
+}
+const { episode: e, detailLink = true } = Astro.props;
+const youtube = e.platform === 'youtube';
+---
+
+<article class="ep" data-characters={e.characters.join(' ')}>
+  <div class="thumb">
+    {
+      youtube ? (
+        <button
+          type="button"
+          class="play"
+          data-embed={`https://www.youtube-nocookie.com/embed/${e.externalId}?autoplay=1&rel=0`}
+          data-title={e.title}
+          aria-label={`${t('common.playEpisode')}: ${e.title}`}
+        >
+          <img
+            src={e.thumbnailUrl}
+            width="360"
+            height="640"
+            loading="lazy"
+            alt={`${t('episodes.thumbAlt')} ${e.title}`}
+          />
+          <span class="icon" aria-hidden="true">&#9654;</span>
+        </button>
+      ) : (
+        <a class="play" href={e.videoUrl} target="_blank" rel="noopener">
+          <img
+            src={e.thumbnailUrl}
+            width="360"
+            height="640"
+            loading="lazy"
+            alt={`${t('episodes.thumbAlt')} ${e.title}`}
+          />
+          <span class="icon" aria-hidden="true">&#9654;</span>
+          <span class="sr">{t('common.openInstagram')}</span>
+        </a>
+      )
+    }
+  </div>
+  <h3>
+    {detailLink ? <a href={`/episodes/${e.slug}`}>{e.title}</a> : e.title}
+  </h3>
+</article>
+
+<script>
+  document.addEventListener('click', (ev) => {
+    const btn = (ev.target as Element).closest<HTMLButtonElement>('button.play[data-embed]');
+    if (!btn) return;
+    const frame = document.createElement('iframe');
+    frame.src = btn.dataset.embed!;
+    frame.title = btn.dataset.title ?? '';
+    frame.allow = 'autoplay; encrypted-media; picture-in-picture';
+    frame.allowFullscreen = true;
+    frame.width = '360';
+    frame.height = '640';
+    btn.replaceWith(frame);
+  });
+</script>
+
+<style>
+  .ep {
+    background: #fff;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: 0 2px 0 rgb(59 42 26 / 12%);
+  }
+  .thumb {
+    aspect-ratio: 9 / 16;
+    background: var(--c-ink);
+  }
+  .thumb :global(.play) {
+    position: relative;
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .thumb :global(img),
+  .thumb :global(iframe) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+  .icon {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c-mustard);
+    color: var(--c-ink);
+    font-size: 1.4rem;
+  }
+  .sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  h3 {
+    margin: 0;
+    padding: var(--space-2);
+    font-size: 1.1rem;
+  }
+  h3 a {
+    text-decoration: none;
+  }
+  h3 a:hover {
+    text-decoration: underline;
+  }
+</style>
