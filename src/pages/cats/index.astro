@@ -1,27 +1,22 @@
 ---
 import Base from '../../layouts/Base.astro';
-import CharacterCard from '../../components/CharacterCard.astro';
-import { characterIds } from '../../data/characters';
+import CastPicker from '../../components/CastPicker.astro';
+import { getEpisodes } from '../../lib/site-episodes';
 import { t } from '../../i18n/t';
+
+const episodes = await getEpisodes();
 ---
 
 <Base title={`${t('cats.pageTitle')} | ${t('brand.name')}`} description={t('cats.pageDesc')} path="/cats">
-  <div class="container wrap">
+  <div class="container page">
     <h1>{t('cats.pageTitle')}</h1>
-    <p>{t('cats.intro')}</p>
-    <div class="cards">
-      {characterIds.map((id) => <CharacterCard id={id} />)}
-    </div>
+    <p class="lede intro">{t('cats.intro')}</p>
+    <CastPicker {episodes} />
   </div>
 </Base>
 
 <style>
-  .wrap {
-    padding-block: var(--space-4);
-  }
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: var(--space-3);
+  .intro {
+    margin-block: 0 var(--space-4);
   }
 </style>

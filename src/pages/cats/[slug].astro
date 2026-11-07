@@ -13,6 +13,7 @@ export function getStaticPaths() {
 const id = Astro.params.slug as CharacterId;
 const c = characters[id];
 const list = filterByCharacter(await getEpisodes(), id);
+const others = characterIds.filter((x) => x !== id);
 ---
 
 <Base
@@ -21,64 +22,132 @@ const list = filterByCharacter(await getEpisodes(), id);
   path={`/cats/${id}`}
   ogImage={c.portrait}
 >
-  <div class="container wrap" style={`--accent:${c.color};--pos:${c.portraitPos};--zoom:${c.portraitZoom}`}>
-    <p><a href="/cats">&larr; {t('cats.back')}</a></p>
+  <div class="container page" style={`--accent:${c.color}`}>
+    <p class="back"><a href="/cats">{t('cats.back')}</a></p>
     <div class="top">
-      <div class="pic"><img src={c.portrait} width="720" height="720" alt={`${t('cats.portraitAlt')} ${c.name}`} /></div>
+      <div class="window"><img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} /></div>
       <div>
         <h1>{c.name}</h1>
         <p class="nick">{c.nickname}</p>
-        <p>{c.oneLiner}</p>
-        <h2>{t('cats.loves')}</h2>
-        <ul>{c.loves.map((x) => <li>{x}</li>)}</ul>
-        <h2>{t('cats.hates')}</h2>
-        <ul>{c.hates.map((x) => <li>{x}</li>)}</ul>
-        <a class="btn" href="/tango-me">{t('cta.tangoFree')}</a>
+        <p class="line">{c.oneLiner}</p>
+        <div class="lists">
+          <div>
+            <h2>{t('cats.loves')}</h2>
+            <ul>{c.loves.map((x) => <li>{x}</li>)}</ul>
+          </div>
+          <div>
+            <h2>{t('cats.hates')}</h2>
+            <ul>{c.hates.map((x) => <li>{x}</li>)}</ul>
+          </div>
+        </div>
+        <a class="btn btn-lg" href="/tango-me">{t('cta.tangoFreeLong')}</a>
+        <ul class="others">
+          {others.map((o) => (
+            <li>
+              <a href={`/cats/${o}`} style={`--accent:${characters[o].color}`}>
+                <img src={characters[o].face} width="40" height="40" alt="" loading="lazy" />
+                {characters[o].name}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
-    <h2>{t('cats.episodesWith')} {c.name}</h2>
-    {list.length ? <EpisodeGrid episodes={list} /> : <p>{t('cats.noEpisodes')}</p>}
+    <h2 class="eps-title">{t('cats.episodesWith')} {c.name}</h2>
+    {list.length ? <EpisodeGrid episodes={list} filters={false} /> : <p>{t('cats.noEpisodes')}</p>}
   </div>
 </Base>
 
 <style>
-  .wrap {
-    padding-block: var(--space-4);
+  .back {
+    margin: 0 0 var(--space-3);
+    font-weight: 600;
   }
   .top {
     display: grid;
     gap: var(--space-4);
-    margin-block-end: var(--space-4);
+    align-items: center;
+    margin-block-end: var(--space-5);
   }
   @media (min-width: 52rem) {
     .top {
-      grid-template-columns: 1fr 1.2fr;
-      align-items: start;
+      grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+      gap: var(--space-5);
     }
   }
-  .pic {
+  .window {
+    inline-size: min(100%, 24rem);
+    aspect-ratio: 3 / 4;
+    border-radius: 999px 999px 26px 26px;
     overflow: hidden;
-    border-radius: var(--radius-card);
-    border-block-start: 10px solid var(--accent);
     background: var(--c-caddy);
+    box-shadow: 0 0 0 8px var(--c-wall), 0 0 0 11px var(--accent), 0 40px 70px -30px rgb(var(--c-shadow) / 90%);
   }
-  img {
+  @media (max-width: 52rem) {
+    .window {
+      inline-size: min(70%, 17rem);
+    }
+  }
+  .window img {
     display: block;
     inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 1;
+    block-size: 100%;
     object-fit: cover;
-    object-position: var(--pos);
-    transform: scale(var(--zoom, 1));
-    transform-origin: var(--pos);
+  }
+  h1 {
+    font-size: clamp(3rem, 2rem + 4vw, 5rem);
+    margin-block-end: 0.25rem;
   }
   .nick {
-    font-weight: 600;
-    color: var(--c-ink-2);
-    margin-block-start: 0;
+    margin: 0 0 var(--space-2);
+    font: 600 1.3rem var(--font-display);
+    color: var(--accent);
   }
-  h2 {
-    font-size: 1.2rem;
-    margin-block: var(--space-2) 0;
+  .line {
+    font-size: 1.3rem;
+    max-inline-size: 30rem;
+    margin-block: 0 var(--space-3);
+  }
+  .lists {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--space-2) var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+  .lists h2 {
+    font-size: 1.15rem;
+    color: var(--c-paper-2);
+    margin-block-end: 0.25rem;
+  }
+  .lists ul {
+    margin: 0;
+    padding-inline-start: 1.1rem;
+  }
+  .others {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .others a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0.9rem 0.2rem 0.2rem;
+    border-radius: var(--radius-pill);
+    background: rgb(244 233 216 / 9%);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .others img {
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .eps-title {
+    margin-block-end: var(--space-3);
   }
 </style>

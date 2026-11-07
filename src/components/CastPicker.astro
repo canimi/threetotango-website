@@ -1,0 +1,284 @@
+---
+import type { Episode, CharacterId } from '../lib/episodes';
+import { characters, characterIds } from '../data/characters';
+import { filterByCharacter } from '../lib/episodes';
+import EpisodeCard from './EpisodeCard.astro';
+import { t } from '../i18n/t';
+
+interface Props {
+  episodes: Episode[];
+  initial?: CharacterId;
+  headingLevel?: 'h2' | 'h3';
+}
+const { episodes, initial = 'luka' } = Astro.props;
+const uid = 'cast';
+const starring = (n: number) =>
+  n === 0 ? t('household.starringNone') : n === 1 ? t('household.starringOne') : t('household.starring').replace('{n}', String(n));
+---
+
+<div class="cast-picker" data-cast-picker>
+  <div class="tabs" role="tablist" aria-label={t('household.tabsLabel')}>
+    {
+      characterIds.map((id) => {
+        const c = characters[id];
+        const on = id === initial;
+        return (
+          <button
+            type="button"
+            role="tab"
+            id={`${uid}-tab-${id}`}
+            aria-controls={`${uid}-panel-${id}`}
+            aria-selected={on ? 'true' : 'false'}
+            tabindex={on ? '0' : '-1'}
+            class="tab"
+            style={`--accent:${c.color}`}
+          >
+            <img src={c.face} width="400" height="400" alt="" loading="lazy" decoding="async" />
+            <span>{c.name}</span>
+          </button>
+        );
+      })
+    }
+  </div>
+
+  {
+    characterIds.map((id) => {
+      const c = characters[id];
+      const list = filterByCharacter(episodes, id);
+      return (
+        <div
+          class="panel"
+          role="tabpanel"
+          id={`${uid}-panel-${id}`}
+          aria-labelledby={`${uid}-tab-${id}`}
+          tabindex="0"
+          hidden={id !== initial}
+          style={`--accent:${c.color}`}
+        >
+          <div class="window">
+            <img src={c.full} width="600" height="800" loading="lazy" decoding="async" alt={`${t('cats.portraitAlt')} ${c.name}`} />
+          </div>
+          <div class="about">
+            <h3>{c.name}<span class="nick">{c.nickname}</span></h3>
+            <p class="line">{c.oneLiner}</p>
+            <dl class="traits">
+              <div>
+                <dt>{t('household.loves')}</dt>
+                <dd>{c.loves.slice(0, 3).join(', ')}</dd>
+              </div>
+              <div>
+                <dt>{t('household.hates')}</dt>
+                <dd>{c.hates.slice(0, 2).join(', ')}</dd>
+              </div>
+            </dl>
+            <p class="starring">{starring(list.length)}</p>
+            {list.length > 0 && (
+              <div class="mini">
+                {list.slice(0, 5).map((e) => (
+                  <EpisodeCard episode={e} size="mini" />
+                ))}
+              </div>
+            )}
+            <a class="profile" href={`/cats/${id}`}>{t('household.meet')}</a>
+          </div>
+        </div>
+      );
+    })
+  }
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-cast-picker]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const select = (tab: HTMLButtonElement, focus = false) => {
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        const panel = root.querySelector<HTMLElement>(`#${t.getAttribute('aria-controls')}`)!;
+        panel.hidden = !on;
+      });
+      if (focus) tab.focus();
+    };
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(tab));
+      tab.addEventListener('keydown', (ev) => {
+        const rtl = document.dir === 'rtl';
+        const map: Record<string, number> = {
+          ArrowRight: rtl ? i - 1 : i + 1,
+          ArrowLeft: rtl ? i + 1 : i - 1,
+          Home: 0,
+          End: tabs.length - 1,
+        };
+        if (!(ev.key in map)) return;
+        ev.preventDefault();
+        select(tabs[(map[ev.key] + tabs.length) % tabs.length], true);
+      });
+    });
+  });
+</script>
+
+<style>
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    margin-block-end: var(--space-4);
+  }
+  .tab {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--c-paper-2);
+    font: 600 1.05rem var(--font-display);
+    cursor: pointer;
+  }
+  .tab img {
+    inline-size: clamp(4rem, 3rem + 4vw, 6rem);
+    block-size: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgb(244 233 216 / 14%);
+    filter: saturate(0.6) brightness(0.85);
+    transition: box-shadow 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+  }
+  .tab:hover img {
+    filter: none;
+  }
+  .tab[aria-selected='true'] {
+    color: var(--c-paper);
+  }
+  .tab[aria-selected='true'] img {
+    filter: none;
+    box-shadow: 0 0 0 4px var(--c-wall), 0 0 0 8px var(--accent);
+    transform: translateY(-3px);
+  }
+  .tab:focus-visible {
+    outline: none;
+  }
+  .tab:focus-visible img {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 10px;
+  }
+  .panel {
+    display: grid;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .panel[hidden] {
+    display: none;
+  }
+  .panel:focus-visible {
+    outline-offset: 8px;
+  }
+  @media (min-width: 52rem) {
+    .panel {
+      grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+      gap: var(--space-5);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .panel:not([hidden]) {
+      animation: swap 0.35s ease-out;
+    }
+    .panel:not([hidden]) .window img {
+      animation: settle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+  }
+  @keyframes swap {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes settle {
+    from {
+      transform: scale(1.06);
+    }
+  }
+  .window {
+    position: relative;
+    inline-size: min(100%, 22rem);
+    aspect-ratio: 3 / 4;
+    border-radius: 999px 999px 26px 26px;
+    overflow: hidden;
+    background: var(--c-caddy);
+    box-shadow: 0 0 0 8px var(--c-wall-2), 0 0 0 11px var(--accent), 0 40px 70px -30px rgb(var(--c-shadow) / 90%);
+    margin-inline: auto;
+  }
+  .window img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.9rem;
+    font-size: clamp(2.4rem, 1.8rem + 2.4vw, 3.6rem);
+    line-height: 1;
+    margin-block-end: var(--space-2);
+  }
+  .nick {
+    font-size: 1.15rem;
+    color: var(--accent);
+  }
+  .line {
+    font-size: 1.25rem;
+    max-inline-size: 32rem;
+    margin-block: 0 var(--space-3);
+  }
+  .traits {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0 0 var(--space-3);
+  }
+  .traits div {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: var(--space-2);
+  }
+  dt {
+    font-weight: 600;
+    color: var(--c-paper-2);
+  }
+  dd {
+    margin: 0;
+  }
+  .starring {
+    margin-block: var(--space-3) var(--space-2);
+    font: 600 1.05rem var(--font-display);
+    color: var(--c-lamp);
+  }
+  .mini {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 5.5rem));
+    gap: var(--space-1);
+    margin-block-end: var(--space-3);
+  }
+  .profile {
+    font-weight: 600;
+  }
+  @media (max-width: 52rem) {
+    .window {
+      inline-size: min(68%, 16rem);
+      margin-inline: 0;
+    }
+  }
+  @media (max-width: 30rem) {
+    .tabs {
+      justify-content: space-between;
+      gap: var(--space-1);
+    }
+    .mini {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .mini > :global(:nth-child(5)) {
+      display: none;
+    }
+  }
+</style>
