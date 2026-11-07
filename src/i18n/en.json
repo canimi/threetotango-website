@@ -265,8 +265,9 @@
       "rate_limited": "That's a lot of Tangos from one place today. Try again tomorrow.",
       "invalid": "Something about that photo or form didn't work. Check everything and try again.",
       "server": "Something went wrong on our side. Please try again in a moment.",
-      "timeout": "This is taking longer than it should. Your free Tango is safe. Please try again in a few minutes.",
-      "not_cat": "That doesn't look like a cat. Try a clear photo of your cat."
+      "timeout": "Still moving in — this is taking longer than usual.",
+      "not_cat": "That doesn't look like a cat. Try a clear photo of your cat.",
+      "bad_token": "Please confirm your email again."
     },
     "waiting": {
       "title": "Moving your cat in…",
@@ -293,6 +294,8 @@
       "listError": "Couldn't add you to the list. Please try again.",
       "quizCta": "Which of our cats are you? Take the quiz",
       "another": "Try another photo"
-    }
+    },
+    "checkAgain": "Check again",
+    "differentEmail": "Use a different email"
   }
 }

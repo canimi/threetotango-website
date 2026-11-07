@@ -39,7 +39,7 @@ function failure<E extends string>(raw: Raw, known: readonly E[], byStatus: Reco
   return { ok: false, error: byStatus[raw.status] ?? fallback };
 }
 
-export type TangoStartError = 'not_cat' | 'used' | 'budget' | 'rate_limited' | 'invalid' | 'server';
+export type TangoStartError = 'not_cat' | 'used' | 'budget' | 'rate_limited' | 'invalid' | 'bad_token' | 'server';
 export type StatusResult = {
   status: 'queued' | 'running' | 'done' | 'failed';
   urls?: { post: string; story: string };
@@ -57,7 +57,7 @@ async function postForm(path: string, body: FormData): Promise<Raw> {
   }
 }
 
-const TANGO_START_ERRORS = ['not_cat', 'used', 'budget', 'rate_limited', 'invalid', 'server'] as const;
+const TANGO_START_ERRORS = ['not_cat', 'used', 'budget', 'rate_limited', 'invalid', 'bad_token', 'server'] as const;
 const STATUSES = ['queued', 'running', 'done', 'failed'] as const;
 const SUBSCRIBE_ERRORS = ['invalid_email', 'rate_limited', 'server'] as const;
 const VERIFY_ERRORS = ['wrong_code', 'expired', 'locked', 'server'] as const;
@@ -83,7 +83,7 @@ export const api = {
     if (raw.status === 200 && raw.body?.ok === true && typeof raw.body.id === 'string') {
       return { ok: true, id: raw.body.id };
     }
-    return failure(raw, TANGO_START_ERRORS, { 400: 'invalid', 429: 'rate_limited' }, 'server');
+    return failure(raw, TANGO_START_ERRORS, { 400: 'invalid', 401: 'bad_token', 429: 'rate_limited' }, 'server');
   },
 
   /** Never throws. Any hiccup reads as "still running" so polling just continues. */
@@ -105,9 +105,9 @@ export const api = {
     token: string,
     kind: 'hd' | 'mug',
     generationId: string,
-  ): Promise<{ ok: true } | Fail<'server'>> {
+  ): Promise<{ ok: true } | Fail<'bad_token' | 'server'>> {
     const raw = await postJson('/api/waitlist', { token, kind, generationId });
     if (raw.status === 200 && raw.body?.ok === true) return { ok: true };
-    return { ok: false, error: 'server' };
+    return failure(raw, ['bad_token', 'server'] as const, { 401: 'bad_token' }, 'server');
   },
 };

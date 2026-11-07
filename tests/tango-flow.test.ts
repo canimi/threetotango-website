@@ -7,6 +7,9 @@ import {
   clearActive,
   saveToken,
   loadToken,
+  clearToken,
+  stepAfterFailure,
+  isTerminal,
   createSubmitter,
   MAX_UPLOAD_BYTES,
 } from '../src/lib/tango-flow';
@@ -231,4 +234,49 @@ describe('normalizeCode', () => {
     [' 12 34\t56\n', '123456'],
     ['abc', ''],
   ])('%j -> %j', (i, o) => expect(normalizeCode(i)).toBe(o));
+});
+
+describe('stepAfterFailure / isTerminal / clearToken', () => {
+  it('not_cat always goes to step 1', () => {
+    expect(stepAfterFailure('not_cat', { hasPhoto: true, hasToken: true })).toBe(1);
+  });
+  it('no photo (resume/reload) goes to step 1', () => {
+    expect(stepAfterFailure('server', { hasPhoto: false, hasToken: true })).toBe(1);
+    expect(stepAfterFailure(undefined, { hasPhoto: false, hasToken: false })).toBe(1);
+  });
+  it('bad_token or missing token goes to step 4', () => {
+    expect(stepAfterFailure('bad_token', { hasPhoto: true, hasToken: true })).toBe(4);
+    expect(stepAfterFailure('server', { hasPhoto: true, hasToken: false })).toBe(4);
+  });
+  it('otherwise step 3', () => {
+    expect(stepAfterFailure('server', { hasPhoto: true, hasToken: true })).toBe(3);
+  });
+  it('only done/failed are terminal (running keeps the active id)', () => {
+    expect(isTerminal('done')).toBe(true);
+    expect(isTerminal('failed')).toBe(true);
+    expect(isTerminal('running')).toBe(false);
+    expect(isTerminal('queued')).toBe(false);
+  });
+  it('clearToken removes the token and never throws', () => {
+    vi.stubGlobal('localStorage', memoryStorage());
+    saveToken('t');
+    clearToken();
+    expect(loadToken()).toBeNull();
+    vi.stubGlobal('localStorage', brokenStorage());
+    expect(() => clearToken()).not.toThrow();
+  });
+});
+
+describe('bad_token mapping', () => {
+  const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
+  it('tangoStart maps 401 and body bad_token', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(401, {})));
+    expect(await api.tangoStart(new FormData())).toEqual({ ok: false, error: 'bad_token' });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(400, { ok: false, error: 'bad_token' })));
+    expect(await api.tangoStart(new FormData())).toEqual({ ok: false, error: 'bad_token' });
+  });
+  it('waitlist maps 401 to bad_token', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(401, { ok: false, error: 'bad_token' })));
+    expect(await api.waitlist('t', 'hd', 'g')).toEqual({ ok: false, error: 'bad_token' });
+  });
 });

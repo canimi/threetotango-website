@@ -67,6 +67,27 @@ export function clearActive(): void {
   }
 }
 
+export function clearToken(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** Which wizard step to land on after a failed/aborted submission. */
+export function stepAfterFailure(
+  error: string | undefined,
+  s: { hasPhoto: boolean; hasToken: boolean },
+): 1 | 3 | 4 {
+  if (error === 'not_cat' || !s.hasPhoto) return 1;
+  if (error === 'bad_token' || !s.hasToken) return 4;
+  return 3;
+}
+
+/** Whether a failed status should drop the active generation and idemKey (always, only for real failures). */
+export const isTerminal = (status: string): boolean => status === 'done' || status === 'failed';
+
 export function saveToken(token: string, now = Date.now()): void {
   try {
     localStorage.setItem(TOKEN_KEY, JSON.stringify({ token, exp: now + TOKEN_TTL_MS }));

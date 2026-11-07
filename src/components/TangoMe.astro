@@ -12,6 +12,7 @@ const i18n = JSON.stringify({
   next: en.tango.next,
   go: en.tango.go,
   sending: en.tango.sending,
+  checkAgain: en.tango.checkAgain,
   result: en.tango.result,
   subscribe: en.subscribe,
 });
@@ -92,6 +93,9 @@ const i18n = JSON.stringify({
       <p class="used" data-used hidden>
         <button type="button" class="btn alt" data-used-waitlist>{t('tango.result.hd')}</button>
       </p>
+      <p class="links" data-diff-email hidden>
+        <button type="button" class="link" data-use-other>{t('tango.differentEmail')}</button>
+      </p>
       <div class="nav">
         <button type="button" class="btn alt" data-back hidden>{t('tango.back')}</button>
         <button type="button" class="btn" data-next>{t('tango.next')}</button>
@@ -103,6 +107,10 @@ const i18n = JSON.stringify({
     <h2>{t('tango.waiting.title')}</h2>
     <p role="status">{t('tango.waiting.sub')}</p>
     <p class="line" data-line aria-hidden="true"></p>
+    <div data-slow hidden>
+      <p class="err" role="alert" data-slow-msg></p>
+      <button type="button" class="btn" data-check-again>{t('tango.checkAgain')}</button>
+    </div>
   </section>
 
   <section data-result hidden tabindex="-1">
@@ -131,6 +139,9 @@ const i18n = JSON.stringify({
     saveActive,
     loadActive,
     clearActive,
+    clearToken,
+    stepAfterFailure,
+    isTerminal,
     saveToken,
     loadToken,
     createSubmitter,
@@ -191,6 +202,7 @@ const i18n = JSON.stringify({
     nextBtn.hidden = step === 4;
     nextBtn.textContent = step === 3 && token ? i18n.go : i18n.next;
     q('[data-idea-wrap]').hidden = scene() !== 'custom';
+    q('[data-diff-email]').hidden = !(token && step === 3);
   }
   function go(n: number) {
     step = n;
@@ -252,6 +264,7 @@ const i18n = JSON.stringify({
     wizard.hidden = true;
     result.hidden = true;
     waiting.hidden = false;
+    q('[data-slow]').hidden = true;
     const lines: string[] = i18n.waiting;
     const line = q('[data-line]');
     let i = 0;
@@ -263,14 +276,22 @@ const i18n = JSON.stringify({
     }, 3500);
     waiting.focus();
   }
-  function backToWizard(message: string) {
+  function dropToken() {
+    clearToken();
+    token = null;
+  }
+  function backToWizard(message: string, error?: string) {
     stopLines();
     waiting.hidden = true;
     result.hidden = true;
     wizard.hidden = false;
     submitter.reset();
-    step = lastStep();
+    if (error === 'bad_token') dropToken();
+    const hasPhoto = !!photoInput.files?.[0] && validateUpload(photoInput.files[0]) === 'ok';
+    const n = stepAfterFailure(error, { hasPhoto, hasToken: !!token });
+    step = n;
     render();
+    q<HTMLElement>(`[data-panel="${n}"] h2`).focus();
     setErr('form', message);
   }
   async function watch(id: string) {
@@ -278,6 +299,7 @@ const i18n = JSON.stringify({
     showWaiting();
     try {
       const r = await pollStatus(id, { intervalMs: 2500, timeoutMs: 120000, status: api.tangoStatus });
+      if (!isTerminal(r.status)) return;
       clearActive();
       stopLines();
       if (r.status === 'done' && r.urls) {
@@ -290,15 +312,22 @@ const i18n = JSON.stringify({
         q('[data-copy]').hidden = !r.share;
         result.focus();
       } else {
-        backToWizard(r.error === 'not_cat' ? E.not_cat : E.server);
+        backToWizard(r.error === 'not_cat' ? E.not_cat : E.server, r.error);
       }
     } catch {
-      clearActive();
-      backToWizard(E.timeout);
+      // Timed out: the generation may still be running. Keep active id and idemKey.
+      stopLines();
+      q('[data-slow-msg]').textContent = E.timeout;
+      q('[data-slow]').hidden = false;
     }
   }
+  q('[data-check-again]').addEventListener('click', () => {
+    q('[data-slow]').hidden = true;
+    void watch(currentId);
+  });
 
   async function submit() {
+    if (!validStep(1)) return go(1);
     const fd = new FormData();
     fd.set('photo', photoInput.files![0]);
     fd.set('catName', nameInput.value.trim());
@@ -314,6 +343,12 @@ const i18n = JSON.stringify({
     nextBtn.disabled = false;
     q<HTMLButtonElement>('[data-verify]').disabled = false;
     if (!res.ok) {
+      if (res.error === 'bad_token') {
+        submitter.reset();
+        dropToken();
+        go(4);
+        return setErr('form', E.bad_token);
+      }
       render();
       setErr('form', E[res.error] ?? E.server);
       if (res.error === 'used') q('[data-used]').hidden = false;
@@ -371,6 +406,10 @@ const i18n = JSON.stringify({
     const res = await api.subscribe(email, 'tango-me');
     setErr('form', res.ok ? i18n.subscribe.resent : SE[res.error]);
   });
+  q('[data-use-other]').addEventListener('click', () => {
+    dropToken();
+    go(4);
+  });
   q('[data-change-email]').addEventListener('click', () => showCode(false));
 
   // ---- result actions ----
@@ -390,6 +429,14 @@ const i18n = JSON.stringify({
     if (res.ok) {
       btn.textContent = R.listed;
       note(R.listed);
+    } else if (res.error === 'bad_token') {
+      btn.disabled = false;
+      dropToken();
+      if (wizard.hidden) note('', E.bad_token);
+      else {
+        go(4);
+        setErr('form', E.bad_token);
+      }
     } else {
       btn.disabled = false;
       note('', R.listError);
