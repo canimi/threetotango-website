@@ -207,5 +207,92 @@
     "item2": "Phone wallpapers with the whole household on them",
     "item3": "The weekly report from Luka. She thinks you're a suspect.",
     "unsubscribe": "One short email a week. Unsubscribe anytime, with one click."
+  },
+  "tango": {
+    "pageTitle": "Tango Me: put your cat in the household",
+    "pageDesc": "Upload a photo of your cat and get an image of them moving in with Luka, Budy, Caddy and Nora. One free Tango per email.",
+    "title": "Tango your cat into the household",
+    "sub": "Upload a photo of your cat. We'll move them in next to Luka, Budy, Caddy and Nora. Nora has not been consulted.",
+    "demoNote": "Your cat, before and after.",
+    "disclosure": "Images are generated with AI. Your photo is deleted after 24 hours.",
+    "noscript": "Please enable JavaScript to use Tango Me. The form needs it to send your photo.",
+    "stepLabel": "Step {n} of {total}",
+    "steps": {
+      "photo": "Photo",
+      "personality": "Personality",
+      "scene": "Scene",
+      "email": "Email"
+    },
+    "photoLegend": "Your cat",
+    "photoLabel": "Photo of your cat",
+    "photoHelp": "JPG, PNG or HEIC, up to 10 MB. A clear, well-lit photo works best.",
+    "previewAlt": "Preview of the photo you chose",
+    "heicPlaceholder": "HEIC photo selected (preview not available in this browser)",
+    "catNameLabel": "Your cat's name",
+    "catNamePlaceholder": "Mochi",
+    "persLegend": "Pick a personality",
+    "personalities": {
+      "genius": "Genius (like Luka)",
+      "chatterbox": "Chatterbox (like Budy)",
+      "unbothered": "Unbothered (like Caddy)",
+      "chaos": "Chaos agent"
+    },
+    "sceneLegend": "Pick a scene",
+    "scenes": {
+      "kitchen-table": "Nora's kitchen table",
+      "sofa-gang": "Sofa with the gang",
+      "fridge-heist": "Fridge heist",
+      "box-fort": "Box fort",
+      "window-birds": "Window bird-watch",
+      "lettuce-crime": "Lettuce crime scene",
+      "custom": "Your idea"
+    },
+    "ideaLabel": "Describe your idea (max 200 characters)",
+    "galleryLabel": "Show my cat in the gallery",
+    "emailIntro": "Last step: confirm your email. One free Tango per email.",
+    "next": "Next",
+    "back": "Back",
+    "go": "Tango me, free",
+    "sending": "Sending...",
+    "errors": {
+      "photoRequired": "Choose a photo of your cat first.",
+      "type": "JPG, PNG or HEIC only",
+      "size": "Max 10 MB",
+      "nameRequired": "Give your cat a name.",
+      "ideaRequired": "Tell us your idea, or pick one of the scenes.",
+      "used": "You've used your free Tango. HD packs are coming soon.",
+      "budget": "We're full today — come back tomorrow.",
+      "rate_limited": "That's a lot of Tangos from one place today. Try again tomorrow.",
+      "invalid": "Something about that photo or form didn't work. Check everything and try again.",
+      "server": "Something went wrong on our side. Please try again in a moment.",
+      "timeout": "This is taking longer than it should. Your free Tango is safe. Please try again in a few minutes.",
+      "not_cat": "That doesn't look like a cat. Try a clear photo of your cat."
+    },
+    "waiting": {
+      "title": "Moving your cat in…",
+      "sub": "This usually takes under a minute. Stay on this page.",
+      "lines": [
+        "Luka is reviewing your cat's paperwork.",
+        "Budy is already telling them everything.",
+        "Caddy has not noticed anyone arrived.",
+        "Nora is hiding the good lettuce.",
+        "Assigning a spot on the sofa. Nobody agrees on which."
+      ]
+    },
+    "result": {
+      "title": "Your cat has moved in",
+      "alt": "Your cat in the Three To Tango household",
+      "downloadPost": "Download for posts (4:5)",
+      "downloadStory": "Download for stories (9:16)",
+      "copyShare": "Copy share link",
+      "copied": "Link copied",
+      "copyFailed": "Couldn't copy. Long-press the link to copy it.",
+      "hd": "HD, no watermark",
+      "mug": "Put it on a mug",
+      "listed": "You're on the list",
+      "listError": "Couldn't add you to the list. Please try again.",
+      "quizCta": "Which of our cats are you? Take the quiz",
+      "another": "Try another photo"
+    }
   }
 }

@@ -1,0 +1,647 @@
+---
+import { t } from '../i18n/t';
+import en from '../i18n/en.json';
+import { PERSONALITIES, SCENES } from '../lib/tango-flow';
+
+const stepKeys = ['photo', 'personality', 'scene', 'email'] as const;
+const i18n = JSON.stringify({
+  errors: en.tango.errors,
+  waiting: en.tango.waiting.lines,
+  stepLabel: en.tango.stepLabel,
+  heicPlaceholder: en.tango.heicPlaceholder,
+  next: en.tango.next,
+  go: en.tango.go,
+  sending: en.tango.sending,
+  result: en.tango.result,
+  subscribe: en.subscribe,
+});
+---
+
+<div class="tango" data-tango data-i18n={i18n}>
+  <noscript><p class="note">{t('tango.noscript')}</p></noscript>
+
+  <div data-wizard hidden>
+    <ol class="steps" aria-label={t('tango.stepLabel').replace('{n}', '1').replace('{total}', '4')} data-steps>
+      {stepKeys.map((k, i) => (
+        <li data-dot={i + 1}><span class="num">{i + 1}</span> <span class="lbl">{t(`tango.steps.${k}`)}</span></li>
+      ))}
+    </ol>
+    <p class="sr" aria-live="polite" data-step-live></p>
+
+    <form data-form novalidate>
+      <section data-panel="1">
+        <h2 tabindex="-1">{t('tango.photoLegend')}</h2>
+        <label for="tm-photo">{t('tango.photoLabel')}</label>
+        <input id="tm-photo" name="photo" type="file" accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif" />
+        <p class="help">{t('tango.photoHelp')}</p>
+        <p class="err" data-err="photo" role="alert" hidden></p>
+        <div class="preview" data-preview hidden>
+          <img data-preview-img alt={t('tango.previewAlt')} hidden />
+          <p class="ph" data-preview-ph hidden></p>
+        </div>
+        <label for="tm-name">{t('tango.catNameLabel')}</label>
+        <input id="tm-name" name="catName" type="text" maxlength="30" placeholder={t('tango.catNamePlaceholder')} autocomplete="off" />
+        <p class="err" data-err="name" role="alert" hidden></p>
+      </section>
+
+      <section data-panel="2" hidden>
+        <fieldset>
+          <legend><h2 tabindex="-1">{t('tango.persLegend')}</h2></legend>
+          {PERSONALITIES.map((p, i) => (
+            <label class="opt"><input type="radio" name="personality" value={p} checked={i === 0} /> {t(`tango.personalities.${p}`)}</label>
+          ))}
+        </fieldset>
+      </section>
+
+      <section data-panel="3" hidden>
+        <fieldset>
+          <legend><h2 tabindex="-1">{t('tango.sceneLegend')}</h2></legend>
+          {SCENES.map((s, i) => (
+            <label class="opt"><input type="radio" name="scene" value={s} checked={i === 0} /> {t(`tango.scenes.${s}`)}</label>
+          ))}
+        </fieldset>
+        <div data-idea-wrap hidden>
+          <label for="tm-idea">{t('tango.ideaLabel')}</label>
+          <textarea id="tm-idea" name="idea" maxlength="200" rows="3"></textarea>
+          <p class="err" data-err="idea" role="alert" hidden></p>
+        </div>
+        <label class="opt gallery"><input type="checkbox" name="gallery" value="1" /> {t('tango.galleryLabel')}</label>
+      </section>
+
+      <section data-panel="4" hidden>
+        <h2 tabindex="-1">{t('tango.steps.email')}</h2>
+        <p>{t('tango.emailIntro')}</p>
+        <div data-email-part>
+          <label for="tm-email">{t('subscribe.emailLabel')}</label>
+          <input id="tm-email" type="email" inputmode="email" autocomplete="email" placeholder={t('subscribe.emailPlaceholder')} />
+          <button type="button" class="btn" data-send-code>{t('subscribe.submit')}</button>
+        </div>
+        <div data-code-part hidden>
+          <p>{t('subscribe.codeIntro')} <strong data-email-shown></strong></p>
+          <label for="tm-code">{t('subscribe.codeLabel')}</label>
+          <input id="tm-code" type="text" inputmode="numeric" autocomplete="one-time-code" />
+          <button type="button" class="btn" data-verify>{t('tango.go')}</button>
+          <p class="links">
+            <button type="button" class="link" data-resend>{t('subscribe.resend')}</button>
+            <button type="button" class="link" data-change-email>{t('subscribe.changeEmail')}</button>
+          </p>
+        </div>
+      </section>
+
+      <p class="err" data-err="form" role="alert" hidden></p>
+      <p class="used" data-used hidden>
+        <button type="button" class="btn alt" data-used-waitlist>{t('tango.result.hd')}</button>
+      </p>
+      <div class="nav">
+        <button type="button" class="btn alt" data-back hidden>{t('tango.back')}</button>
+        <button type="button" class="btn" data-next>{t('tango.next')}</button>
+      </div>
+    </form>
+  </div>
+
+  <section data-waiting hidden tabindex="-1">
+    <h2>{t('tango.waiting.title')}</h2>
+    <p role="status">{t('tango.waiting.sub')}</p>
+    <p class="line" data-line aria-hidden="true"></p>
+  </section>
+
+  <section data-result hidden tabindex="-1">
+    <h2>{t('tango.result.title')}</h2>
+    <img class="out" data-out-img alt={t('tango.result.alt')} />
+    <div class="actions">
+      <a class="btn" data-dl-post download rel="noopener" target="_blank">{t('tango.result.downloadPost')}</a>
+      <a class="btn" data-dl-story download rel="noopener" target="_blank">{t('tango.result.downloadStory')}</a>
+      <button type="button" class="btn alt" data-copy>{t('tango.result.copyShare')}</button>
+      <button type="button" class="btn alt" data-waitlist="hd">{t('tango.result.hd')}</button>
+      <button type="button" class="btn alt" data-waitlist="mug">{t('tango.result.mug')}</button>
+    </div>
+    <p class="ok" data-result-msg role="status" hidden></p>
+    <p class="err" data-result-err role="alert" hidden></p>
+    <p><a href="/quiz">{t('tango.result.quizCta')}</a></p>
+    <p><button type="button" class="link" data-again>{t('tango.result.another')}</button></p>
+  </section>
+</div>
+
+<script>
+  import { api } from '../lib/api';
+  import { isValidEmail, normalizeCode, isValidCode } from '../lib/validate';
+  import {
+    validateUpload,
+    pollStatus,
+    saveActive,
+    loadActive,
+    clearActive,
+    saveToken,
+    loadToken,
+    createSubmitter,
+  } from '../lib/tango-flow';
+
+  const root = document.querySelector<HTMLElement>('[data-tango]')!;
+  const i18n = JSON.parse(root.dataset.i18n ?? '{}');
+  const E: Record<string, string> = i18n.errors;
+  const SE: Record<string, string> = i18n.subscribe.errors;
+  const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+  const all = <T extends HTMLElement>(s: string) => Array.from(root.querySelectorAll<T>(s));
+
+  const wizard = q('[data-wizard]');
+  const form = q<HTMLFormElement>('[data-form]');
+  const waiting = q('[data-waiting]');
+  const result = q('[data-result]');
+  const nextBtn = q<HTMLButtonElement>('[data-next]');
+  const backBtn = q<HTMLButtonElement>('[data-back]');
+  const photoInput = q<HTMLInputElement>('#tm-photo');
+  const nameInput = q<HTMLInputElement>('#tm-name');
+  const ideaInput = q<HTMLTextAreaElement>('#tm-idea');
+  const emailInput = q<HTMLInputElement>('#tm-email');
+  const codeInput = q<HTMLInputElement>('#tm-code');
+
+  const submitter = createSubmitter((fd) => api.tangoStart(fd));
+  let step = 1;
+  let token: string | null = loadToken();
+  let email = '';
+  let currentId = '';
+  let previewUrl = '';
+  let lineTimer: number | undefined;
+
+  const setErr = (name: string, text: string) => {
+    const el = q(`[data-err="${name}"]`);
+    el.textContent = text;
+    el.hidden = text === '';
+  };
+  const clearErrs = () => ['photo', 'name', 'idea', 'form'].forEach((n) => setErr(n, ''));
+  const scene = () => (form.elements.namedItem('scene') as RadioNodeList).value;
+  const lastStep = () => (token ? 3 : 4);
+
+  function render() {
+    all('[data-panel]').forEach((p) => (p.hidden = Number(p.dataset.panel) !== step));
+    all('[data-dot]').forEach((d) => {
+      const n = Number(d.dataset.dot);
+      d.classList.toggle('on', n === step);
+      d.classList.toggle('past', n < step);
+      if (n === step) d.setAttribute('aria-current', 'step');
+      else d.removeAttribute('aria-current');
+      d.hidden = n === 4 && !!token;
+    });
+    const label = String(i18n.stepLabel).replace('{n}', String(step)).replace('{total}', String(lastStep()));
+    q('[data-step-live]').textContent = label;
+    q('[data-steps]').setAttribute('aria-label', label);
+    backBtn.hidden = step === 1;
+    q('[data-used]').hidden = true;
+    // Step 4 has its own buttons; on step 3 the main button submits when a token already exists.
+    nextBtn.hidden = step === 4;
+    nextBtn.textContent = step === 3 && token ? i18n.go : i18n.next;
+    q('[data-idea-wrap]').hidden = scene() !== 'custom';
+  }
+  function go(n: number) {
+    step = n;
+    clearErrs();
+    render();
+    q<HTMLElement>(`[data-panel="${n}"] h2`).focus();
+  }
+
+  // ---- step 1: photo preview ----
+  function clearPreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = '';
+    q('[data-preview]').hidden = true;
+  }
+  photoInput.addEventListener('change', () => {
+    clearPreview();
+    setErr('photo', '');
+    const f = photoInput.files?.[0];
+    if (!f) return;
+    const v = validateUpload(f);
+    if (v !== 'ok') return setErr('photo', E[v]);
+    const img = q<HTMLImageElement>('[data-preview-img]');
+    const ph = q('[data-preview-ph]');
+    const heic = /heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name);
+    q('[data-preview]').hidden = false;
+    img.hidden = heic;
+    ph.hidden = !heic;
+    if (heic) {
+      ph.textContent = `${f.name} — ${i18n.heicPlaceholder}`;
+    } else {
+      previewUrl = URL.createObjectURL(f);
+      img.src = previewUrl;
+    }
+  });
+  form.addEventListener('change', (e) => {
+    if ((e.target as HTMLInputElement).name === 'scene') render();
+  });
+
+  function validStep(n: number): boolean {
+    clearErrs();
+    if (n === 1) {
+      const f = photoInput.files?.[0];
+      if (!f) return setErr('photo', E.photoRequired), false;
+      const v = validateUpload(f);
+      if (v !== 'ok') return setErr('photo', E[v]), false;
+      if (nameInput.value.trim() === '') return setErr('name', E.nameRequired), false;
+    }
+    if (n === 3 && scene() === 'custom' && ideaInput.value.trim() === '') {
+      return setErr('idea', E.ideaRequired), false;
+    }
+    return true;
+  }
+
+  // ---- result / waiting ----
+  function stopLines() {
+    window.clearInterval(lineTimer);
+  }
+  function showWaiting() {
+    wizard.hidden = true;
+    result.hidden = true;
+    waiting.hidden = false;
+    const lines: string[] = i18n.waiting;
+    const line = q('[data-line]');
+    let i = 0;
+    line.textContent = lines[0];
+    stopLines();
+    lineTimer = window.setInterval(() => {
+      i = (i + 1) % lines.length;
+      line.textContent = lines[i];
+    }, 3500);
+    waiting.focus();
+  }
+  function backToWizard(message: string) {
+    stopLines();
+    waiting.hidden = true;
+    result.hidden = true;
+    wizard.hidden = false;
+    submitter.reset();
+    step = lastStep();
+    render();
+    setErr('form', message);
+  }
+  async function watch(id: string) {
+    currentId = id;
+    showWaiting();
+    try {
+      const r = await pollStatus(id, { intervalMs: 2500, timeoutMs: 120000, status: api.tangoStatus });
+      clearActive();
+      stopLines();
+      if (r.status === 'done' && r.urls) {
+        waiting.hidden = true;
+        result.hidden = false;
+        q<HTMLImageElement>('[data-out-img]').src = r.urls.post;
+        q<HTMLAnchorElement>('[data-dl-post]').href = r.urls.post;
+        q<HTMLAnchorElement>('[data-dl-story]').href = r.urls.story;
+        q<HTMLElement>('[data-copy]').dataset.url = r.share ?? '';
+        q('[data-copy]').hidden = !r.share;
+        result.focus();
+      } else {
+        backToWizard(r.error === 'not_cat' ? E.not_cat : E.server);
+      }
+    } catch {
+      clearActive();
+      backToWizard(E.timeout);
+    }
+  }
+
+  async function submit() {
+    const fd = new FormData();
+    fd.set('photo', photoInput.files![0]);
+    fd.set('catName', nameInput.value.trim());
+    fd.set('personality', (form.elements.namedItem('personality') as RadioNodeList).value);
+    fd.set('scene', scene());
+    if (scene() === 'custom') fd.set('idea', ideaInput.value.trim());
+    fd.set('gallery', (form.elements.namedItem('gallery') as HTMLInputElement).checked ? '1' : '0');
+    fd.set('token', token ?? '');
+    nextBtn.disabled = true;
+    q<HTMLButtonElement>('[data-verify]').disabled = true;
+    nextBtn.textContent = i18n.sending;
+    const res = await submitter(fd);
+    nextBtn.disabled = false;
+    q<HTMLButtonElement>('[data-verify]').disabled = false;
+    if (!res.ok) {
+      render();
+      setErr('form', E[res.error] ?? E.server);
+      if (res.error === 'used') q('[data-used]').hidden = false;
+      if (res.error === 'invalid' || res.error === 'not_cat') submitter.reset();
+      return;
+    }
+    saveActive(res.id);
+    void watch(res.id);
+  }
+
+  // ---- wizard buttons ----
+  nextBtn.addEventListener('click', () => {
+    if (nextBtn.disabled || !validStep(step)) return;
+    if (step === 3 && token) return void submit();
+    go(step + 1);
+  });
+  backBtn.addEventListener('click', () => go(step - 1));
+  form.addEventListener('submit', (e) => e.preventDefault());
+
+  // ---- step 4: email + code ----
+  const showCode = (on: boolean) => {
+    q('[data-email-part]').hidden = on;
+    q('[data-code-part]').hidden = !on;
+    (on ? codeInput : emailInput).focus();
+  };
+  q<HTMLButtonElement>('[data-send-code]').addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget as HTMLButtonElement;
+    const value = emailInput.value.trim();
+    setErr('form', '');
+    if (!isValidEmail(value)) return setErr('form', SE.invalid_email);
+    btn.disabled = true;
+    const res = await api.subscribe(value, 'tango-me');
+    btn.disabled = false;
+    if (!res.ok) return setErr('form', SE[res.error]);
+    email = value;
+    q('[data-email-shown]').textContent = email;
+    codeInput.value = '';
+    showCode(true);
+  });
+  q<HTMLButtonElement>('[data-verify]').addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget as HTMLButtonElement;
+    if (btn.disabled) return;
+    const code = normalizeCode(codeInput.value);
+    setErr('form', '');
+    if (!isValidCode(code)) return setErr('form', SE.wrong_code);
+    btn.disabled = true;
+    const res = await api.verify(email, code);
+    btn.disabled = false;
+    if (!res.ok) return setErr('form', SE[res.error]);
+    token = res.token;
+    saveToken(res.token);
+    await submit();
+  });
+  q<HTMLButtonElement>('[data-resend]').addEventListener('click', async () => {
+    const res = await api.subscribe(email, 'tango-me');
+    setErr('form', res.ok ? i18n.subscribe.resent : SE[res.error]);
+  });
+  q('[data-change-email]').addEventListener('click', () => showCode(false));
+
+  // ---- result actions ----
+  const resultMsg = q('[data-result-msg]');
+  const resultErr = q('[data-result-err]');
+  const note = (ok: string, bad = '') => {
+    resultMsg.textContent = ok;
+    resultMsg.hidden = ok === '';
+    resultErr.textContent = bad;
+    resultErr.hidden = bad === '';
+  };
+  async function joinList(kind: 'hd' | 'mug', btn: HTMLButtonElement) {
+    const R: Record<string, string> = i18n.result;
+    if (!token) return note('', R.listError);
+    btn.disabled = true;
+    const res = await api.waitlist(token, kind, currentId);
+    if (res.ok) {
+      btn.textContent = R.listed;
+      note(R.listed);
+    } else {
+      btn.disabled = false;
+      note('', R.listError);
+    }
+  }
+  all<HTMLButtonElement>('[data-waitlist]').forEach((b) =>
+    b.addEventListener('click', () => joinList(b.dataset.waitlist as 'hd' | 'mug', b)),
+  );
+  q<HTMLButtonElement>('[data-used-waitlist]').addEventListener('click', (ev) =>
+    joinList('hd', ev.currentTarget as HTMLButtonElement),
+  );
+  q<HTMLButtonElement>('[data-copy]').addEventListener('click', async (ev) => {
+    const url = (ev.currentTarget as HTMLElement).dataset.url ?? '';
+    const R: Record<string, string> = i18n.result;
+    try {
+      await navigator.clipboard.writeText(url);
+      note(R.copied);
+    } catch {
+      note('', R.copyFailed);
+    }
+  });
+  q('[data-again]').addEventListener('click', () => {
+    result.hidden = true;
+    wizard.hidden = false;
+    submitter.reset();
+    form.reset();
+    clearPreview();
+    note('');
+    go(1);
+  });
+
+  // ---- boot ----
+  wizard.hidden = false;
+  render();
+  const resume = loadActive();
+  if (resume) void watch(resume);
+</script>
+
+<style>
+  .tango {
+    max-inline-size: 34rem;
+    margin-inline: auto;
+    text-align: start;
+  }
+  .steps {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-1);
+    list-style: none;
+    padding: 0;
+    margin-block: 0 var(--space-3);
+  }
+  .steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--c-ink-2);
+    font-size: 0.9rem;
+  }
+  .num {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 1.7rem;
+    block-size: 1.7rem;
+    border-radius: 50%;
+    border: 2px solid var(--c-ink-2);
+    font-weight: 700;
+  }
+  .steps li.on {
+    color: var(--c-ink);
+    font-weight: 700;
+  }
+  .steps li.on .num,
+  .steps li.past .num {
+    background: var(--c-mustard);
+    border-color: var(--c-mustard);
+    color: var(--c-ink);
+  }
+  @media (max-width: 30rem) {
+    .lbl {
+      display: none;
+    }
+    .steps li.on .lbl {
+      display: inline;
+    }
+  }
+  .sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-block: 0 var(--space-2);
+  }
+  h2:focus,
+  section:focus {
+    outline: none;
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+  legend {
+    padding: 0;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-block: var(--space-2) var(--space-1);
+  }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.7rem 1rem;
+    margin-block: 0 var(--space-1);
+    border: 2px solid var(--c-ink-2);
+    border-radius: var(--radius-card);
+    background: var(--c-cream);
+    cursor: pointer;
+  }
+  .opt:has(input:checked) {
+    border-color: var(--c-ink);
+    background: var(--c-caddy);
+  }
+  .gallery {
+    margin-block-start: var(--space-3);
+    font-weight: 400;
+  }
+  input[type='text'],
+  input[type='email'],
+  input[type='file'],
+  textarea {
+    inline-size: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 1rem;
+    border: 2px solid var(--c-ink-2);
+    border-radius: 1rem;
+    background: var(--c-cream);
+    color: var(--c-ink);
+    font: inherit;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  .opt:has(input:focus-visible),
+  .btn:focus-visible,
+  .link:focus-visible {
+    outline: 3px solid var(--c-ink);
+    outline-offset: 2px;
+  }
+  .help {
+    margin-block: var(--space-1) 0;
+    color: var(--c-ink-2);
+    font-size: 0.9rem;
+  }
+  .preview {
+    margin-block: var(--space-2);
+  }
+  .preview img {
+    max-inline-size: 100%;
+    max-block-size: 18rem;
+    border-radius: var(--radius-card);
+  }
+  .ph {
+    margin: 0;
+    padding: var(--space-3);
+    border: 2px dashed var(--c-ink-2);
+    border-radius: var(--radius-card);
+    background: var(--c-caddy);
+    overflow-wrap: anywhere;
+  }
+  .btn {
+    border: 0;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-block-start: var(--space-2);
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .btn.alt {
+    background: var(--c-caddy);
+    border: 2px solid var(--c-ink);
+  }
+  .nav {
+    display: flex;
+    gap: var(--space-1);
+    justify-content: space-between;
+    margin-block-start: var(--space-2);
+  }
+  .nav .btn {
+    margin: 0;
+  }
+  .nav [data-next] {
+    margin-inline-start: auto;
+  }
+  .err {
+    margin-block: var(--space-1) 0;
+    font-weight: 600;
+    color: var(--c-ink);
+    padding: 0.5rem 0.8rem;
+    border-inline-start: 4px solid var(--c-budy);
+    background: var(--c-caddy);
+  }
+  .ok {
+    font-weight: 600;
+  }
+  .links {
+    display: flex;
+    gap: var(--space-3);
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--c-ink);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  [data-waiting],
+  [data-result] {
+    text-align: center;
+  }
+  .line {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    min-block-size: 3.5rem;
+  }
+  .out {
+    max-inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    justify-content: center;
+    margin-block: var(--space-2);
+  }
+  .actions .btn {
+    margin: 0;
+  }
+  .note {
+    margin: 0;
+  }
+</style>

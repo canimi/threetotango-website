@@ -19,6 +19,7 @@ describe('built routes', () => {
     'links/index.html',
     'privacy/index.html',
     'gift/index.html',
+    'tango-me/index.html',
     'contact/index.html',
     '404.html',
     ...fixture.map((e) => `episodes/${e.slug}/index.html`),

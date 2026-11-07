@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro';
+import TangoMe from '../components/TangoMe.astro';
+import { t } from '../i18n/t';
+---
+
+<Base title={`${t('tango.pageTitle')} | ${t('brand.name')}`} description={t('tango.pageDesc')} path="/tango-me">
+  <section class="container tm">
+    <h1>{t('tango.title')}</h1>
+    <p class="sub">{t('tango.sub')}</p>
+
+    <div class="demo">
+      <img src="/img/tango/before.webp" width="640" height="640" alt={t('showcase.beforeAlt')} decoding="async" />
+      <img src="/img/tango/after.webp" width="640" height="640" alt={t('showcase.afterAlt')} decoding="async" />
+    </div>
+
+    <TangoMe />
+    <p class="fine">{t('tango.disclosure')}</p>
+  </section>
+</Base>
+
+<style>
+  .tm {
+    padding-block: var(--space-4);
+  }
+  h1,
+  .sub {
+    text-align: center;
+  }
+  .sub {
+    color: var(--c-ink-2);
+    margin-block: 0 var(--space-3);
+  }
+  .demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    max-inline-size: 34rem;
+    margin-inline: auto;
+    margin-block-end: var(--space-4);
+  }
+  .demo img {
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+    background: var(--c-caddy);
+  }
+  .fine {
+    text-align: center;
+    color: var(--c-ink-2);
+    font-size: 0.9rem;
+    margin-block-start: var(--space-3);
+  }
+</style>

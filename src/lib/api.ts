@@ -7,6 +7,15 @@ export type VerifyError = 'wrong_code' | 'expired' | 'locked' | 'server';
 type Fail<E extends string> = { ok: false; error: E };
 type Raw = { status: number; body: Record<string, unknown> | null };
 
+async function readBody(res: Response): Promise<Record<string, unknown> | null> {
+  try {
+    const parsed: unknown = await res.json();
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Shared by every endpoint. Never throws; network/parse failures yield body=null, status=0/actual. */
 async function postJson(path: string, payload: unknown): Promise<Raw> {
   try {
@@ -15,14 +24,7 @@ async function postJson(path: string, payload: unknown): Promise<Raw> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    let body: Record<string, unknown> | null = null;
-    try {
-      const parsed: unknown = await res.json();
-      if (parsed && typeof parsed === 'object') body = parsed as Record<string, unknown>;
-    } catch {
-      body = null;
-    }
-    return { status: res.status, body };
+    return { status: res.status, body: await readBody(res) };
   } catch {
     return { status: 0, body: null };
   }
@@ -37,6 +39,26 @@ function failure<E extends string>(raw: Raw, known: readonly E[], byStatus: Reco
   return { ok: false, error: byStatus[raw.status] ?? fallback };
 }
 
+export type TangoStartError = 'not_cat' | 'used' | 'budget' | 'rate_limited' | 'invalid' | 'server';
+export type StatusResult = {
+  status: 'queued' | 'running' | 'done' | 'failed';
+  urls?: { post: string; story: string };
+  share?: string;
+  error?: 'not_cat' | 'server';
+};
+
+/** Multipart variant (browser sets the boundary header itself). Never throws. */
+async function postForm(path: string, body: FormData): Promise<Raw> {
+  try {
+    const res = await fetch(path, { method: 'POST', body });
+    return { status: res.status, body: await readBody(res) };
+  } catch {
+    return { status: 0, body: null };
+  }
+}
+
+const TANGO_START_ERRORS = ['not_cat', 'used', 'budget', 'rate_limited', 'invalid', 'server'] as const;
+const STATUSES = ['queued', 'running', 'done', 'failed'] as const;
 const SUBSCRIBE_ERRORS = ['invalid_email', 'rate_limited', 'server'] as const;
 const VERIFY_ERRORS = ['wrong_code', 'expired', 'locked', 'server'] as const;
 
@@ -54,5 +76,38 @@ export const api = {
       return { ok: true, token: raw.body.token };
     }
     return failure(raw, VERIFY_ERRORS, { 401: 'wrong_code', 410: 'expired', 423: 'locked' }, 'server');
+  },
+
+  async tangoStart(form: FormData): Promise<{ ok: true; id: string } | Fail<TangoStartError>> {
+    const raw = await postForm('/api/tango/start', form);
+    if (raw.status === 200 && raw.body?.ok === true && typeof raw.body.id === 'string') {
+      return { ok: true, id: raw.body.id };
+    }
+    return failure(raw, TANGO_START_ERRORS, { 400: 'invalid', 429: 'rate_limited' }, 'server');
+  },
+
+  /** Never throws. Any hiccup reads as "still running" so polling just continues. */
+  async tangoStatus(id: string): Promise<StatusResult> {
+    try {
+      const res = await fetch(`/api/tango/status/${encodeURIComponent(id)}`);
+      const body = res.ok ? await readBody(res) : null;
+      const status = body?.status;
+      if (typeof status === 'string' && (STATUSES as readonly string[]).includes(status)) {
+        return body as unknown as StatusResult;
+      }
+    } catch {
+      // fall through
+    }
+    return { status: 'running' };
+  },
+
+  async waitlist(
+    token: string,
+    kind: 'hd' | 'mug',
+    generationId: string,
+  ): Promise<{ ok: true } | Fail<'server'>> {
+    const raw = await postJson('/api/waitlist', { token, kind, generationId });
+    if (raw.status === 200 && raw.body?.ok === true) return { ok: true };
+    return { ok: false, error: 'server' };
   },
 };

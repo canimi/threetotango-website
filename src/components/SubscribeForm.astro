@@ -54,8 +54,7 @@ const errors = JSON.stringify({
         type="text"
         inputmode="numeric"
         autocomplete="one-time-code"
-        pattern="[0-9]{6}"
-        maxlength="6"
+        pattern="[0-9 \-]{6,12}"
         required
       />
       <button type="submit" class="btn" data-code-btn>{t('subscribe.verify')}</button>
@@ -76,7 +75,7 @@ const errors = JSON.stringify({
 
 <script>
   import { api } from '../lib/api';
-  import { isValidEmail, isValidCode } from '../lib/validate';
+  import { isValidEmail, isValidCode, normalizeCode } from '../lib/validate';
 
   document.querySelectorAll<HTMLElement>('[data-subscribe]').forEach((root) => {
     const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
@@ -130,7 +129,7 @@ const errors = JSON.stringify({
     codeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (codeBtn.disabled) return;
-      const code = codeInput.value.trim();
+      const code = normalizeCode(codeInput.value);
       if (!isValidCode(code)) return say(errors.wrong_code);
       busy(codeBtn, true, root.dataset.verify!, root.dataset.verifying!);
       const res = await api.verify(email, code);
