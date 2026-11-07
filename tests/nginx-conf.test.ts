@@ -27,3 +27,14 @@ describe('nginx.conf', () => {
     expect(conf).toContain('resolver 127.0.0.11 valid=30s;');
   });
 });
+
+describe('CSP', () => {
+  const csp = readFileSync('deploy/security-headers.conf', 'utf8');
+  const directive = (n: string) => new RegExp(`${n} ([^;"]*)`).exec(csp)?.[1] ?? '';
+  it('allows blob: images for upload preview', () => {
+    expect(directive('img-src')).toContain('blob:');
+  });
+  it('does not allow inline scripts', () => {
+    expect(directive('script-src')).not.toContain('unsafe-inline');
+  });
+});
