@@ -15,7 +15,7 @@ create table if not exists episodes (
   thumbnail_url text,
   video_url     text,
   hero_mp4_path text,
-  characters    text[] not null default '{}',
+  characters    text[] default '{}',  -- NULL = not yet tagged (episode import retries tagging)
   is_hidden     boolean not null default false,
   created_at    timestamptz not null default now(),
   unique (platform, external_id)
@@ -110,3 +110,6 @@ create index if not exists sessions_expires_idx on sessions (expires_at);
 create index if not exists sessions_email_idx on sessions (lower(email));
 
 reset search_path;
+
+-- Migration for DBs created before 'characters' became nullable (idempotent):
+alter table ttw.episodes alter column characters drop not null;
