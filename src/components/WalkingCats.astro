@@ -6,7 +6,7 @@ interface Props {
   sprites?: WalkSprite[];
 }
 const { sprites = walkSprites() } = Astro.props;
-const H = 44; // rendered height inside the 64px header
+const H = 60; // rendered height; the cat overhangs the 64px header's bottom edge
 const style = (s: WalkSprite) => {
   const w = Math.round((s.frameWidth * H) / s.frameHeight);
   return [
@@ -33,6 +33,9 @@ const style = (s: WalkSprite) => {
 }
 
 <script>
+  const CROSS_S = 20; // seconds to cross the full viewport
+  const SPAWN_MS = 15000; // a new cat every 15 s
+  const FIRST_MS = 2000;
   const box = document.querySelector<HTMLElement>('[data-walkers]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (box && !reduce.matches) {
@@ -43,6 +46,11 @@ const style = (s: WalkSprite) => {
       if (document.hidden) return;
       const cat = cats[i % cats.length];
       i++;
+      const w = cat.offsetWidth;
+      // Travel speed in px/s; one gait cycle covers ~half a rendered frame width of ground,
+      // so feet keep pace with the ground instead of skating.
+      const speed = (window.innerWidth + w) / CROSS_S;
+      cat.style.setProperty('--gait', ((w * 0.5) / speed).toFixed(3) + 's');
       cat.classList.remove('go');
       void cat.offsetWidth; // restart the crossing animation on this one element
       cat.classList.add('go');
@@ -50,7 +58,7 @@ const style = (s: WalkSprite) => {
     cats.forEach((c) => c.addEventListener('animationend', (e) => e.animationName.includes('cross') && c.classList.remove('go')));
     const run = () => {
       clearInterval(timer);
-      timer = window.setInterval(walk, 10000);
+      timer = window.setInterval(walk, SPAWN_MS);
     };
     document.addEventListener('visibilitychange', () => {
       box.classList.toggle('paused', document.hidden);
@@ -60,7 +68,7 @@ const style = (s: WalkSprite) => {
     window.setTimeout(() => {
       walk();
       run();
-    }, 2500);
+    }, FIRST_MS);
   }
 </script>
 
@@ -68,13 +76,14 @@ const style = (s: WalkSprite) => {
   .walkers {
     position: absolute;
     inset: 0;
-    overflow: hidden;
+    overflow-x: clip; /* no horizontal scroll from off-screen cats */
+    overflow-y: visible; /* paws may sit on the header's bottom line, body overhangs it */
     pointer-events: none;
     z-index: 0;
   }
   .walker {
     position: absolute;
-    inset-block-end: 4px;
+    inset-block-end: -4px; /* sprite has a little padding under the paws */
     left: 0;
     inline-size: var(--w);
     block-size: var(--h);
@@ -91,7 +100,7 @@ const style = (s: WalkSprite) => {
   }
   .walker.go {
     opacity: 0.9;
-    animation: cross 7s linear forwards;
+    animation: cross 20s linear forwards;
   }
   .walker.go i {
     animation: gait var(--gait) steps(var(--frames)) infinite;

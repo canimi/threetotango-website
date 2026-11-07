@@ -150,20 +150,34 @@ describe('walking cats', () => {
     if (walkSprites().length === 0) expect(home()).not.toContain('data-walkers');
   });
 
-  it('renders a 44px steps() sprite per cat when sprites exist', async () => {
+  it('renders a 60px steps() sprite per cat when sprites exist', async () => {
     const c = await AstroContainer.create();
     const html = await c.renderToString(WalkingCats, {
       props: { sprites: walkSprites(tempPublic({ 'walk-budy.webp': 'x', 'walk-budy.json': walkJson })) },
     });
     expect(html).toContain('data-walkers');
     expect(html).toMatch(/aria-hidden="true"/);
-    expect(html).toMatch(/data-walker="budy"[^>]*style="--w:66px;--h:44px;--strip:528px;--frames:8;--gait:0\.667s;--sheet:url\(\/img\/cast\/walk-budy\.webp\)"/);
+    expect(html).toMatch(/data-walker="budy"[^>]*style="--w:90px;--h:60px;--strip:720px;--frames:8;--gait:0\.667s;--sheet:url\(\/img\/cast\/walk-budy\.webp\)"/);
   });
 
   it('walk CSS uses steps(), transforms only, and switches off for reduced motion', () => {
     const css = builtCss();
     expect(css).toMatch(/steps\(var\(--frames\)\)/);
     expect(css).toMatch(/@keyframes gait[^}]*\{[^}]*transform:translate[^}]*\}/);
+  });
+
+  it('crosses in 20s, spawns every 15s (first after 2s), never blocks clicks, overhangs the header', () => {
+    const css = builtCss();
+    expect(css).toMatch(/cross 20s linear/);
+    expect(css).not.toMatch(/cross 7s/);
+    expect(css).toMatch(/\.walkers\[[^\]]*\]\{[^}]*pointer-events:none/);
+    expect(css).toMatch(/\.walkers\[[^\]]*\]\{[^}]*overflow-x:clip/);
+    expect(css).toMatch(/\.walker\[[^\]]*\]\{[^}]*inset-block-end:-4px/);
+    const src = readFileSync('src/components/WalkingCats.astro', 'utf8');
+    expect(src).toContain('SPAWN_MS = 15000');
+    expect(src).toContain('FIRST_MS = 2000');
+    expect(src).toContain('CROSS_S = 20');
+    expect(src).toContain('document.hidden');
   });
 });
 
