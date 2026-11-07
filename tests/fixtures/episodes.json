@@ -1,5 +1,66 @@
 [
-  {"id":"e3","platform":"youtube","externalId":"abc123XYZ_1","slug":"the-lettuce-incident","title":"The Lettuce Incident","description":"Budy finds the lettuce. Nora finds the mess.","publishedAt":"2026-11-01T10:00:00Z","thumbnailUrl":"https://img.example/3.jpg","videoUrl":"https://www.youtube.com/watch?v=abc123XYZ_1","heroMp4Path":"/data/hero/the-lettuce-incident.mp4","characters":["nora","budy"]},
-  {"id":"e2","platform":"instagram","externalId":"Cxyz789","slug":"keyboard-landlord","title":"Keyboard Landlord","description":"Luka collects rent in warm keyboard.","publishedAt":"2026-10-20T10:00:00Z","thumbnailUrl":"https://img.example/2.jpg","videoUrl":"https://www.instagram.com/reel/Cxyz789/","heroMp4Path":null,"characters":["nora","luka"]},
-  {"id":"e1","platform":"youtube","externalId":"def456UVW_2","slug":"the-rug-is-mine","title":"The Rug Is Mine","description":"Caddy would like everyone to leave. Quietly.","publishedAt":"2026-10-05T10:00:00Z","thumbnailUrl":"https://img.example/1.jpg","videoUrl":"https://www.youtube.com/watch?v=def456UVW_2","heroMp4Path":null,"characters":["caddy","budy"]}
+  {
+    "id": "e3",
+    "platform": "youtube",
+    "externalId": "abc123XYZ_1",
+    "slug": "the-lettuce-incident",
+    "title": "The Lettuce Incident",
+    "description": "Budy finds the lettuce. Nora finds the mess.",
+    "publishedAt": "2026-11-01T10:00:00Z",
+    "thumbnailUrl": "https://img.example/3.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=abc123XYZ_1",
+    "heroMp4Path": "/data/hero/the-lettuce-incident.mp4",
+    "characters": [
+      "nora",
+      "budy"
+    ]
+  },
+  {
+    "id": "e2",
+    "platform": "instagram",
+    "externalId": "Cxyz789",
+    "slug": "keyboard-landlord",
+    "title": "Keyboard Landlord",
+    "description": "Luka collects rent in warm keyboard.",
+    "publishedAt": "2026-10-20T10:00:00Z",
+    "thumbnailUrl": "https://img.example/2.jpg",
+    "videoUrl": "https://www.instagram.com/reel/Cxyz789/",
+    "heroMp4Path": null,
+    "characters": [
+      "nora",
+      "luka"
+    ]
+  },
+  {
+    "id": "e1",
+    "platform": "youtube",
+    "externalId": "def456UVW_2",
+    "slug": "the-rug-is-mine",
+    "title": "The Rug Is Mine",
+    "description": "Caddy would like everyone to leave. Quietly.",
+    "publishedAt": "2026-10-05T10:00:00Z",
+    "thumbnailUrl": "https://img.example/1.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=def456UVW_2",
+    "heroMp4Path": null,
+    "characters": [
+      "caddy",
+      "budy"
+    ]
+  },
+  {
+    "id": "e0",
+    "platform": "instagram",
+    "externalId": "Cnoimg1",
+    "slug": "no-thumb-yet",
+    "title": "No Thumb Yet",
+    "description": "Thumbnail still being mirrored.",
+    "publishedAt": "2026-09-20T10:00:00Z",
+    "thumbnailUrl": "",
+    "videoUrl": "https://www.instagram.com/reel/Cnoimg1/",
+    "heroMp4Path": null,
+    "characters": [
+      "nora",
+      "mystery-cat"
+    ]
+  }
 ]

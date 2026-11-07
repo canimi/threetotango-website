@@ -1,5 +1,6 @@
 ---
 import type { Episode } from '../lib/episodes';
+import { characters } from '../data/characters';
 import { t } from '../i18n/t';
 
 interface Props {
@@ -8,9 +9,12 @@ interface Props {
 }
 const { episode: e, detailLink = true } = Astro.props;
 const youtube = e.platform === 'youtube';
+const known = e.characters.filter((c) => c in characters);
+const accent = known[0] ? characters[known[0]].color : 'var(--c-mustard)';
+const hasThumb = Boolean(e.thumbnailUrl);
 ---
 
-<article class="ep" data-characters={e.characters.join(' ')}>
+<article class="ep" data-characters={known.join(' ')}>
   <div class="thumb">
     {
       youtube ? (
@@ -21,24 +25,36 @@ const youtube = e.platform === 'youtube';
           data-title={e.title}
           aria-label={`${t('common.playEpisode')}: ${e.title}`}
         >
-          <img
-            src={e.thumbnailUrl}
-            width="360"
-            height="640"
-            loading="lazy"
-            alt={`${t('episodes.thumbAlt')} ${e.title}`}
-          />
+          {hasThumb ? (
+            <img
+              src={e.thumbnailUrl}
+              width="360"
+              height="640"
+              loading="lazy"
+              alt={`${t('episodes.thumbAlt')} ${e.title}`}
+            />
+          ) : (
+            <span class="ph" style={`--accent:${accent}`}>
+              <span class="ph-title">{e.title}</span>
+            </span>
+          )}
           <span class="icon" aria-hidden="true">&#9654;</span>
         </button>
       ) : (
         <a class="play" href={e.videoUrl} target="_blank" rel="noopener">
-          <img
-            src={e.thumbnailUrl}
-            width="360"
-            height="640"
-            loading="lazy"
-            alt={`${t('episodes.thumbAlt')} ${e.title}`}
-          />
+          {hasThumb ? (
+            <img
+              src={e.thumbnailUrl}
+              width="360"
+              height="640"
+              loading="lazy"
+              alt={`${t('episodes.thumbAlt')} ${e.title}`}
+            />
+          ) : (
+            <span class="ph" style={`--accent:${accent}`}>
+              <span class="ph-title">{e.title}</span>
+            </span>
+          )}
           <span class="icon" aria-hidden="true">&#9654;</span>
           <span class="sr">{t('common.openInstagram')}</span>
         </a>
@@ -106,6 +122,18 @@ const youtube = e.platform === 'youtube';
     background: var(--c-mustard);
     color: var(--c-ink);
     font-size: 1.4rem;
+  }
+  .ph {
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    block-size: 100%;
+    padding: var(--space-2);
+    background: var(--c-cream);
+    border-block-start: 10px solid var(--accent);
+    color: var(--c-ink);
+    font: 600 1.1rem var(--font-display);
+    text-align: center;
   }
   .sr {
     position: absolute;

@@ -11,7 +11,8 @@ interface Props {
   path: string;
 }
 
-const { title, description, ogImage = '/img/og-default.jpg', path } = Astro.props;
+const { title, description, ogImage: ogImageProp, path } = Astro.props;
+const ogImage = ogImageProp || '/img/og-default.jpg';
 const site = Astro.site ?? new URL('https://threetotango.canimi.app');
 const canonical = new URL(path, site).href;
 const ogUrl = new URL(ogImage, site).href;

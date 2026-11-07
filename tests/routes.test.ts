@@ -83,4 +83,21 @@ describe('built routes', () => {
   it('behind-the-scenes discloses AI', () => {
     expect(html('behind-the-scenes/index.html')).toMatch(/AI/);
   });
+
+  describe('missing thumbnails and unknown characters', () => {
+    it('renders no empty src anywhere', () => {
+      for (const p of ['index.html', 'episodes/index.html', 'episodes/no-thumb-yet/index.html'])
+        expect(html(p)).not.toContain('src=""');
+    });
+    it('uses the default og:image when thumbnailUrl is empty', () => {
+      expect(html('episodes/no-thumb-yet/index.html')).toContain(
+        'property="og:image" content="https://threetotango.canimi.app/img/og-default.jpg"',
+      );
+    });
+    it('ignores unknown character ids', () => {
+      const p = html('episodes/no-thumb-yet/index.html');
+      expect(p).not.toContain('mystery-cat');
+      expect(p).toContain('/cats/nora');
+    });
+  });
 });

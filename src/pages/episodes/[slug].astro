@@ -14,20 +14,21 @@ export async function getStaticPaths() {
 }
 
 const { episode: e, newer, older } = Astro.props;
+const cast = e.characters.filter((c) => c in characters);
 ---
 
 <Base
   title={`${e.title} | ${t('brand.name')}`}
   description={e.description}
   path={`/episodes/${e.slug}`}
-  ogImage={e.thumbnailUrl}
+  ogImage={e.thumbnailUrl || undefined}
 >
   <div class="container wrap">
     <h1>{e.title}</h1>
     <p>{e.description}</p>
     <p class="cast">
       {t('episodes.starring')}:
-      {e.characters.map((c) => <a href={`/cats/${c}`}>{characters[c].name}</a>)}
+      {cast.map((c) => <a href={`/cats/${c}`}>{characters[c].name}</a>)}
     </p>
     <div class="player"><EpisodeCard episode={e} detailLink={false} /></div>
     <p class="cta"><a class="btn" href="/tango-me">{t('cta.tangoFree')}</a></p>
