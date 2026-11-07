@@ -53,7 +53,20 @@
     "videoLabel": "Latest episode preview, looping without sound",
     "sub": "A wordless 3D cat comedy for people who live with the evidence.",
     "frameLabel": "Play the latest episode",
-    "nowShowing": "Now showing"
+    "nowShowing": "Now showing",
+    "h1": "Three To Tango: Nora lives her best life. Her three cats have other plans.",
+    "line": "A wordless 3D cat comedy. The household has room for one more.",
+    "lineupLabel": "The cast",
+    "meet": "Meet {name}",
+    "bubbles": {
+      "luka": "🤨 a trap?",
+      "budy": "MEOW? Food?",
+      "caddy": "…zzz"
+    },
+    "yourCat": "+ Your cat",
+    "yourCatHint": "Drop a photo or tap to pick one",
+    "yourCatLabel": "Add your cat: pick or drop a photo to start Tango Me",
+    "dropNow": "Let go to add your cat"
   },
   "household": {
     "title": "The household",
@@ -330,7 +343,8 @@
       "another": "Try another photo"
     },
     "checkAgain": "Check again",
-    "differentEmail": "Use a different email"
+    "differentEmail": "Use a different email",
+    "prefilled": "We brought the photo you picked."
   },
   "player": {
     "label": "Episode player",

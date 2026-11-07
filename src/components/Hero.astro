@@ -4,6 +4,7 @@ import type { Episode } from '../lib/episodes';
 import { characters, characterIds } from '../data/characters';
 import { playerData } from '../lib/player';
 import { basename } from '../lib/site-episodes';
+import CastLineup from './CastLineup.astro';
 
 interface Props {
   episodes: Episode[];
@@ -28,6 +29,14 @@ const EAGER = 12;
 ---
 
 <section class="hero" data-hero>
+  <svg class="fx-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <filter id="wall-ripple" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.011" numOctaves="1" seed="7" result="noise" data-ripple-noise
+      ></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" data-ripple-map
+      ></feDisplacementMap>
+    </filter>
+  </svg>
   <div class="wall" aria-hidden="true" data-wall>
     {
       columns.map((col, c) => (
@@ -55,11 +64,11 @@ const EAGER = 12;
 
   <div class="container grid">
     <div class="copy">
-      <h1>{t('brand.promise')}</h1>
-      <p class="sub">{t('hero.sub')}</p>
-      <div class="actions">
-        <a class="btn btn-lg" href="/tango-me">{t('cta.tangoFreeLong')}</a>
-        <a class="quiz-link" href="/quiz">{t('common.takeQuiz')}</a>
+      <h1 class="sr-only">{t('hero.h1')}</h1>
+      <CastLineup />
+      <div class="pitch">
+        <p class="line">{t('hero.line')}</p>
+        <a class="btn btn-lg" href="/tango-me" data-magnetic>{t('cta.tangoFreeLong')}</a>
       </div>
     </div>
 
@@ -157,7 +166,7 @@ const EAGER = 12;
     position: relative;
     display: grid;
     align-items: center;
-    min-block-size: clamp(36rem, 100svh, 60rem);
+    min-block-size: clamp(36rem, 100svh, 64rem);
     margin-block-start: calc(var(--header-h) * -1);
     padding-block: calc(var(--header-h) + var(--space-4)) var(--space-5);
     overflow: hidden;
@@ -205,41 +214,42 @@ const EAGER = 12;
     gap: var(--space-4);
     align-items: center;
   }
-  @media (min-width: 56rem) {
+  @media (min-width: 64rem) {
     .grid {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: var(--space-5);
     }
   }
-  h1 {
-    font-size: var(--step-hero);
-    line-height: 0.95;
-    letter-spacing: -0.02em;
-    max-inline-size: 11.5ch;
-    margin-block-end: var(--space-3);
-    text-shadow: 0 2px 30px rgb(var(--c-shadow) / 60%);
+  .copy {
+    min-inline-size: 0;
   }
-  .sub {
-    max-inline-size: 30rem;
-    margin-block: 0 var(--space-4);
-    color: var(--c-paper-2);
-    font-size: clamp(1.1rem, 1rem + 0.4vw, 1.3rem);
+  .pitch {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+    margin-block-start: var(--space-4);
   }
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2) var(--space-4);
+  .line {
+    max-inline-size: 34ch;
+    margin: 0;
+    color: var(--c-paper);
+    font: 600 clamp(1.25rem, 1rem + 0.8vw, 1.85rem) / 1.25 var(--font-display);
+    text-shadow: 0 2px 20px rgb(var(--c-shadow) / 70%);
   }
-  .quiz-link {
-    font-weight: 600;
-    font-size: 1.1rem;
+  .fx-defs {
+    position: absolute;
+    inline-size: 0;
+    block-size: 0;
+  }
+  /* Ripple is attached by pointer-fx only while the pointer moves. */
+  .wall.is-rippling {
+    filter: url(#wall-ripple);
   }
   .frame-wrap {
     position: relative;
     margin: 0;
     justify-self: center;
-    inline-size: clamp(15rem, 22vw, 21rem);
+    inline-size: clamp(15rem, 4rem + 15vw, 25rem);
   }
   .frame {
     position: relative;
@@ -319,11 +329,10 @@ const EAGER = 12;
     .wall {
       animation: wall-in 0.5s ease-out both;
     }
-    h1 {
+    .copy :global([data-lineup]) {
       animation: rise 0.55s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
-    .sub,
-    .actions {
+    .pitch {
       animation: rise 0.55s 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
     .frame-wrap {
@@ -353,7 +362,7 @@ const EAGER = 12;
     }
   }
 
-  @media (max-width: 56rem) {
+  @media (max-width: 63.99rem) {
     .hero {
       align-items: start;
       padding-block: calc(var(--header-h) + var(--space-3)) var(--space-4);
@@ -387,11 +396,22 @@ const EAGER = 12;
     .sound {
       inset-inline-end: -1.5rem;
     }
-    .actions .btn {
-      inline-size: 100%;
+    .pitch {
+      justify-items: center;
+      text-align: center;
     }
-    .actions {
-      justify-content: center;
+    .pitch {
+      margin-block-start: var(--space-2);
+      gap: var(--space-2);
+    }
+    .line {
+      font-size: 1.2rem;
+    }
+  }
+  @media (max-width: 47.99rem) {
+    .pitch {
+      justify-items: stretch;
+      text-align: start;
     }
   }
 </style>

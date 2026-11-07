@@ -40,6 +40,7 @@ const i18n = JSON.stringify({
           <img data-preview-img alt={t('tango.previewAlt')} hidden />
           <p class="ph" data-preview-ph hidden></p>
         </div>
+        <p class="ok" data-prefilled role="status" hidden>{t('tango.prefilled')}</p>
         <label for="tm-name">{t('tango.catNameLabel')}</label>
         <input id="tm-name" name="catName" type="text" maxlength="30" placeholder={t('tango.catNamePlaceholder')} autocomplete="off" />
         <p class="err" data-err="name" role="alert" hidden></p>
@@ -146,6 +147,7 @@ const i18n = JSON.stringify({
     loadToken,
     createSubmitter,
   } from '../lib/tango-flow';
+  import { idbKV, takePendingPhoto } from '../lib/pending-photo';
 
   const root = document.querySelector<HTMLElement>('[data-tango]')!;
   const i18n = JSON.parse(root.dataset.i18n ?? '{}');
@@ -217,10 +219,14 @@ const i18n = JSON.stringify({
     previewUrl = '';
     q('[data-preview]').hidden = true;
   }
-  photoInput.addEventListener('change', () => {
+  // A photo handed over from the home page ("+ Your cat") when the input could not take it directly.
+  let handed: File | null = null;
+  const photo = (): File | undefined => photoInput.files?.[0] ?? handed ?? undefined;
+  photoInput.addEventListener('change', (ev) => {
+    if (ev.isTrusted) handed = null;
     clearPreview();
     setErr('photo', '');
-    const f = photoInput.files?.[0];
+    const f = photo();
     if (!f) return;
     const v = validateUpload(f);
     if (v !== 'ok') return setErr('photo', E[v]);
@@ -244,7 +250,7 @@ const i18n = JSON.stringify({
   function validStep(n: number): boolean {
     clearErrs();
     if (n === 1) {
-      const f = photoInput.files?.[0];
+      const f = photo();
       if (!f) return setErr('photo', E.photoRequired), false;
       const v = validateUpload(f);
       if (v !== 'ok') return setErr('photo', E[v]), false;
@@ -287,7 +293,8 @@ const i18n = JSON.stringify({
     wizard.hidden = false;
     submitter.reset();
     if (error === 'bad_token') dropToken();
-    const hasPhoto = !!photoInput.files?.[0] && validateUpload(photoInput.files[0]) === 'ok';
+    const p0 = photo();
+    const hasPhoto = !!p0 && validateUpload(p0) === 'ok';
     const n = stepAfterFailure(error, { hasPhoto, hasToken: !!token });
     step = n;
     render();
@@ -329,7 +336,7 @@ const i18n = JSON.stringify({
   async function submit() {
     if (!validStep(1)) return go(1);
     const fd = new FormData();
-    fd.set('photo', photoInput.files![0]);
+    fd.set('photo', photo()!);
     fd.set('catName', nameInput.value.trim());
     fd.set('personality', (form.elements.namedItem('personality') as RadioNodeList).value);
     fd.set('scene', scene());
@@ -459,6 +466,7 @@ const i18n = JSON.stringify({
     }
   });
   q('[data-again]').addEventListener('click', () => {
+    handed = null;
     result.hidden = true;
     wizard.hidden = false;
     submitter.reset();
@@ -473,6 +481,31 @@ const i18n = JSON.stringify({
   render();
   const resume = loadActive();
   if (resume) void watch(resume);
+  else if ('indexedDB' in window) void prefill();
+
+  // Photo picked or dropped on the home page's "+ Your cat" spot.
+  async function prefill() {
+    let f: File | null = null;
+    try {
+      f = await takePendingPhoto(idbKV());
+    } catch {
+      return;
+    }
+    if (!f || photo()) return;
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      photoInput.files = dt.files;
+    } catch {
+      handed = f;
+    }
+    if (!photoInput.files?.length) handed = f;
+    photoInput.dispatchEvent(new Event('change', { bubbles: true }));
+    q('[data-prefilled]').hidden = validateUpload(f) !== 'ok';
+  }
+  photoInput.addEventListener('change', (ev) => {
+    if (ev.isTrusted) q('[data-prefilled]').hidden = true;
+  });
 </script>
 
 <style>
@@ -639,6 +672,11 @@ const i18n = JSON.stringify({
   }
   .nav [data-next] {
     margin-inline-start: auto;
+  }
+  [data-prefilled] {
+    margin-block: var(--space-1) var(--space-2);
+    font-weight: 600;
+    color: var(--c-ink-2);
   }
   .err {
     margin-block: var(--space-1) 0;
