@@ -887,7 +887,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.req) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 25000
         }
       },
       "credentials": {
@@ -976,7 +976,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.req) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 25000
         }
       },
       "credentials": {
@@ -1028,7 +1028,7 @@
         "method": "GET",
         "url": "={{ $json.url }}",
         "options": {
-          "timeout": 8000,
+          "timeout": 5000,
           "response": {
             "response": {
               "responseFormat": "file"
@@ -1142,7 +1142,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.req) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 25000
         }
       },
       "credentials": {
