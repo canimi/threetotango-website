@@ -1,22 +1,45 @@
 :root {
+  /* Nora's living room in the evening */
+  --c-wall: #17322a;
+  --c-wall-2: #1f4236;
+  --c-wall-3: #285343;
+  --c-lamp: #ffcf6e;
   --c-mustard: #e3a21a;
+  --c-mustard-hi: #f0b334;
   --c-mustard-dark: #d99a14;
-  --c-cream: #fff6e5;
+  --c-on-mustard: #1a1208;
+  --c-rug: #a8322b;
+  --c-paper: #f4e9d8;
+  --c-paper-2: #e3d3bb;
+  /* Text on paper surfaces */
   --c-ink: #3b2a1a;
   --c-ink-2: #5a4632;
+  /* Light input fill used on paper cards */
+  --c-cream: #fffaf1;
   --c-luka: #8a9bb0;
   --c-budy: #e07b39;
   --c-caddy: #f3ede4;
+  --c-shadow: 6 20 15;
 
-  --radius-card: 20px;
+  --radius-thumb: 18px;
+  --radius-card: 28px;
   --radius-pill: 999px;
 
   --font-display: 'Fredoka', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
 
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.33rem;
+  --step-2: clamp(1.9rem, 1.4rem + 1.8vw, 2.6rem);
+  --step-hero: clamp(3.2rem, 1.6rem + 5.4vw, 6.5rem);
+
   --space-1: 0.5rem;
   --space-2: 1rem;
   --space-3: 1.5rem;
   --space-4: 2.5rem;
-  --max-width: 72rem;
+  --space-5: clamp(3.5rem, 2rem + 5vw, 6.5rem);
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --max-width: 76rem;
+  --header-h: 64px;
 }

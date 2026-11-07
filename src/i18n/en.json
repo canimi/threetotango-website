@@ -4,14 +4,19 @@
     "promise": "Nora lives her best life. Her three cats have other plans."
   },
   "cta": {
-    "tangoFree": "Tango me, free"
+    "tangoFree": "Put your cat in the show",
+    "tangoFreeLong": "Put your cat in the show — free",
+    "tangoCompact": "Try Tango Me",
+    "floating": "🐾 Put your cat in the show",
+    "floatingDismiss": "Hide this button"
   },
   "nav": {
     "main": "Main navigation",
     "episodes": "Episodes",
-    "cats": "The Cats",
+    "cats": "The cats",
     "quiz": "Quiz",
-    "home": "Three To Tango home"
+    "home": "Three To Tango home",
+    "menu": "Menu"
   },
   "footer": {
     "instagram": "Instagram",
@@ -19,7 +24,10 @@
     "privacy": "Privacy",
     "contact": "Contact",
     "aiNote": "Made with AI, openly. Every episode is created with AI tools.",
-    "copyright": "Three To Tango"
+    "copyright": "Three To Tango",
+    "bts": "How one person and a lot of AI tools make a cat sitcom.",
+    "btsLink": "Behind the scenes",
+    "follow": "Follow the household"
   },
   "meta": {
     "skip": "Skip to content"
@@ -27,37 +35,59 @@
   "common": {
     "tangoShort": "Tango me",
     "tryFree": "Try it free",
-    "watchLatest": "Watch latest",
     "watch": "Watch",
     "playEpisode": "Play episode",
     "openInstagram": "Watch on Instagram",
     "all": "All",
-    "latestOnYoutube": "YouTube"
+    "latestOnYoutube": "YouTube",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off",
+    "playPreview": "Play preview",
+    "newBadge": "New",
+    "scrollPrev": "Scroll back",
+    "scrollNext": "Scroll forward",
+    "takeQuiz": "Take the quiz"
   },
   "hero": {
     "posterAlt": "Nora at her laptop while three cats take over the desk",
     "videoLabel": "Latest episode preview, looping without sound",
-    "sub": "A wordless 3D cat comedy for people who live with the evidence."
+    "sub": "A wordless 3D cat comedy for people who live with the evidence.",
+    "frameLabel": "Play the latest episode",
+    "nowShowing": "Now showing"
   },
   "household": {
     "title": "The household",
     "sub": "One human. Three cats. Zero chance of a quiet workday.",
     "loves": "Loves",
     "hates": "Hates",
-    "meet": "Full profile"
+    "meet": "Full profile",
+    "tabsLabel": "Choose a member of the household",
+    "starring": "Starring in {n} episodes",
+    "starringOne": "Starring in 1 episode",
+    "starringNone": "Episodes coming soon"
   },
   "showcase": {
-    "bandTitle": "Your cat. Our sofa. Total chaos.",
-    "title": "Tango Me",
-    "sub": "Upload your photo. Join the household as a plush 3D character. First one is free.",
+    "title": "Tango Me: put your cat in the show",
+    "sub": "Upload a photo of your cat. We drop it into Nora's living room with Luka, Budy and Caddy — as a 3D character from the show. Your first one is free.",
+    "stepsLabel": "How Tango Me works",
+    "step1": "Upload your cat",
+    "step1Body": "Any clear photo. JPG, PNG or HEIC.",
+    "step2": "Pick a scene and a personality",
+    "step2Body": "Sofa gang, fridge heist, lettuce crime scene, or your own idea.",
+    "step3": "Get your episode still",
+    "step3Body": "One for your feed, one for your story. Ready in about a minute.",
+    "cta": "Put your cat in the show — free",
     "before": "Your photo",
-    "after": "You, in the show",
-    "sliderLabel": "Compare original photo and 3D version",
-    "beforeAlt": "Example original photo",
-    "afterAlt": "Example 3D version in the Three To Tango style"
+    "after": "In the show",
+    "sliderLabel": "Compare the original photo and the 3D version",
+    "beforeAlt": "A real cat photo sent to Tango Me",
+    "afterAlt": "The same cat as a 3D character in Nora's living room",
+    "storyAlt": "The story-format version of the same result",
+    "slotLabel": "Your cat here",
+    "slotAlt": "Luka, Budy and Caddy with an empty spot for your cat"
   },
   "episodes": {
-    "title": "Latest episodes",
+    "title": "On the sofa tonight",
     "filterLabel": "Filter episodes by cat",
     "empty": "New episodes are loading. Check back soon.",
     "pageTitle": "Episodes",
@@ -67,16 +97,18 @@
     "starring": "Starring",
     "prev": "Previous episode",
     "next": "Next episode",
-    "thumbAlt": "Thumbnail for"
+    "thumbAlt": "Thumbnail for",
+    "sub": "New episodes every week. Tap one to watch it here."
   },
   "quizTeaser": {
     "title": "Which one are you?",
-    "sub": "Seven questions. One verdict. Luka will not be consulted.",
+    "sub": "Seven questions and about a minute. Luka will not be consulted.",
+    "firstQuestion": "Question 1 of 7",
     "cta": "Take the quiz"
   },
   "newsletter": {
-    "title": "Weekly report from Luka",
-    "sub": "She thinks you're a suspect.",
+    "title": "Get the free GIF pack + Luka's weekly report",
+    "sub": "One short email a week. New episodes first, and a GIF pack for your chats as a thank you.",
     "body": "One short email a week: new episodes, behind-the-scenes, and a free GIF pack as a thank you.",
     "cta": "Get the free GIF",
     "seeGift": "See what is in the free gift"
@@ -96,9 +128,9 @@
     "p3": "You should know how it is made. We will keep saying it, on every product and every page."
   },
   "cats": {
-    "pageTitle": "The Cats",
+    "pageTitle": "The cats",
     "pageDesc": "Meet Luka, Budy, Caddy and Nora.",
-    "intro": "Three cats and the human who lives with them.",
+    "intro": "Three cats and the human who lives with them. Pick one.",
     "loves": "Loves",
     "hates": "Hates",
     "episodesWith": "Episodes with",
@@ -112,7 +144,7 @@
     "latest": "Latest episode",
     "quiz": "Which cat are you?",
     "gift": "Get the free GIF",
-    "tango": "Tango me, free"
+    "tango": "Put your cat in the show"
   },
   "privacy": {
     "title": "Privacy",
@@ -213,8 +245,8 @@
   "tango": {
     "pageTitle": "Tango Me: put your cat in the household",
     "pageDesc": "Upload a photo of your cat and get an image of them moving in with Luka, Budy, Caddy and Nora. One free Tango per email.",
-    "title": "Tango your cat into the household",
-    "sub": "Upload a photo of your cat. We'll move them in next to Luka, Budy, Caddy and Nora. Nora has not been consulted.",
+    "title": "Tango Me: put your cat in the show",
+    "sub": "Upload a photo of your cat. We drop it into Nora's living room with Luka, Budy and Caddy as a 3D character from the show. Your first one is free.",
     "demoNote": "Your cat, before and after.",
     "disclosure": "Images are generated with AI. Your photo is deleted after 24 hours.",
     "noscript": "Please enable JavaScript to use Tango Me. The form needs it to send your photo.",
@@ -254,7 +286,7 @@
     "emailIntro": "Last step: confirm your email. One free Tango per email.",
     "next": "Next",
     "back": "Back",
-    "go": "Tango me, free",
+    "go": "Put my cat in the show",
     "sending": "Sending...",
     "errors": {
       "photoRequired": "Choose a photo of your cat first.",
@@ -299,5 +331,14 @@
     },
     "checkAgain": "Check again",
     "differentEmail": "Use a different email"
+  },
+  "player": {
+    "label": "Episode player",
+    "close": "Close player",
+    "castLabel": "In this episode",
+    "cta": "Put your cat in this episode's world",
+    "details": "Episode page",
+    "watchInstagram": "Watch on Instagram",
+    "watchYoutube": "Open on YouTube"
   }
 }

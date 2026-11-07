@@ -1,62 +1,212 @@
 ---
 import { t } from '../i18n/t';
 
+interface Props {
+  path: string;
+}
+const { path } = Astro.props;
 const links = [
   { href: '/episodes', label: t('nav.episodes') },
   { href: '/cats', label: t('nav.cats') },
   { href: '/quiz', label: t('nav.quiz') },
 ];
+const current = (href: string) => path === href || path.startsWith(`${href}/`);
 ---
 
-<header class="site-header">
+<div class="header-sentinel" data-header-sentinel aria-hidden="true"></div>
+<header class="site-header" data-site-header>
   <div class="container bar">
-    <a class="wordmark" href="/" aria-label={t('nav.home')}>Three <strong>To</strong> Tango</a>
-    <nav aria-label={t('nav.main')}>
+    <a class="wordmark" href="/" aria-label={t('nav.home')}>Three <span class="to">To</span> Tango</a>
+    <nav class="nav-wide" aria-label={t('nav.main')}>
       <ul>
-        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        {links.map((l) => <li><a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a></li>)}
       </ul>
     </nav>
-    <a class="btn" href="/tango-me">{t('cta.tangoFree')}</a>
+    <a class="btn head-cta" href="/tango-me">
+      <span class="long">{t('cta.tangoFree')}</span>
+      <span class="short">{t('cta.tangoCompact')}</span>
+    </a>
+    <details class="menu">
+      <summary aria-label={t('nav.menu')}>
+        <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>
+      </summary>
+      <nav class="menu-panel" aria-label={t('nav.main')}>
+        <ul>
+          {links.map((l) => <li><a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a></li>)}
+        </ul>
+      </nav>
+    </details>
   </div>
 </header>
 
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  const sentinel = document.querySelector<HTMLElement>('[data-header-sentinel]');
+  if (header && sentinel && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => {
+      header.classList.toggle('is-scrolled', !entry.isIntersecting);
+    }).observe(sentinel);
+  }
+</script>
+
 <style>
+  .header-sentinel {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 1px;
+    block-size: 40px;
+    pointer-events: none;
+  }
   .site-header {
-    background: var(--c-cream);
-    border-block-end: 2px solid var(--c-mustard);
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 50;
+    background: rgb(23 50 42 / 78%);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-block-end: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .site-header.is-scrolled {
+    background: rgb(23 50 42 / 92%);
+    border-block-end-color: rgb(255 207 110 / 14%);
   }
   .bar {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-1) var(--space-3);
-    padding-block: var(--space-2);
+    gap: var(--space-3);
+    block-size: var(--header-h);
+    transition: block-size 0.2s ease;
+  }
+  .is-scrolled .bar {
+    block-size: 56px;
   }
   .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28em;
     font-family: var(--font-display);
-    font-weight: 500;
-    font-size: 1.5rem;
+    font-weight: 600;
+    font-size: 1.45rem;
+    letter-spacing: -0.01em;
     text-decoration: none;
+    color: var(--c-paper);
+    white-space: nowrap;
     margin-inline-end: auto;
   }
-  .wordmark strong {
-    font-weight: 600;
+  .to {
+    display: inline-block;
+    padding-inline: 0.32em;
+    border-radius: 0.38em;
     background: var(--c-mustard);
-    padding-inline: 0.3em;
-    border-radius: 0.4em;
+    color: var(--c-on-mustard);
+    transform: rotate(-4deg);
   }
   ul {
     display: flex;
-    gap: var(--space-3);
+    gap: var(--space-1);
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  nav a {
+  .nav-wide a,
+  .menu-panel a {
+    display: block;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-pill);
+    color: var(--c-paper);
     font-weight: 600;
     text-decoration: none;
   }
-  nav a:hover {
-    text-decoration: underline;
+  .nav-wide a:hover,
+  .nav-wide a[aria-current='page'] {
+    background: rgb(244 233 216 / 10%);
+  }
+  .nav-wide a[aria-current='page'] {
+    color: var(--c-lamp);
+  }
+  .head-cta {
+    min-block-size: 2.6rem;
+    padding-inline: 1.2rem;
+    font-size: 1rem;
+  }
+  .short {
+    display: none;
+  }
+  .menu {
+    display: none;
+    position: relative;
+  }
+  summary {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 50%;
+    list-style: none;
+    cursor: pointer;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .burger {
+    display: grid;
+    gap: 4px;
+  }
+  .burger i {
+    display: block;
+    inline-size: 20px;
+    block-size: 2px;
+    border-radius: 2px;
+    background: var(--c-paper);
+  }
+  .menu[open] summary {
+    background: rgb(244 233 216 / 12%);
+  }
+  .menu-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-start: calc(100% + 0.5rem);
+    min-inline-size: 12rem;
+    padding: var(--space-1);
+    border-radius: 20px;
+    background: var(--c-wall-2);
+    box-shadow: 0 20px 40px -12px rgb(var(--c-shadow) / 80%);
+  }
+  .menu-panel ul {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .menu-panel a {
+    padding: 0.7rem 1rem;
+  }
+  @media (max-width: 52rem) {
+    .bar {
+      gap: var(--space-1);
+      block-size: 58px;
+    }
+    .nav-wide {
+      display: none;
+    }
+    .menu {
+      display: block;
+    }
+    .wordmark {
+      font-size: 1.2rem;
+    }
+  }
+  @media (max-width: 30rem) {
+    .long {
+      display: none;
+    }
+    .short {
+      display: inline;
+    }
+    .head-cta {
+      min-block-size: 2.4rem;
+      padding-inline: 0.95rem;
+      font-size: 0.95rem;
+    }
   }
 </style>
