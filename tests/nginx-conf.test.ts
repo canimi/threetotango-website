@@ -90,3 +90,14 @@ describe('deploy prep', () => {
     expect(readFileSync('docker-compose.umami.yml', 'utf8')).toContain('UMAMI_APP_SECRET:?');
   });
 });
+
+describe('compose build (BuildKit)', () => {
+  const c = readFileSync('docker-compose.yml', 'utf8');
+  it('has no build.network and fetches episodes via the public URL', () => {
+    expect(c).not.toMatch(/^\s{6}network:/m);
+    expect(c).toContain('https://n8n.canimi.app/webhook/ttw-episodes');
+  });
+  it('still attaches to the external n8n network at runtime', () => {
+    expect(c).toMatch(/external: true/);
+  });
+});

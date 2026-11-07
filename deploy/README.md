@@ -10,10 +10,10 @@ Set them in Portainer (Stacks > Add stack > Environment variables). See `deploy/
 | `TTW_PROXY_KEY` | Secret nginx sends to n8n as `X-TTW-Proxy-Key`; the TTW n8n webhooks answer 404 without it. Hex, `openssl rand -hex 24`. |
 | `TTW_MEDIA_KEY` | Secret n8n must send as `X-TTW-Key` to the internal media endpoint. |
 
-Optional: `N8N_NETWORK` (default `n8n-docker_default`), `EPISODES_API_URL` (build-time episode list), `PUBLIC_UMAMI_ID` (analytics website id; empty = no tracking script).
+Optional: `N8N_NETWORK` (default `n8n-docker_default`), `EPISODES_API_URL` (build-time episode list, fetched over the public internet; default `https://n8n.canimi.app/webhook/ttw-episodes`), `PUBLIC_UMAMI_ID` (analytics website id; empty = no tracking script).
 
 ## Network
-The stack attaches to the existing, externally created Docker network of the n8n stack (`N8N_NETWORK`). Check the exact name in Portainer > Networks. On that network nginx reaches n8n at `http://n8n-docker-n8n-1:5678` (resolved at request time via Docker DNS, so nginx starts even when n8n is down), and the image build also uses it to fetch episodes. No host ports are published; cloudflared routes `threetotango.canimi.app` to `http://ttw-web:80`.
+The stack attaches to the existing, externally created Docker network of the n8n stack (`N8N_NETWORK`). Check the exact name in Portainer > Networks. On that network nginx reaches n8n at `http://n8n-docker-n8n-1:5678` (resolved at request time via Docker DNS, so nginx starts even when n8n is down). The image build does not use this network (BuildKit cannot join it); it fetches episodes from the public n8n URL. No host ports are published; cloudflared routes `threetotango.canimi.app` to `http://ttw-web:80`.
 
 Public `/api/*` and `/tango-me/r/<id>` are proxied to fixed n8n webhook paths only (see `deploy/nginx.conf`); everything else under `/api/` is 404.
 

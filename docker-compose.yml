@@ -6,10 +6,8 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile
-      # Lets the build reach n8n (to fetch episodes at build time).
-      network: ${N8N_NETWORK:-n8n-docker_default}
       args:
-        EPISODES_API_URL: ${EPISODES_API_URL:-http://n8n-docker-n8n-1:5678/webhook/ttw-episodes}
+        EPISODES_API_URL: ${EPISODES_API_URL:-https://n8n.canimi.app/webhook/ttw-episodes}
         PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
     container_name: ttw-web
     restart: unless-stopped
