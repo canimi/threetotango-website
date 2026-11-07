@@ -486,7 +486,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with u as (update ttw.episodes e set thumbnail_url = case when x.field = 'thumbnail_url' then x.value else e.thumbnail_url end, hero_mp4_path = case when x.field = 'hero_mp4_path' then x.value else e.hero_mp4_path end from jsonb_to_recordset($1::jsonb) as x(external_id text, field text, value text) where e.platform = 'instagram' and e.external_id = x.external_id returning e.id) select count(*)::int as changed from u",
+        "query": "with u as (update ttw.episodes e set thumbnail_url = coalesce(x.thumb, e.thumbnail_url), hero_mp4_path = coalesce(x.hero, e.hero_mp4_path) from (select external_id, max(case when field = 'thumbnail_url' then value end) as thumb, max(case when field = 'hero_mp4_path' then value end) as hero from jsonb_to_recordset($1::jsonb) as r(external_id text, field text, value text) group by external_id) x where e.platform = 'instagram' and e.external_id = x.external_id returning e.id) select count(*)::int as changed from u",
         "options": {
           "queryReplacement": "={{ [ JSON.stringify($json.updates) ] }}"
         }
