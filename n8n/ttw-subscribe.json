@@ -26,7 +26,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const j = $input.first().json;\nconst b = (j.body && typeof j.body === 'object') ? j.body : j;\nconst email = String(b.email == null ? '' : b.email).trim().toLowerCase();\nconst valid = email.length <= 254 && /^[^\\s@,;<>\"']+@[^\\s@,;<>\"']+\\.[^\\s@,;<>\"']{2,}$/.test(email);\nlet source = String(b.source == null ? '' : b.source);\nif (!['gift', 'tango-me', 'footer'].includes(source)) source = 'footer';\nreturn [{ json: { valid, email, source } }];"
+        "jsCode": "const j = $input.first().json;\nconst b = (j.body && typeof j.body === 'object') ? j.body : j;\nconst email = String(b.email == null ? '' : b.email).trim().toLowerCase();\nconst valid = email.length <= 254 && /^[^\\s@,;<>\"']+@[^\\s@,;<>\"']+\\.[^\\s@,;<>\"']{2,}$/.test(email);\nlet source = String(b.source == null ? '' : b.source);\nif (!['gift', 'tango-me', 'footer'].includes(source)) source = 'footer';\nif (!valid) return [{ json: { valid, email, source } }];\nconst lockQ = 'select pg_advisory_xact_lock(hashtext($1)) as locked';\nconst mainQ = \"with cnt as (select count(*)::int as c from ttw.email_codes where lower(email) = $1 and sent_at > now() - interval '1 hour'), gen as (select lpad((abs((('x' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))::bit(32)::bigint)) % 1000000)::text, 6, '0') as code), ins as (insert into ttw.email_codes (email, code_hash) select $1, encode(sha256(convert_to($1 || ':' || gen.code, 'UTF8')), 'hex') from cnt, gen where cnt.c < 3 returning id), sub as (insert into ttw.subscribers (email, source) select $1, $2 from cnt where c < 3 on conflict (lower(email)) do nothing returning id) select (select c from cnt) as recent, exists (select 1 from ins) as stored, (select code from gen) as code\";\nreturn [{ json: { valid, email, source, q: lockQ, params: [email] } }, { json: { valid, email, source, q: mainQ, params: [email, source] } }];"
       }
     },
     {
@@ -78,9 +78,10 @@
       "parameters": {
         "resource": "database",
         "operation": "executeQuery",
-        "query": "with cnt as (select count(*)::int as c from ttw.email_codes where lower(email) = $1 and sent_at > now() - interval '1 hour'), gen as (select lpad((abs((('x' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))::bit(32)::bigint)) % 1000000)::text, 6, '0') as code), ins as (insert into ttw.email_codes (email, code_hash) select $1, encode(sha256(convert_to($1 || ':' || gen.code, 'UTF8')), 'hex') from cnt, gen where cnt.c < 3 returning id), sub as (insert into ttw.subscribers (email, source) select $1, $2 from cnt where c < 3 on conflict (lower(email)) do nothing returning id) select (select c from cnt) as recent, exists (select 1 from ins) as stored, (select code from gen) as code",
+        "query": "={{ $json.q }}",
         "options": {
-          "queryReplacement": "={{ [$json.email, $json.source] }}"
+          "queryBatching": "transaction",
+          "queryReplacement": "={{ $json.params }}"
         }
       }
     },
@@ -284,7 +285,7 @@
       "parameters": {
         "resource": "database",
         "operation": "executeQuery",
-        "query": "with prev as (select verified_at from ttw.subscribers where lower(email) = $1), latest as (select id, code_hash, expires_at, attempts from ttw.email_codes where lower(email) = $1 order by sent_at desc, id desc limit 1), st as (select id, case when expires_at <= now() then 'expired' when attempts >= 5 then 'locked' when code_hash = encode(sha256(convert_to($1 || ':' || $2, 'UTF8')), 'hex') then 'ok' else 'wrong' end as s from latest), tok as (select translate(encode(decode(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/=', '-_') as t), bump as (update ttw.email_codes set attempts = attempts + 1 where id = (select id from st where s = 'wrong') returning id), del as (delete from ttw.email_codes where lower(email) = $1 and exists (select 1 from st where s = 'ok') returning id), ver as (update ttw.subscribers set verified_at = coalesce(verified_at, now()) where lower(email) = $1 and exists (select 1 from st where s = 'ok') returning id), ses as (insert into ttw.sessions (token_hash, email, expires_at) select encode(sha256(convert_to(tok.t, 'UTF8')), 'hex'), $1, now() + interval '24 hours' from tok where exists (select 1 from st where s = 'ok') returning token_hash) select coalesce((select s from st), 'expired') as status, ((select s from st) = 'ok' and exists (select 1 from prev where verified_at is null)) as first_verify, case when (select s from st) = 'ok' then (select t from tok) end as token",
+        "query": "with latest as (select expires_at from ttw.email_codes where lower(email) = $1 order by sent_at desc, id desc limit 1), bump as (update ttw.email_codes set attempts = case when code_hash = encode(sha256(convert_to($1 || ':' || $2, 'UTF8')), 'hex') then 99 else attempts + 1 end where id = (select id from ttw.email_codes where lower(email) = $1 order by sent_at desc, id desc limit 1) and attempts < 5 and expires_at > now() returning (code_hash = encode(sha256(convert_to($1 || ':' || $2, 'UTF8')), 'hex')) as hit), tok as (select translate(encode(decode(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/=', '-_') as t), ver as (update ttw.subscribers set verified_at = now() where lower(email) = $1 and verified_at is null and exists (select 1 from bump where hit) returning id), ses as (insert into ttw.sessions (token_hash, email, expires_at) select encode(sha256(convert_to(tok.t, 'UTF8')), 'hex'), $1, now() + interval '24 hours' from tok where exists (select 1 from bump where hit) returning token_hash) select case when exists (select 1 from bump) then (case when exists (select 1 from bump where hit) then 'ok' else 'wrong' end) when not exists (select 1 from latest) or (select expires_at from latest) <= now() then 'expired' else 'locked' end as status, exists (select 1 from ver) as first_verify, case when exists (select 1 from bump where hit) then (select t from tok) end as token",
         "options": {
           "queryReplacement": "={{ [$json.email, $json.code] }}"
         }
@@ -473,7 +474,7 @@
       "parameters": {
         "resource": "database",
         "operation": "executeQuery",
-        "query": "with s as (select email from ttw.sessions where token_hash = encode(sha256(convert_to($1, 'UTF8')), 'hex') and expires_at > now()), ins as (insert into ttw.waitlist (email, kind, generation_id) select s.email, $2::text, $3::text from s where not $4::boolean and not exists (select 1 from ttw.waitlist w where lower(w.email) = lower(s.email) and w.kind = $2::text and w.generation_id is not distinct from $3::text) on conflict do nothing returning id) select case when not exists (select 1 from s) then 'bad_token' when $4::boolean then 'invalid' else 'ok' end as status",
+        "query": "with s as (select email from ttw.sessions where token_hash = encode(sha256(convert_to($1, 'UTF8')), 'hex') and expires_at > now()), g as (select ($3::text is null or exists (select 1 from ttw.generations where id = $3::text)) as gen_ok), ins as (insert into ttw.waitlist (email, kind, generation_id) select s.email, $2::text, $3::text from s, g where not $4::boolean and g.gen_ok and not exists (select 1 from ttw.waitlist w where lower(w.email) = lower(s.email) and w.kind = $2::text and w.generation_id is not distinct from $3::text) on conflict do nothing returning id) select case when not exists (select 1 from s) then 'bad_token' when $4::boolean or not (select gen_ok from g) then 'invalid' else 'ok' end as status",
         "options": {
           "queryReplacement": "={{ [$json.token, $json.kind, $json.generationId, $json.bad] }}"
         }
@@ -524,6 +525,128 @@
           "responseCode": 400
         }
       }
+    },
+    {
+      "name": "Pick Store Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        176
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [$input.last()];"
+      }
+    },
+    {
+      "name": "Subscribe Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        272
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.['x-ttw-proxy-key'] === '__TTW_PROXY_KEY__' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Verify Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        736
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.['x-ttw-proxy-key'] === '__TTW_PROXY_KEY__' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Waitlist Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        1424
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.['x-ttw-proxy-key'] === '__TTW_PROXY_KEY__' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Respond 404 empty",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        1100
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
     }
   ],
   "connections": {
@@ -531,7 +654,7 @@
       "main": [
         [
           {
-            "node": "Prep Subscribe",
+            "node": "Subscribe Key OK?",
             "type": "main",
             "index": 0
           }
@@ -571,7 +694,7 @@
       "main": [
         [
           {
-            "node": "Code Stored?",
+            "node": "Pick Store Result",
             "type": "main",
             "index": 0
           }
@@ -625,7 +748,7 @@
       "main": [
         [
           {
-            "node": "Prep Verify",
+            "node": "Verify Key OK?",
             "type": "main",
             "index": 0
           }
@@ -744,7 +867,7 @@
       "main": [
         [
           {
-            "node": "Prep Waitlist",
+            "node": "Waitlist Key OK?",
             "type": "main",
             "index": 0
           }
@@ -804,9 +927,75 @@
           }
         ]
       ]
+    },
+    "Subscribe Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Prep Subscribe",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Prep Verify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waitlist Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Prep Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Store Result": {
+      "main": [
+        [
+          {
+            "node": "Code Stored?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none"
   }
 }
