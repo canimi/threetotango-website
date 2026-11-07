@@ -9,7 +9,7 @@ interface Props {
 }
 const { episode: e, detailLink = true } = Astro.props;
 const youtube = e.platform === 'youtube';
-const known = e.characters.filter((c) => c in characters);
+const known = e.characters.filter((c) => Object.hasOwn(characters, c));
 const accent = known[0] ? characters[known[0]].color : 'var(--c-mustard)';
 const hasThumb = Boolean(e.thumbnailUrl);
 ---

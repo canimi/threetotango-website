@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 }
 
 const { episode: e, newer, older } = Astro.props;
-const cast = e.characters.filter((c) => c in characters);
+const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
 ---
 
 <Base

@@ -94,9 +94,15 @@ describe('built routes', () => {
         'property="og:image" content="https://threetotango.canimi.app/img/og-default.jpg"',
       );
     });
+    it('renders the placeholder for the no-thumbnail episode', () => {
+      const p = html('episodes/no-thumb-yet/index.html');
+      expect(p).toMatch(/class="ph[^"]*"[^>]*>\s*<span class="ph-title"[^>]*>No Thumb Yet</);
+      expect(p).not.toContain('<img src="" ');
+    });
     it('ignores unknown character ids', () => {
       const p = html('episodes/no-thumb-yet/index.html');
       expect(p).not.toContain('mystery-cat');
+      expect(p).not.toContain('/cats/constructor');
       expect(p).toContain('/cats/nora');
     });
   });
