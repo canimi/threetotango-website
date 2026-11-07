@@ -229,16 +229,16 @@ video {
   z-index: 60;
   inset-block-start: 0;
   left: 0;
-  inline-size: 34vmax;
+  inline-size: 18vmax;
   aspect-ratio: 1;
-  margin-block-start: -17vmax;
-  margin-left: -17vmax;
+  margin-block-start: -9vmax;
+  margin-left: -9vmax;
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
     rgb(255 207 110 / 34%),
-    rgb(255 207 110 / 16%) 30%,
-    rgb(255 207 110 / 5%) 65%,
+    rgb(255 207 110 / 14%) 35%,
+    rgb(255 207 110 / 3%) 70%,
     transparent
   );
   mix-blend-mode: screen;
