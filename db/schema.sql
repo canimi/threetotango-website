@@ -76,7 +76,7 @@ create table if not exists waitlist (
 );
 create index if not exists waitlist_email_idx on waitlist (lower(email));
 create index if not exists waitlist_created_idx on waitlist (created_at);
-create unique index if not exists waitlist_signup_uq on waitlist (lower(email), kind, coalesce(generation_id, ''));
+create unique index if not exists waitlist_signup_uq on waitlist (lower(email), kind, generation_id);
 
 -- Contract: no seed row. The Tango Me pipeline must run
 --   insert into daily_budget(day) values (current_date) on conflict do nothing
