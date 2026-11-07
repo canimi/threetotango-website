@@ -13,9 +13,11 @@ RUN npm run build
 
 # Stage 2: serve with nginx
 FROM nginx:alpine
-RUN mkdir -p /etc/nginx/snippets /usr/share/nginx/media
+RUN mkdir -p /etc/nginx/snippets /etc/nginx/templates /usr/share/nginx/media \
+ && chown -R nginx:nginx /usr/share/nginx/media
 COPY deploy/security-headers.conf /etc/nginx/snippets/ttw-security.conf
 COPY deploy/proxy.conf /etc/nginx/snippets/ttw-proxy.conf
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/media-internal.conf.template /etc/nginx/templates/media-internal.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 80 8081

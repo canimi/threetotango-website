@@ -12,8 +12,11 @@ services:
         PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
     container_name: ttw-web
     restart: unless-stopped
+    environment:
+      # Shared secret n8n sends as X-TTW-Key when PUT/DELETE-ing to http://ttw-web:8081/media/...
+      TTW_MEDIA_KEY: ${TTW_MEDIA_KEY:?set TTW_MEDIA_KEY}
     volumes:
-      - /opt/ttw/media:/usr/share/nginx/media:ro
+      - ttw_media:/usr/share/nginx/media
     networks:
       - n8n
 
@@ -26,6 +29,9 @@ services:
       APP_SECRET: ${UMAMI_APP_SECRET}
     networks:
       - n8n
+
+volumes:
+  ttw_media:
 
 networks:
   n8n:

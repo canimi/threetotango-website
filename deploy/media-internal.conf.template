@@ -1,0 +1,34 @@
+# Internal WebDAV-style media endpoint (port 8081, never published, cloudflared only routes to :80).
+# Rendered by the nginx image entrypoint (envsubst) into /etc/nginx/conf.d/media-internal.conf.
+# Only ${TTW_MEDIA_KEY} is substituted; nginx $variables are left alone.
+server {
+    listen 8081;
+    server_name _;
+
+    allow 172.16.0.0/12;
+    allow 10.0.0.0/8;
+    allow 192.168.0.0/16;
+    deny all;
+
+    client_max_body_size 50m;
+
+    # Shared secret (defense in depth). Missing header -> 401 even if the key were empty.
+    if ($http_x_ttw_key = "") {
+        return 401;
+    }
+    if ($http_x_ttw_key != "${TTW_MEDIA_KEY}") {
+        return 401;
+    }
+
+    location /media/ {
+        alias /usr/share/nginx/media/;
+        autoindex off;
+        dav_methods PUT DELETE;
+        create_full_put_path on;
+        dav_access user:rw group:r all:r;
+    }
+
+    location / {
+        return 404;
+    }
+}
