@@ -88,72 +88,78 @@
         300
       ],
       "parameters": {
-        "mode": "manual",
-        "includeOtherFields": false,
         "assignments": {
           "assignments": [
             {
               "id": "c1",
               "name": "mediaBase",
-              "value": "http://ttw-web:8081/media/tango/",
-              "type": "string"
+              "type": "string",
+              "value": "http://ttw-web:8081/media/tango/"
             },
             {
               "id": "c2",
               "name": "refsBase",
-              "value": "http://ttw-web/img/refs/",
-              "type": "string"
+              "type": "string",
+              "value": "http://ttw-web/img/refs/"
             },
             {
               "id": "c3",
               "name": "mediaKey",
-              "value": "__TTW_MEDIA_KEY__",
-              "type": "string"
+              "type": "string",
+              "value": "__TTW_MEDIA_KEY__"
             },
             {
               "id": "c4",
               "name": "publicMedia",
-              "value": "/media/tango/",
-              "type": "string"
+              "type": "string",
+              "value": "/media/tango/"
             },
             {
               "id": "c5",
               "name": "siteUrl",
-              "value": "https://threetotango.canimi.app",
-              "type": "string"
+              "type": "string",
+              "value": "https://threetotango.canimi.app"
             },
             {
               "id": "c6",
               "name": "textModel",
-              "value": "gemini-2.5-flash",
-              "type": "string"
+              "type": "string",
+              "value": "gemini-2.5-flash"
             },
             {
               "id": "c7",
               "name": "imageModel",
-              "value": "gemini-3.1-flash-image",
-              "type": "string"
+              "type": "string",
+              "value": "gemini-nano-banana-2.1"
             },
             {
               "id": "c8",
               "name": "reserveUsd",
-              "value": "0.07",
-              "type": "string"
+              "type": "string",
+              "value": "0.05"
             },
             {
               "id": "c9",
               "name": "dailyCapUsd",
-              "value": "3.00",
-              "type": "string"
+              "type": "string",
+              "value": "3.00"
             },
             {
               "id": "c10",
               "name": "ipLimit",
-              "value": "3",
-              "type": "string"
+              "type": "string",
+              "value": "3"
+            },
+            {
+              "id": "c11",
+              "name": "costUsd",
+              "type": "string",
+              "value": "0.045"
             }
           ]
         },
+        "includeOtherFields": false,
+        "mode": "manual",
         "options": {}
       },
       "executeOnce": true
@@ -805,10 +811,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released",
         "options": {
-          "queryReplacement": "={{ [ $('Insert Generation').first().json.id, 'server', $('Extract Image').isExecuted ? $('Config').first().json.reserveUsd : '0' ] }}"
-        }
+          "queryReplacement": "={{ [ $('Insert Generation').first().json.id, 'server', $('Extract Image').isExecuted ? $('Config').first().json.costUsd : '0' ] }}"
+        },
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released"
       },
       "credentials": {
         "postgres": {
@@ -1063,9 +1069,9 @@
         100
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
+        "jsCode": "const v = $('Validate').first().json;\nconst kit = $('Prompt Kit').first().json;\nconst photo = $('Extract Photo').first().json.photoB64;\nconst prompt = $('Parse Prompt').first().json.prompt;\nconst list = $('Ref List').all();\nconst fetched = $('Fetch Ref').all();\nconst refs = [];\n$input.all().forEach((it, i) => {\n  const b64 = it.json && typeof it.json.b64 === 'string' ? it.json.b64 : '';\n  const f = fetched[i] || {};\n  let mt = String((f.binary && f.binary.data && f.binary.data.mimeType) || '').toLowerCase();\n  if (!/^image\\//.test(mt) && list[i] && /\\.webp$/i.test(list[i].json.url)) mt = 'image/webp';\n  if (b64 && /^image\\/(png|jpeg|webp)$/.test(mt) && b64.length < 8000000 && list[i]) refs.push({ name: list[i].json.name, mime: mt, b64 });\n});\nconst parts = [\n  { text: \"Image 1 is a photo of the user's real cat. Recreate THIS exact cat (coat colour, pattern, eye colour, face shape, fur length) as the hero of the new image.\" },\n  { inlineData: { mimeType: v.mime, data: photo } }\n];\nfor (const r of refs) {\n  parts.push({ text: 'Character sheet for ' + r.name.toUpperCase() + ' (multi-view turnaround on a grey background). Use it ONLY for this character\\'s identity: face, colours, coat or hair, proportions. Do not copy the grey background, the multi-view layout, the poses, the outfit details if the scene needs others, or any labels.' });\n  parts.push({ inlineData: { mimeType: r.mime, data: r.b64 } });\n}\nconst ids = v.scene === 'custom' ? [] : (kit.sceneChars[v.scene] || []);\nconst identity = ids.map((n) => kit.characters[n]).join(' ');\nconst look = $('Parse Moderation').first().json.look;\nconst finalPrompt = [prompt, identity, kit.userCat + (look ? \" The user's cat in the photo: \" + look + '.' : ''), kit.anatomy, kit.style].filter(Boolean).join('\\n\\n');\nparts.push({ text: finalPrompt });\nconst req = { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '4:5', imageSize: '1K' }, thinkingConfig: { thinkingLevel: 'minimal' } } };\nreturn [{ json: { finalPrompt, refsUsed: refs.map((r) => r.name), req } }];",
         "language": "javaScript",
-        "jsCode": "const v = $('Validate').first().json;\nconst kit = $('Prompt Kit').first().json;\nconst photo = $('Extract Photo').first().json.photoB64;\nconst prompt = $('Parse Prompt').first().json.prompt;\nconst list = $('Ref List').all();\nconst fetched = $('Fetch Ref').all();\nconst refs = [];\n$input.all().forEach((it, i) => {\n  const b64 = it.json && typeof it.json.b64 === 'string' ? it.json.b64 : '';\n  const f = fetched[i] || {};\n  let mt = String((f.binary && f.binary.data && f.binary.data.mimeType) || '').toLowerCase();\n  if (!/^image\\//.test(mt) && list[i] && /\\.webp$/i.test(list[i].json.url)) mt = 'image/webp';\n  if (b64 && /^image\\/(png|jpeg|webp)$/.test(mt) && b64.length < 8000000 && list[i]) refs.push({ name: list[i].json.name, mime: mt, b64 });\n});\nconst parts = [\n  { text: \"Image 1 is a photo of the user's real cat. Recreate THIS exact cat (coat colour, pattern, eye colour, face shape, fur length) as the hero of the new image.\" },\n  { inlineData: { mimeType: v.mime, data: photo } }\n];\nfor (const r of refs) {\n  parts.push({ text: 'Character sheet for ' + r.name.toUpperCase() + ' (multi-view turnaround on a grey background). Use it ONLY for this character\\'s identity: face, colours, coat or hair, proportions. Do not copy the grey background, the multi-view layout, the poses, the outfit details if the scene needs others, or any labels.' });\n  parts.push({ inlineData: { mimeType: r.mime, data: r.b64 } });\n}\nconst ids = v.scene === 'custom' ? [] : (kit.sceneChars[v.scene] || []);\nconst identity = ids.map((n) => kit.characters[n]).join(' ');\nconst look = $('Parse Moderation').first().json.look;\nconst finalPrompt = [prompt, identity, kit.userCat + (look ? \" The user's cat in the photo: \" + look + '.' : ''), kit.anatomy, kit.style].filter(Boolean).join('\\n\\n');\nparts.push({ text: finalPrompt });\nconst req = { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '4:5', imageSize: '1K' } } };\nreturn [{ json: { finalPrompt, refsUsed: refs.map((r) => r.name), req } }];"
+        "mode": "runOnceForAllItems"
       }
     },
     {
@@ -1418,10 +1424,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status = 'running' for update), g as (update ttw.generations t set status = 'done', error = null, result_path_45 = $2, result_path_916 = $3, cost_usd = $4::numeric, free_use_consumed = true, reserved_usd = 0 from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $4::numeric, generations_count = bb.generations_count + 1 from o where bb.day = o.d returning 1) select (select count(*) from g)::int as done, (select count(*) from b)::int as budget_rows",
         "options": {
-          "queryReplacement": "={{ [ $('Insert Generation').first().json.id, $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-post.jpg', $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-story.jpg', $('Config').first().json.reserveUsd ] }}"
-        }
+          "queryReplacement": "={{ [ $('Insert Generation').first().json.id, $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-post.jpg', $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-story.jpg', $('Config').first().json.costUsd ] }}"
+        },
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status = 'running' for update), g as (update ttw.generations t set status = 'done', error = null, result_path_45 = $2, result_path_916 = $3, cost_usd = $4::numeric, free_use_consumed = true, reserved_usd = 0 from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $4::numeric, generations_count = bb.generations_count + 1 from o where bb.day = o.d returning 1) select (select count(*) from g)::int as done, (select count(*) from b)::int as budget_rows"
       },
       "credentials": {
         "postgres": {
@@ -1451,10 +1457,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where error = 'exec:' || $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0, cost_usd = $2::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $2::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed",
         "options": {
-          "queryReplacement": "={{ [ String($json.execution && $json.execution.id || ''), ['Build Generation', 'Generate Image', 'Extract Image', 'Build Check', 'Output Check', 'Parse Check', 'Check OK?', 'To Binary', 'Make Post', 'Make Story', 'Upload Post', 'Keep Story', 'Upload Story', 'Finalize Done', 'Fail server'].includes(String($json.execution && $json.execution.lastNodeExecuted || '')) ? '0.07' : '0' ] }}"
-        }
+          "queryReplacement": "={{ [ String($json.execution && $json.execution.id || ''), ['Build Generation', 'Generate Image', 'Extract Image', 'Build Check', 'Output Check', 'Parse Check', 'Check OK?', 'To Binary', 'Make Post', 'Make Story', 'Upload Post', 'Keep Story', 'Upload Story', 'Finalize Done', 'Fail server'].includes(String($json.execution && $json.execution.lastNodeExecuted || '')) ? '0.045' : '0' ] }}"
+        },
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where error = 'exec:' || $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0, cost_usd = $2::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $2::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed"
       },
       "credentials": {
         "postgres": {
