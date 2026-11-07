@@ -1,0 +1,179 @@
+---
+import { t } from '../i18n/t';
+import { characters } from '../data/characters';
+import { demoAssets } from '../lib/demo-assets';
+import BeforeAfter from './BeforeAfter.astro';
+
+interface Props {
+  /** Compact = only the steps (used on top of the /tango-me page). */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+const demo = demoAssets();
+const steps = [1, 2, 3].map((n) => ({ title: t(`showcase.step${n}`), body: t(`showcase.step${n}Body`) }));
+const trio = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
+---
+
+{
+  compact ? (
+    <ol class="steps compact" aria-label={t('showcase.stepsLabel')}>
+      {steps.map((s, i) => (
+        <li><span class="n" aria-hidden="true">{i + 1}</span><span><strong>{s.title}</strong> {s.body}</span></li>
+      ))}
+    </ol>
+  ) : (
+    <section class="tango-band" id="tango-me" aria-labelledby="tango-title">
+      <div class="container inner">
+        <div class="copy">
+          <h2 id="tango-title">{t('showcase.title')}</h2>
+          <p class="lede">{t('showcase.sub')}</p>
+          <ol class="steps" aria-label={t('showcase.stepsLabel')}>
+            {steps.map((s, i) => (
+              <li><span class="n" aria-hidden="true">{i + 1}</span><span><strong>{s.title}</strong>{s.body}</span></li>
+            ))}
+          </ol>
+          <a class="btn btn-lg" href="/tango-me">{t('showcase.cta')}</a>
+        </div>
+        <div class="demo">
+          {demo.before && demo.after ? (
+            <BeforeAfter before={demo.before} after={demo.after} story={demo.story} />
+          ) : (
+            <div class="slot-comp" role="img" aria-label={t('showcase.slotAlt')}>
+              {trio.map((c, i) => (
+                <img class={`m m${i}`} src={c.face} width="400" height="400" alt="" loading="lazy" style={`--accent:${c.color}`} />
+              ))}
+              <div class="slot">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                  <path d="M22 30 L30 8 L42 24 Q50 21 58 24 L70 8 L78 30 Q86 44 82 60 Q76 84 50 86 Q24 84 18 60 Q14 44 22 30Z" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="6 6" stroke-linejoin="round" />
+                </svg>
+                <span>{t('showcase.slotLabel')}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .tango-band {
+    position: relative;
+    padding-block: var(--space-5);
+    background:
+      radial-gradient(60rem 30rem at 85% 40%, rgb(255 207 110 / 12%), transparent 70%),
+      var(--c-wall-2);
+  }
+  .inner {
+    display: grid;
+    gap: var(--space-5);
+    align-items: center;
+  }
+  @media (min-width: 56rem) {
+    .inner {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    }
+  }
+  .lede {
+    margin-block: 0 var(--space-4);
+  }
+  .steps {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+  .steps li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-2);
+    align-items: start;
+  }
+  .steps strong {
+    display: block;
+    font: 600 1.2rem var(--font-display);
+    color: var(--c-paper);
+  }
+  .steps li > span:last-child {
+    color: var(--c-paper-2);
+  }
+  .n {
+    display: grid;
+    place-items: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: 50%;
+    background: var(--c-lamp);
+    color: var(--c-on-mustard);
+    font: 600 1.15rem var(--font-display);
+  }
+  .compact {
+    gap: var(--space-2);
+    margin-block-end: var(--space-4);
+  }
+  @media (min-width: 46rem) {
+    .compact {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .compact strong {
+    font-size: 1.05rem;
+  }
+  .compact li > span:last-child {
+    font-size: 0.95rem;
+  }
+
+  /* Fallback composition: the trio leaves a spot on the sofa. */
+  .slot-comp {
+    position: relative;
+    inline-size: min(100%, 30rem);
+    aspect-ratio: 1;
+    margin-inline: auto;
+  }
+  .m {
+    position: absolute;
+    inline-size: 46%;
+    block-size: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px var(--accent), 0 24px 50px -18px rgb(var(--c-shadow) / 90%);
+  }
+  .m0 {
+    inset-block-start: 2%;
+    inset-inline-start: 4%;
+    transform: rotate(-6deg);
+  }
+  .m1 {
+    inset-block-start: 6%;
+    inset-inline-end: 2%;
+    inline-size: 40%;
+    transform: rotate(5deg);
+  }
+  .m2 {
+    inset-block-end: 4%;
+    inset-inline-start: 0;
+    inline-size: 40%;
+  }
+  .slot {
+    position: absolute;
+    inset-block-end: 2%;
+    inset-inline-end: 6%;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.25rem;
+    inline-size: 48%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 3px dashed var(--c-mustard);
+    background: rgb(227 162 26 / 10%);
+    color: var(--c-mustard);
+    font: 600 1.15rem var(--font-display);
+    text-align: center;
+  }
+  .slot svg {
+    inline-size: 45%;
+    block-size: auto;
+  }
+</style>

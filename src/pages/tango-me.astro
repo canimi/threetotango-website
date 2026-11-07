@@ -1,35 +1,72 @@
 ---
 import Base from '../layouts/Base.astro';
 import TangoMe from '../components/TangoMe.astro';
+import TangoShowcase from '../components/TangoShowcase.astro';
+import BeforeAfter from '../components/BeforeAfter.astro';
+import { demoAssets } from '../lib/demo-assets';
 import { t } from '../i18n/t';
+
+const demo = demoAssets();
 ---
 
 <Base title={`${t('tango.pageTitle')} | ${t('brand.name')}`} description={t('tango.pageDesc')} path="/tango-me">
-  <section class="container tm">
+  <section class="container page tm">
     <h1>{t('tango.title')}</h1>
-    <p class="sub">{t('tango.sub')}</p>
+    <p class="lede">{t('tango.sub')}</p>
+    <TangoShowcase compact />
 
-    <TangoMe />
+    <div class:list={['work', { solo: !(demo.before && demo.after) }]}>
+      <div class="form paper">
+        <TangoMe />
+      </div>
+      {
+        demo.before && demo.after && (
+          <aside class="demo">
+            <BeforeAfter before={demo.before} after={demo.after} story={demo.story} />
+            <p class="demo-note">{t('tango.demoNote')}</p>
+          </aside>
+        )
+      }
+    </div>
     <p class="fine">{t('tango.disclosure')}</p>
   </section>
 </Base>
 
 <style>
-  .tm {
-    padding-block: var(--space-4);
+  h1 {
+    max-inline-size: 18ch;
   }
-  h1,
-  .sub {
+  .lede {
+    margin-block: 0 var(--space-4);
+  }
+  .work {
+    display: grid;
+    gap: var(--space-5);
+    align-items: start;
+  }
+  @media (min-width: 60rem) {
+    .work {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    }
+    .work.solo {
+      grid-template-columns: minmax(0, 40rem);
+    }
+    .demo {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-3));
+    }
+  }
+  .form {
+    padding: clamp(1.25rem, 0.8rem + 2.5vw, 2.75rem);
+  }
+  .demo-note {
+    margin-block: var(--space-4) 0;
     text-align: center;
-  }
-  .sub {
-    color: var(--c-ink-2);
-    margin-block: 0 var(--space-3);
+    color: var(--c-paper-2);
   }
   .fine {
-    text-align: center;
-    color: var(--c-ink-2);
-    font-size: 0.9rem;
-    margin-block-start: var(--space-3);
+    color: var(--c-paper-2);
+    font-size: var(--step--1);
+    margin-block-start: var(--space-4);
   }
 </style>

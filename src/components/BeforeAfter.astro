@@ -1,33 +1,84 @@
 ---
 import { t } from '../i18n/t';
+
+interface Props {
+  before: string;
+  after: string;
+  story?: string | null;
+}
+const { before, after, story } = Astro.props;
 ---
 
-<div class="ba" style="--pos:50%">
-  <img class="after" src="/img/tango/after.webp" width="640" height="640" loading="lazy" alt={t('showcase.afterAlt')} />
-  <img class="before" src="/img/tango/before.webp" width="640" height="640" loading="lazy" alt={t('showcase.beforeAlt')} />
-  <input type="range" min="0" max="100" value="50" aria-label={t('showcase.sliderLabel')} />
-  <span class="tag l">{t('showcase.before')}</span>
-  <span class="tag r">{t('showcase.after')}</span>
+<div class="ba-wrap">
+  <div class="ba" data-ba style="--pos:50%">
+    <img class="after" src={after} width="800" height="1000" loading="lazy" decoding="async" alt={t('showcase.afterAlt')} />
+    <img class="before" src={before} width="800" height="1000" loading="lazy" decoding="async" alt={t('showcase.beforeAlt')} />
+    <span class="handle" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l-5 6 5 6M15 6l5 6-5 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </span>
+    <input type="range" min="0" max="100" value="50" aria-label={t('showcase.sliderLabel')} />
+    <span class="tag l">{t('showcase.before')}</span>
+    <span class="tag r">{t('showcase.after')}</span>
+  </div>
+  {story && <img class="story" src={story} width="360" height="640" loading="lazy" decoding="async" alt={t('showcase.storyAlt')} />}
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>('.ba').forEach((ba) => {
+  document.querySelectorAll<HTMLElement>('[data-ba]').forEach((ba) => {
     const input = ba.querySelector('input')!;
-    input.addEventListener('input', () => ba.style.setProperty('--pos', `${input.value}%`));
+    const set = (v: number) => ba.style.setProperty('--pos', `${v}%`);
+    input.addEventListener('input', () => {
+      ba.classList.remove('wipe');
+      set(Number(input.value));
+    });
+    // One wipe when it first scrolls into view; afterwards it is a manual slider.
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        ba.classList.add('wipe');
+        ba.addEventListener('animationend', () => ba.classList.remove('wipe'), { once: true });
+      }, { threshold: 0.5 });
+      io.observe(ba);
+    }
   });
 </script>
 
 <style>
+  @property --pos {
+    syntax: '<percentage>';
+    inherits: true;
+    initial-value: 50%;
+  }
+  .ba-wrap {
+    position: relative;
+    inline-size: min(100%, 28rem);
+    margin-inline: auto;
+  }
   .ba {
     position: relative;
-    inline-size: min(100%, 26rem);
-    aspect-ratio: 1;
-    margin-inline: auto;
+    aspect-ratio: 4 / 5;
     border-radius: var(--radius-card);
     overflow: hidden;
-    background: var(--c-caddy);
+    background: var(--c-wall);
+    box-shadow: 0 30px 60px -24px rgb(var(--c-shadow) / 90%);
   }
-  img {
+  .ba.wipe {
+    animation: wipe 1.6s cubic-bezier(0.6, 0, 0.3, 1);
+  }
+  @keyframes wipe {
+    0% {
+      --pos: 100%;
+    }
+    55% {
+      --pos: 8%;
+    }
+    100% {
+      --pos: 50%;
+    }
+  }
+  .ba img {
     position: absolute;
     inset: 0;
     inline-size: 100%;
@@ -37,8 +88,35 @@ import { t } from '../i18n/t';
   .before {
     clip-path: inset(0 calc(100% - var(--pos)) 0 0);
   }
+  .ba::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--pos);
+    inline-size: 3px;
+    margin-inline-start: -1.5px;
+    background: var(--c-paper);
+    pointer-events: none;
+  }
+  .handle {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 50%;
+    inset-inline-start: var(--pos);
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    margin: -1.375rem 0 0 -1.375rem;
+    border-radius: 50%;
+    background: var(--c-paper);
+    color: var(--c-ink);
+    pointer-events: none;
+    box-shadow: 0 6px 16px -4px rgb(var(--c-shadow) / 70%);
+  }
   input {
     position: absolute;
+    z-index: 2;
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
@@ -46,32 +124,42 @@ import { t } from '../i18n/t';
     opacity: 0;
     cursor: ew-resize;
   }
-  .ba::after {
-    content: '';
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: var(--pos);
-    inline-size: 4px;
-    background: var(--c-mustard);
-    pointer-events: none;
-  }
-  .ba:focus-within {
-    outline: 3px solid var(--c-ink);
+  .ba:has(input:focus-visible) {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 4px;
   }
   .tag {
     position: absolute;
-    inset-block-end: var(--space-1);
-    padding-inline: 0.7rem;
+    z-index: 1;
+    inset-block-end: var(--space-2);
+    padding: 0.15rem 0.75rem;
     border-radius: var(--radius-pill);
-    background: var(--c-cream);
-    font-size: 0.85rem;
+    background: rgb(23 50 42 / 80%);
+    color: var(--c-paper);
+    font-size: 0.9rem;
     font-weight: 600;
     pointer-events: none;
   }
   .l {
-    inset-inline-start: var(--space-1);
+    inset-inline-start: var(--space-2);
   }
   .r {
-    inset-inline-end: var(--space-1);
+    inset-inline-end: var(--space-2);
+  }
+  .story {
+    position: absolute;
+    inset-inline-end: -1.5rem;
+    inset-block-end: -2rem;
+    inline-size: 30%;
+    block-size: auto;
+    aspect-ratio: 9 / 16;
+    border-radius: 14px;
+    box-shadow: 0 0 0 4px var(--c-paper), 0 20px 40px -12px rgb(var(--c-shadow) / 90%);
+    transform: rotate(5deg);
+  }
+  @media (max-width: 40rem) {
+    .story {
+      inset-inline-end: -0.5rem;
+    }
   }
 </style>
