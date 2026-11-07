@@ -154,8 +154,8 @@ const errors = JSON.stringify({
 
 <style>
   .sub-form {
-    max-inline-size: 30rem;
-    margin-inline: auto;
+    inline-size: 100%;
+    max-inline-size: 32rem;
     text-align: start;
   }
   label {
@@ -173,16 +173,20 @@ const errors = JSON.stringify({
     min-inline-size: 0;
     padding-block: 0.65rem;
     padding-inline: 1rem;
-    border: 2px solid var(--c-ink-2);
+    min-block-size: 3rem;
+    border: 2px solid transparent;
     border-radius: var(--radius-pill);
     background: var(--c-cream);
     color: var(--c-ink);
     font: inherit;
   }
+  input::placeholder {
+    color: var(--c-ink-2);
+  }
   input:focus-visible,
   .link:focus-visible,
   .btn:focus-visible {
-    outline: 3px solid var(--c-ink);
+    outline: 3px solid var(--c-lamp);
     outline-offset: 2px;
   }
   .btn {
@@ -206,7 +210,7 @@ const errors = JSON.stringify({
     padding: 0;
     border: 0;
     background: none;
-    color: var(--c-ink);
+    color: inherit;
     font: inherit;
     text-decoration: underline;
     cursor: pointer;

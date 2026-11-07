@@ -13,16 +13,20 @@ import { t } from '../i18n/t';
     <p>{t('bts.p2')}</p>
     <h2>{t('bts.h3')}</h2>
     <p>{t('bts.p3')}</p>
-    <p><a class="btn" href="/tango-me">{t('cta.tangoFree')}</a></p>
+    <p><a class="btn btn-lg" href="/tango-me">{t('cta.tangoFreeLong')}</a></p>
   </div>
 </Base>
 
 <style>
   .wrap {
-    padding-block: var(--space-4);
+    padding-block: var(--space-4) var(--space-5);
     max-inline-size: 42rem;
   }
   .lead {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+  }
+  h2 {
+    font-size: 1.6rem;
+    margin-block-start: var(--space-4);
   }
 </style>

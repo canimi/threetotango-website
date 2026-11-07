@@ -5,40 +5,54 @@ import { t } from '../i18n/t';
 ---
 
 <Base title={`${t('gift.pageTitle')} | ${t('brand.name')}`} description={t('gift.pageDesc')} path="/gift">
-  <section class="container gift">
-    <h1>{t('gift.title')}</h1>
-    <p class="sub">{t('gift.sub')}</p>
-
-    <h2>{t('gift.youGet')}</h2>
-    <ul class="gets">
-      <li>{t('gift.item1')}</li>
-      <li>{t('gift.item2')}</li>
-      <li>{t('gift.item3')}</li>
-    </ul>
-
-    <SubscribeForm source="gift" />
-    <p class="fine">{t('gift.unsubscribe')}</p>
+  <section class="container page gift">
+    <div class="copy">
+      <h1>{t('gift.title')}</h1>
+      <p class="lede">{t('gift.sub')}</p>
+      <h2>{t('gift.youGet')}</h2>
+      <ul class="gets">
+        <li>{t('gift.item1')}</li>
+        <li>{t('gift.item2')}</li>
+        <li>{t('gift.item3')}</li>
+      </ul>
+    </div>
+    <div class="form paper">
+      <SubscribeForm source="gift" />
+      <p class="fine">{t('gift.unsubscribe')}</p>
+    </div>
   </section>
 </Base>
 
 <style>
   .gift {
-    padding-block: var(--space-4);
-    text-align: center;
+    display: grid;
+    gap: var(--space-4) var(--space-5);
+    align-items: center;
   }
-  .sub {
-    color: var(--c-ink-2);
-    margin-block: 0 var(--space-3);
+  @media (min-width: 56rem) {
+    .gift {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .lede {
+    margin-block: 0 var(--space-4);
+  }
+  h2 {
+    font-size: 1.3rem;
   }
   .gets {
-    display: inline-block;
-    text-align: start;
-    margin-block: 0 var(--space-4);
+    margin: 0;
     padding-inline-start: 1.2rem;
+  }
+  .gets li {
+    margin-block-end: var(--space-1);
+  }
+  .form {
+    padding: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);
   }
   .fine {
     color: var(--c-ink-2);
-    font-size: 0.9rem;
-    margin-block-start: var(--space-2);
+    font-size: var(--step--1);
+    margin-block: var(--space-3) 0;
   }
 </style>

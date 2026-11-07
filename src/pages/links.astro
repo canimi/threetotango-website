@@ -38,7 +38,7 @@ const items = [
 
 <style>
   .wrap {
-    padding-block: var(--space-4);
+    padding-block: var(--space-4) var(--space-5);
     max-inline-size: 28rem;
     text-align: center;
   }
@@ -52,14 +52,17 @@ const items = [
   .big {
     display: block;
     padding-block: 1.1rem;
-    border: 3px solid var(--c-mustard);
-    border-radius: var(--radius-card);
-    background: var(--c-cream);
-    font: 600 1.25rem var(--font-display);
+    border-radius: var(--radius-pill);
+    background: rgb(244 233 216 / 9%);
+    font: 600 1.2rem var(--font-display);
     text-decoration: none;
   }
-  .big:hover,
-  .primary {
+  .big:hover {
+    background: rgb(244 233 216 / 16%);
+  }
+  .primary,
+  .primary:hover {
     background: var(--c-mustard);
+    color: var(--c-on-mustard);
   }
 </style>

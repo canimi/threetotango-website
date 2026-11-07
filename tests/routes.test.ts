@@ -37,7 +37,7 @@ describe('built routes', () => {
     it('plays the hero mp4 of the latest hero episode', () => {
       expect(page()).toContain('/media/hero/the-lettuce-incident.mp4');
     });
-    it('shows four household cards and filter chips', () => {
+    it('shows the four-member cast picker and filter chips', () => {
       for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/cats/${id}`);
       expect(page()).toContain('data-characters="nora budy"');
     });
@@ -50,14 +50,26 @@ describe('built routes', () => {
       expect(i('Which one are you?')).toBeGreaterThan(i('id="household"'));
       expect(h).toContain('See all episodes');
     });
-    it('shows no before/after slider or missing placeholder images', () => {
-      expect(page()).not.toContain('type="range"');
-      expect(page()).not.toContain('/img/tango/');
+    it('shows the before/after demo only when the demo images exist', () => {
+      const demo =
+        existsSync('public/img/tango/demo-before.jpg') && existsSync('public/img/tango/demo-after.jpg');
+      if (demo) {
+        expect(page()).toContain('type="range"');
+        expect(page()).toContain('/img/tango/demo-before.jpg');
+        expect(page()).toContain('/img/tango/demo-after.jpg');
+      } else {
+        expect(page()).not.toContain('type="range"');
+        expect(page()).not.toContain('/img/tango/');
+        expect(page()).toContain('Your cat here');
+      }
       expect(page()).not.toContain('/img/cats/');
       expect(page()).not.toContain('hero-poster');
     });
-    it('uses the ref sheets as cat portraits', () => {
-      for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/img/refs/${id}.webp`);
+    it('uses the cast crops as cat portraits', () => {
+      for (const id of ['luka', 'budy', 'caddy', 'nora']) {
+        expect(page()).toContain(`/img/cast/${id}-face.webp`);
+        expect(page()).toContain(`/img/cast/${id}-full.webp`);
+      }
     });
     it('does not embed an iframe before tap', () => {
       expect(page()).not.toContain('<iframe');
