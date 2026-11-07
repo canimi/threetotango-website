@@ -1,0 +1,33 @@
+# Three To Tango - Portainer stack (Repository). Set variables in Portainer "Environment variables".
+# See deploy/.env.example for the full list.
+services:
+  ttw-web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      # Lets the build reach n8n (to fetch episodes at build time).
+      network: ${N8N_NETWORK:-n8n-docker_default}
+      args:
+        EPISODES_API_URL: ${EPISODES_API_URL:-http://n8n-docker-n8n-1:5678/webhook/ttw-episodes}
+        PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
+    container_name: ttw-web
+    restart: unless-stopped
+    volumes:
+      - /opt/ttw/media:/usr/share/nginx/media:ro
+    networks:
+      - n8n
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@n8n-docker-postgres-1:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    networks:
+      - n8n
+
+networks:
+  n8n:
+    external: true
+    name: ${N8N_NETWORK:-n8n-docker_default}

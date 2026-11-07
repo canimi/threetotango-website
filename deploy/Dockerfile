@@ -1,0 +1,21 @@
+# Stage 1: build the Astro static site
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# Build-time config (a unreachable EPISODES_API_URL is fine: the site builds with no episodes)
+ARG EPISODES_API_URL=""
+ARG PUBLIC_UMAMI_ID=""
+ENV EPISODES_API_URL=$EPISODES_API_URL \
+    PUBLIC_UMAMI_ID=$PUBLIC_UMAMI_ID
+RUN npm run build
+
+# Stage 2: serve with nginx
+FROM nginx:alpine
+RUN mkdir -p /etc/nginx/snippets /usr/share/nginx/media
+COPY deploy/security-headers.conf /etc/nginx/snippets/ttw-security.conf
+COPY deploy/proxy.conf /etc/nginx/snippets/ttw-proxy.conf
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
