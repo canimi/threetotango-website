@@ -1,0 +1,17 @@
+# Optional Umami analytics (stats.canimi.app). Deploy as a SEPARATE Portainer stack, see deploy/README.md.
+# Needs the database "umami" and its user created in the existing Postgres first.
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${UMAMI_DB_USER:?set UMAMI_DB_USER}:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD}@n8n-docker-postgres-1:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET}
+    networks:
+      - n8n
+
+networks:
+  n8n:
+    external: true
+    name: ${N8N_NETWORK:-n8n-docker_default}

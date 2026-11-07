@@ -1,5 +1,6 @@
 # Three To Tango - Portainer stack (Repository). Set variables in Portainer "Environment variables".
 # See deploy/.env.example for the full list.
+# Umami analytics is optional and lives in docker-compose.umami.yml (see deploy/README.md).
 services:
   ttw-web:
     build:
@@ -13,22 +14,12 @@ services:
     container_name: ttw-web
     restart: unless-stopped
     environment:
-      # Shared secret n8n sends as X-TTW-Key when PUT/DELETE-ing to http://ttw-web:8081/media/...
       # Shared secret nginx adds as X-TTW-Proxy-Key on every request to n8n webhooks.
       TTW_PROXY_KEY: ${TTW_PROXY_KEY:?set TTW_PROXY_KEY}
+      # Shared secret n8n sends as X-TTW-Key when PUT/DELETE-ing to http://ttw-web:8081/media/...
       TTW_MEDIA_KEY: ${TTW_MEDIA_KEY:?set TTW_MEDIA_KEY}
     volumes:
       - ttw_media:/usr/share/nginx/media
-    networks:
-      - n8n
-
-  umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
-    container_name: umami
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@n8n-docker-postgres-1:5432/umami
-      APP_SECRET: ${UMAMI_APP_SECRET}
     networks:
       - n8n
 

@@ -74,3 +74,19 @@ describe('proxy key (R13)', () => {
     expect(m).toMatch(/location = \/media\/ \{\s*return 405;/);
   });
 });
+
+describe('deploy prep', () => {
+  it('share location hides n8n CSP', () => {
+    expect(conf).toMatch(/ttw-tango-share\?id=\$1;\s*[^}]*proxy_hide_header Content-Security-Policy;/);
+  });
+  it('hides X-Powered-By on proxied locations', () => {
+    expect(readFileSync('deploy/ttw-proxy.inc.template', 'utf8')).toContain('proxy_hide_header X-Powered-By;');
+  });
+  it('main compose has no umami and requires only the two keys', () => {
+    const c = readFileSync('docker-compose.yml', 'utf8');
+    expect(c).not.toMatch(/umami:|UMAMI_DB|UMAMI_APP/);
+    const req = [...c.matchAll(/\$\{(\w+):\?/g)].map((m) => m[1]).sort();
+    expect(req).toEqual(['TTW_MEDIA_KEY', 'TTW_PROXY_KEY']);
+    expect(readFileSync('docker-compose.umami.yml', 'utf8')).toContain('UMAMI_APP_SECRET:?');
+  });
+});
