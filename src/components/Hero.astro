@@ -169,8 +169,19 @@ const EAGER = 12;
     min-block-size: clamp(36rem, 100svh, 64rem);
     margin-block-start: calc(var(--header-h) * -1);
     padding-block: calc(var(--header-h) + var(--space-4)) var(--space-5);
-    overflow: hidden;
+    overflow: clip;
     isolation: isolate;
+    background: var(--c-wall);
+  }
+  /* Smooth fade into the page colour; overlaps the hero edge by 2px so no sub-pixel seam shows at any DPR. */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -2px;
+    block-size: calc(28% + 2px);
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgb(23 50 42 / 0%), rgb(23 50 42 / 80%) 55%, var(--c-wall) 88%);
   }
   .wall {
     position: absolute;
@@ -186,6 +197,7 @@ const EAGER = 12;
     flex-direction: column;
     gap: 14px;
     will-change: transform;
+    backface-visibility: hidden;
   }
   .set {
     display: flex;
@@ -364,6 +376,7 @@ const EAGER = 12;
 
   @media (max-width: 63.99rem) {
     .hero {
+      min-block-size: 0;
       align-items: start;
       padding-block: calc(var(--header-h) + var(--space-3)) var(--space-4);
     }
