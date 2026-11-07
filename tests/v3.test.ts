@@ -280,6 +280,10 @@ describe('pointer effects', () => {
     expect(src).toContain("matchMedia('(pointer: fine) and (hover: hover)')");
     expect(src).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
     expect(src).toMatch(/passive: true/);
+    expect(src).toContain('RING_EVERY = 120');
+    expect(src).toMatch(/n < 8/);
+    expect(src).toContain('.animate(');
+    expect(builtCss()).toMatch(/\.ripple-ring\{[^}]*pointer-events:none/);
     expect(home()).toMatch(/<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/);
     expect(home()).toContain('id="wall-ripple"');
     expect(home()).toMatch(/feDisplacementMap[^>]*scale="0"/);

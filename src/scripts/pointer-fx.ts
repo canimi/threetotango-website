@@ -1,5 +1,5 @@
 /**
- * Pointer effects for fine pointers only: lamp glow, hero wall ripple, magnetic buttons, episode tilt.
+ * Pointer effects for fine pointers only: lamp glow, water rings, hero wall ripple, magnetic buttons, episode tilt.
  * One passive pointermove listener → one rAF tick. Reads (cached rects) happen before writes; writes are
  * transforms / CSS custom properties consumed by transforms, plus one SVG attribute while rippling.
  */
@@ -17,6 +17,36 @@ function start(): void {
   lamp.className = 'lamp-glow';
   lamp.setAttribute('aria-hidden', 'true');
   document.body.append(lamp);
+
+  // ---- water rings: pooled fixed-position discs, animated with WAAPI (transform/opacity only) ----
+  const RING_MS = 900;
+  const RING_EVERY = 120;
+  const RING_MIN_MOVE = 6;
+  const rings: HTMLElement[] = [];
+  const ringHost = document.createElement('div');
+  ringHost.className = 'ripple-rings';
+  ringHost.setAttribute('aria-hidden', 'true');
+  for (let n = 0; n < 8; n++) {
+    const r = document.createElement('i');
+    r.className = 'ripple-ring';
+    ringHost.append(r);
+    rings.push(r);
+  }
+  document.body.append(ringHost);
+  let ringIdx = 0;
+  let ringT = 0;
+  let ringX = -1;
+  let ringY = -1;
+  const spawnRing = (x: number, y: number) => {
+    const r = rings[ringIdx++ % rings.length];
+    r.animate(
+      [
+        { transform: `translate3d(${x}px, ${y}px, 0) scale(0)`, opacity: 0.7 },
+        { transform: `translate3d(${x}px, ${y}px, 0) scale(3)`, opacity: 0 },
+      ],
+      { duration: RING_MS, easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)' },
+    );
+  };
 
   // ---- wall ripple ----
   const wall = document.querySelector<HTMLElement>('[data-wall]');
@@ -59,6 +89,14 @@ function start(): void {
     // WRITES
     lamp.style.transform = `translate3d(${px}px, ${py}px, 0)`;
 
+    const now = performance.now();
+    if (now - ringT >= RING_EVERY && Math.hypot(px - ringX, py - ringY) >= RING_MIN_MOVE) {
+      if (ringX >= 0) spawnRing(px, py);
+      ringT = now;
+      ringX = px;
+      ringY = py;
+    }
+
     if (mag && magRect) {
       const [mx, my] = magnet(px, py, magRect);
       mag.style.setProperty('--mx', `${mx.toFixed(1)}px`);
@@ -75,7 +113,7 @@ function start(): void {
 
     // Ripple eases toward the pointer speed, then back to 0; the filter is detached when calm.
     if (wall && map) {
-      const target = heroVisible ? clamp(speed * 0.35, 0, 14) : 0;
+      const target = heroVisible ? clamp(speed * 0.6, 0, 24) : 0;
       ripple += (target - ripple) * (target > ripple ? 0.25 : 0.08);
       speed *= 0.85;
       const active = ripple > 0.2;
@@ -106,6 +144,10 @@ function start(): void {
       if (lastX >= 0) speed = Math.max(speed, Math.hypot(px - lastX, py - lastY));
       lastX = px;
       lastY = py;
+      if (ringX < 0) {
+        ringX = px;
+        ringY = py;
+      }
       root.classList.add('fx-pointer');
       schedule();
     },

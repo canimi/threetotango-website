@@ -229,12 +229,18 @@ video {
   z-index: 60;
   inset-block-start: 0;
   left: 0;
-  inline-size: 64vmax;
+  inline-size: 96vmax;
   aspect-ratio: 1;
-  margin-block-start: -32vmax;
-  margin-left: -32vmax;
+  margin-block-start: -48vmax;
+  margin-left: -48vmax;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(255 207 110 / 12%), rgb(255 207 110 / 4%) 50%, transparent);
+  background: radial-gradient(
+    closest-side,
+    rgb(255 207 110 / 34%),
+    rgb(255 207 110 / 18%) 22%,
+    rgb(255 207 110 / 7%) 55%,
+    transparent
+  );
   mix-blend-mode: screen;
   opacity: 0;
   transform: translate3d(-100vmax, -100vmax, 0);
@@ -244,6 +250,29 @@ video {
 }
 .fx-pointer .lamp-glow {
   opacity: 1;
+}
+/* Water rings: fixed overlay above page content, below modals (z 100); never takes pointer events. */
+.ripple-rings {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ripple-ring {
+  position: absolute;
+  inset-block-start: 0;
+  left: 0;
+  inline-size: 56px;
+  block-size: 56px;
+  margin: -28px 0 0 -28px;
+  box-sizing: border-box;
+  border: 1.5px solid rgb(255 207 110 / 38%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0) scale(0);
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 .btn[data-magnetic] {
   position: relative;
@@ -277,7 +306,8 @@ video {
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lamp-glow {
+  .lamp-glow,
+  .ripple-rings {
     display: none;
   }
 }
