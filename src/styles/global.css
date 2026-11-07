@@ -105,11 +105,15 @@ video {
   max-inline-size: 100%;
 }
 
+/* Content column: 85vw (max 1800px); phones keep 16px each side. */
 .container {
-  inline-size: 100%;
-  max-inline-size: var(--max-width);
+  inline-size: min(var(--max-width), 85vw);
   margin-inline: auto;
-  padding-inline: var(--gutter);
+}
+@media (max-width: 47.99rem) {
+  .container {
+    inline-size: calc(100% - 2 * var(--gutter-min));
+  }
 }
 
 .lede {
@@ -149,6 +153,12 @@ video {
   min-block-size: 3.5rem;
   padding-inline: 2rem;
   font-size: 1.2rem;
+}
+@media (max-width: 25rem) {
+  .btn-lg {
+    padding-inline: 1rem;
+    font-size: 1.08rem;
+  }
 }
 /* Quiet button for dark surfaces */
 .btn-ghost {
@@ -211,4 +221,63 @@ video {
 
 [hidden] {
   display: none !important;
+}
+
+/* ---- Pointer effects (only styled when pointer-fx runs: fine pointer, motion allowed) ---- */
+.lamp-glow {
+  position: fixed;
+  z-index: 60;
+  inset-block-start: 0;
+  left: 0;
+  inline-size: 64vmax;
+  aspect-ratio: 1;
+  margin-block-start: -32vmax;
+  margin-left: -32vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 207 110 / 12%), rgb(255 207 110 / 4%) 50%, transparent);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translate3d(-100vmax, -100vmax, 0);
+  transition: opacity 0.6s ease;
+  will-change: transform;
+  pointer-events: none;
+}
+.fx-pointer .lamp-glow {
+  opacity: 1;
+}
+.btn[data-magnetic] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translate(var(--mx, 0px), var(--my, 0px));
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.15s ease;
+}
+.btn[data-magnetic].is-magnet {
+  transition:
+    transform 0.12s linear,
+    background-color 0.15s ease;
+}
+.btn[data-magnetic]:active {
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) + 1px));
+}
+.btn[data-magnetic]::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 38%, rgb(255 246 220 / 55%) 50%, transparent 62%);
+  opacity: 0;
+  transform: translateX(calc(var(--sx, 50%) - 50%));
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.btn[data-magnetic].is-magnet::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lamp-glow {
+    display: none;
+  }
 }

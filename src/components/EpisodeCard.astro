@@ -23,6 +23,7 @@ const fresh = isNew(e.publishedAt);
     href={`/episodes/${e.slug}`}
     {...playerData(e, known)}
     aria-label={`${t('common.playEpisode')}: ${e.title}`}
+    data-tilt
   >
     {
       hasThumb ? (
@@ -40,6 +41,7 @@ const fresh = isNew(e.publishedAt);
         </span>
       )
     }
+    <span class="glare" aria-hidden="true"></span>
     {fresh && <span class="badge">{t('common.newBadge')}</span>}
     <span class="play" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
@@ -63,6 +65,38 @@ const fresh = isNew(e.publishedAt);
     overflow: hidden;
     background: var(--c-wall-2);
     isolation: isolate;
+  }
+  /* Pointer tilt (vars written by pointer-fx on fine pointers only). */
+  .thumb {
+    transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  :global(.is-tilting).thumb {
+    transition-duration: 0.08s;
+  }
+  .glare {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .glare::before {
+    content: '';
+    position: absolute;
+    inset-block-start: -60%;
+    left: -60%;
+    inline-size: 120%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 232 190 / 32%), rgb(255 207 110 / 8%) 55%, transparent);
+    transform: translate(var(--gx, 50%), var(--gy, 50%));
+  }
+  :global(.is-tilting).thumb .glare {
+    opacity: 1;
   }
   .thumb::after {
     content: '';

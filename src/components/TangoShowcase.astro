@@ -32,7 +32,7 @@ const trio = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
               <li><span class="n" aria-hidden="true">{i + 1}</span><span><strong>{s.title}</strong>{s.body}</span></li>
             ))}
           </ol>
-          <a class="btn btn-lg" href="/tango-me">{t('showcase.cta')}</a>
+          <a class="btn btn-lg" href="/tango-me" data-magnetic>{t('showcase.cta')}</a>
         </div>
         <div class="demo">
           {demo.before && demo.after ? (
