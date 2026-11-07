@@ -23,44 +23,118 @@ const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
   path={`/episodes/${e.slug}`}
   ogImage={e.thumbnailUrl || undefined}
 >
-  <div class="container wrap">
-    <h1>{e.title}</h1>
-    <p>{e.description}</p>
-    <p class="cast">
-      {t('episodes.starring')}:
-      {cast.map((c) => <a href={`/cats/${c}`}>{characters[c].name}</a>)}
-    </p>
-    <div class="player"><EpisodeCard episode={e} detailLink={false} /></div>
-    <p class="cta"><a class="btn" href="/tango-me">{t('cta.tangoFree')}</a></p>
+  <div class="container page">
+    <p class="back"><a href="/episodes">{t('episodes.all')}</a></p>
+    <div class="layout">
+      <div class="player"><EpisodeCard episode={e} size="mini" eager /></div>
+      <div class="info">
+        <h1>{e.title}</h1>
+        <p class="lede">{e.description}</p>
+        {cast.length > 0 && (
+          <>
+            <p class="cast-label">{t('episodes.starring')}</p>
+            <ul class="cast">
+              {cast.map((c) => (
+                <li>
+                  <a href={`/cats/${c}`} style={`--accent:${characters[c].color}`}>
+                    <img src={characters[c].face} width="40" height="40" alt="" loading="lazy" />
+                    {characters[c].name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <a class="btn btn-lg" href="/tango-me">{t('player.cta')}</a>
+      </div>
+    </div>
     <nav class="pn" aria-label={t('episodes.all')}>
-      {older ? <a href={`/episodes/${older.slug}`}>&larr; {t('episodes.prev')}: {older.title}</a> : <span />}
-      {newer ? <a href={`/episodes/${newer.slug}`}>{t('episodes.next')}: {newer.title} &rarr;</a> : <span />}
+      {older ? <a class="prev" href={`/episodes/${older.slug}`}><span>{t('episodes.prev')}</span>{older.title}</a> : <span />}
+      {newer ? <a class="next" href={`/episodes/${newer.slug}`}><span>{t('episodes.next')}</span>{newer.title}</a> : <span />}
     </nav>
   </div>
 </Base>
 
 <style>
-  .wrap {
-    padding-block: var(--space-4);
-    max-inline-size: 36rem;
+  .back {
+    margin: 0 0 var(--space-3);
+    font-weight: 600;
+  }
+  .layout {
+    display: grid;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  @media (min-width: 52rem) {
+    .layout {
+      grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+      gap: var(--space-5);
+    }
+  }
+  .player {
+    inline-size: min(100%, 22rem);
+    margin-inline: auto;
+  }
+  .player :global(.play) {
+    inline-size: 52px !important;
+    block-size: 52px !important;
+    inset-inline-start: 1rem !important;
+    inset-block-end: 1rem !important;
+  }
+  .player :global(.play svg) {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+  .lede {
+    margin-block: 0 var(--space-3);
+  }
+  .cast-label {
+    margin: 0 0 var(--space-1);
+    color: var(--c-paper-2);
   }
   .cast {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+  .cast a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 1rem 0.25rem 0.25rem;
+    border-radius: var(--radius-pill);
+    background: rgb(244 233 216 / 9%);
     font-weight: 600;
+    text-decoration: none;
   }
-  .player {
-    margin-block: var(--space-3);
-  }
-  .cta {
-    text-align: center;
+  .cast img {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--accent);
   }
   .pn {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-2);
-    margin-block-start: var(--space-3);
-    font-weight: 600;
+    margin-block-start: var(--space-5);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid rgb(244 233 216 / 12%);
+  }
+  .pn a {
+    display: grid;
+    gap: 0.2rem;
+    font: 600 1.1rem var(--font-display);
+    text-decoration: none;
+  }
+  .pn span {
+    font: 400 0.9rem var(--font-body);
+    color: var(--c-paper-2);
+  }
+  .next {
+    text-align: end;
   }
 </style>

@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import PlayerModal from '../components/PlayerModal.astro';
+import FloatingCta from '../components/FloatingCta.astro';
 import { t } from '../i18n/t';
 
 interface Props {
@@ -24,6 +26,7 @@ const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17322a" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -50,10 +53,12 @@ const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
   </head>
   <body>
     <a class="skip-link" href="#main">{t('meta.skip')}</a>
-    <Header />
+    <Header {path} />
     <main id="main">
       <slot />
     </main>
     <Footer />
+    <PlayerModal />
+    {path !== '/tango-me' && <FloatingCta />}
   </body>
 </html>

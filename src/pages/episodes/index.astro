@@ -8,14 +8,15 @@ const episodes = await getEpisodes();
 ---
 
 <Base title={`${t('episodes.pageTitle')} | ${t('brand.name')}`} description={t('episodes.pageDesc')} path="/episodes">
-  <div class="container wrap">
+  <div class="container page">
     <h1>{t('episodes.all')}</h1>
+    <p class="lede intro">{t('episodes.pageDesc')}</p>
     <EpisodeGrid episodes={episodes} />
   </div>
 </Base>
 
 <style>
-  .wrap {
-    padding-block: var(--space-4);
+  .intro {
+    margin-block: 0 var(--space-4);
   }
 </style>

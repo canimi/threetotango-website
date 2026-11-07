@@ -1,0 +1,260 @@
+---
+import { characters, characterIds } from '../data/characters';
+import { t } from '../i18n/t';
+---
+
+<dialog class="player" data-player-modal aria-labelledby="player-title">
+  <div class="shell">
+    <button type="button" class="close" data-player-close aria-label={t('player.close')}>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+    </button>
+    <div class="stage" data-player-stage></div>
+    <div class="info">
+      <h2 id="player-title" data-player-title></h2>
+      <p class="cast-label">{t('player.castLabel')}</p>
+      <ul class="cast">
+        {
+          characterIds.map((id) => (
+            <li data-cast-id={id} hidden>
+              <a href={`/cats/${id}`} style={`--accent:${characters[id].color}`}>
+                <img src={characters[id].face} width="40" height="40" alt="" loading="lazy" />
+                {characters[id].name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a class="btn btn-lg cta" href="/tango-me">{t('player.cta')}</a>
+      <p class="more">
+        <a data-player-details href="/episodes">{t('player.details')}</a>
+        <a data-player-external href="/episodes" target="_blank" rel="noopener" hidden
+          data-label-instagram={t('player.watchInstagram')}
+          data-label-youtube={t('player.watchYoutube')}></a>
+      </p>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-player-modal]');
+  if (dialog && typeof dialog.showModal === 'function') {
+    const stage = dialog.querySelector<HTMLElement>('[data-player-stage]')!;
+    const title = dialog.querySelector<HTMLElement>('[data-player-title]')!;
+    const details = dialog.querySelector<HTMLAnchorElement>('[data-player-details]')!;
+    const external = dialog.querySelector<HTMLAnchorElement>('[data-player-external]')!;
+    let opener: HTMLElement | null = null;
+
+    const open = (el: HTMLElement) => {
+      const d = el.dataset;
+      opener = el;
+      stage.replaceChildren();
+      if (d.player === 'youtube') {
+        const f = document.createElement('iframe');
+        f.src = d.src ?? '';
+        f.title = d.title ?? '';
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        stage.append(f);
+      } else if (d.player === 'mp4') {
+        const v = document.createElement('video');
+        v.src = d.src ?? '';
+        if (d.poster) v.poster = d.poster;
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        stage.append(v);
+      } else {
+        const a = document.createElement('a');
+        a.href = d.src ?? '';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.className = 'ig';
+        if (d.poster) {
+          const img = document.createElement('img');
+          img.src = d.poster;
+          img.alt = '';
+          a.append(img);
+        }
+        const s = document.createElement('span');
+        s.className = 'btn';
+        s.textContent = external.dataset.labelInstagram ?? '';
+        a.append(s);
+        stage.append(a);
+      }
+      title.textContent = d.title ?? '';
+      const cast = (d.cast ?? '').split(' ');
+      dialog.querySelectorAll<HTMLElement>('[data-cast-id]').forEach((li) => {
+        li.hidden = !cast.includes(li.dataset.castId ?? '');
+      });
+      dialog.querySelector<HTMLElement>('.cast-label')!.hidden = !cast.some(Boolean);
+      details.href = d.href ?? '/episodes';
+      details.hidden = location.pathname.replace(/\/$/, '') === d.href;
+      const ext = d.external ?? '';
+      external.hidden = !ext || d.player === 'instagram';
+      external.href = ext || '/episodes';
+      external.textContent = /instagram\.com/.test(ext)
+        ? (external.dataset.labelInstagram ?? '')
+        : (external.dataset.labelYoutube ?? '');
+      dialog.showModal();
+      dialog.querySelector<HTMLElement>('[data-player-close]')!.focus();
+    };
+
+    document.addEventListener('click', (ev) => {
+      const me = ev as MouseEvent;
+      if (me.defaultPrevented || me.button !== 0 || me.metaKey || me.ctrlKey || me.shiftKey || me.altKey) return;
+      const el = (ev.target as Element).closest<HTMLElement>('[data-player]');
+      if (!el || dialog.contains(el)) return;
+      ev.preventDefault();
+      open(el);
+    });
+    dialog.querySelector('[data-player-close]')!.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (ev) => {
+      if (ev.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      stage.replaceChildren();
+      opener?.focus();
+    });
+  }
+</script>
+
+<style>
+  .player {
+    inline-size: min(100% - 1.5rem, 58rem);
+    max-block-size: calc(100svh - 1.5rem);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-card);
+    background: var(--c-wall-2);
+    color: var(--c-paper);
+    box-shadow: 0 40px 80px -20px rgb(var(--c-shadow) / 90%);
+    overflow: auto;
+  }
+  .player::backdrop {
+    background: rgb(10 26 21 / 82%);
+    backdrop-filter: blur(6px);
+  }
+  .player[open] {
+    animation: pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+  }
+  .shell {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-2);
+  }
+  @media (min-width: 46rem) {
+    .shell {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3);
+    }
+  }
+  .close {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 0.75rem;
+    inset-inline-end: 0.75rem;
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-paper);
+    color: var(--c-ink);
+    cursor: pointer;
+  }
+  .stage {
+    block-size: min(72svh, 40rem);
+    aspect-ratio: 9 / 16;
+    max-inline-size: 100%;
+    justify-self: center;
+    border-radius: var(--radius-thumb);
+    overflow: hidden;
+    background: var(--c-wall);
+  }
+  @media (max-width: 46rem) {
+    .stage {
+      block-size: auto;
+      inline-size: min(100%, 50svh * 9 / 16);
+    }
+  }
+  .stage :global(iframe),
+  .stage :global(video),
+  .stage :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+  .stage :global(.ig) {
+    position: relative;
+    display: block;
+    block-size: 100%;
+  }
+  .stage :global(.ig .btn) {
+    position: absolute;
+    inset-inline: 1rem;
+    inset-block-end: 1rem;
+  }
+  .info {
+    padding-inline-end: var(--space-3);
+  }
+  h2 {
+    font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.3rem);
+    padding-inline-end: 2.5rem;
+  }
+  .cast-label {
+    margin: 0 0 var(--space-1);
+    color: var(--c-paper-2);
+  }
+  .cast {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+  .cast li[hidden] {
+    display: none;
+  }
+  .cast a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 1rem 0.25rem 0.25rem;
+    border-radius: var(--radius-pill);
+    background: rgb(244 233 216 / 9%);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .cast img {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .cast a:hover {
+    background: rgb(244 233 216 / 16%);
+  }
+  .more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-block: var(--space-3) 0;
+    font-weight: 600;
+  }
+  .more [hidden] {
+    display: none;
+  }
+</style>

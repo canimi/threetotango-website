@@ -7,76 +7,184 @@ import { t } from '../i18n/t';
 interface Props {
   episodes: Episode[];
   filters?: boolean;
+  layout?: 'rail' | 'grid';
 }
-const { episodes, filters = true } = Astro.props;
+const { episodes, filters = true, layout = 'grid' } = Astro.props;
+const rail = layout === 'rail';
 ---
 
 {
   episodes.length === 0 ? (
-    <p>{t('episodes.empty')}</p>
+    <p class="empty">{t('episodes.empty')}</p>
   ) : (
-    <>
-      {filters && (
-      <div class="chips" role="group" aria-label={t('episodes.filterLabel')}>
-        <button type="button" class="chip" data-filter="all" aria-pressed="true">
-          {t('common.all')}
-        </button>
-        {filterIds.map((id) => (
-          <button type="button" class="chip" data-filter={id} aria-pressed="false">
-            {characters[id].name}
-          </button>
-        ))}
-      </div>
+    <div class:list={['episodes', `is-${layout}`]} data-episodes>
+      {(filters || rail) && (
+        <div class="tools">
+          {filters && (
+            <div class="chips" role="group" aria-label={t('episodes.filterLabel')}>
+              <button type="button" class="chip" data-filter="all" aria-pressed="true">
+                {t('common.all')}
+              </button>
+              {filterIds.map((id) => (
+                <button type="button" class="chip" data-filter={id} aria-pressed="false" style={`--accent:${characters[id].color}`}>
+                  <img src={characters[id].face} width="28" height="28" alt="" loading="lazy" />
+                  {characters[id].name}
+                </button>
+              ))}
+            </div>
+          )}
+          {rail && (
+            <div class="arrows">
+              <button type="button" class="arrow" data-scroll="-1" aria-label={t('common.scrollPrev')}>
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+              <button type="button" class="arrow" data-scroll="1" aria-label={t('common.scrollNext')}>
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
       )}
-      <div class="grid" data-episode-grid>
-        {episodes.map((e) => (
-          <EpisodeCard episode={e} />
+      <div class="list" data-episode-grid tabindex={rail ? '0' : undefined} aria-label={rail ? t('episodes.title') : undefined} role={rail ? 'region' : undefined}>
+        {episodes.map((e, i) => (
+          <EpisodeCard episode={e} size={rail ? 'rail' : 'grid'} eager={rail && i < 4} />
         ))}
       </div>
-    </>
+    </div>
   )
 }
 
 <script>
-  const chips = document.querySelectorAll<HTMLButtonElement>('.chip[data-filter]');
-  chips.forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const f = chip.dataset.filter!;
-      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
-      document.querySelectorAll<HTMLElement>('[data-episode-grid] .ep').forEach((card) => {
-        const list = (card.dataset.characters ?? '').split(' ');
-        card.hidden = f !== 'all' && !list.includes(f);
-      });
-    }),
-  );
+  document.querySelectorAll<HTMLElement>('[data-episodes]').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('[data-episode-grid]')!;
+    const chips = root.querySelectorAll<HTMLButtonElement>('.chip[data-filter]');
+    chips.forEach((chip) =>
+      chip.addEventListener('click', () => {
+        const f = chip.dataset.filter!;
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        list.querySelectorAll<HTMLElement>('.ep').forEach((card) => {
+          const ids = (card.dataset.characters ?? '').split(' ');
+          card.hidden = f !== 'all' && !ids.includes(f);
+        });
+        list.scrollTo({ left: 0 });
+      }),
+    );
+    root.querySelectorAll<HTMLButtonElement>('[data-scroll]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const dir = Number(b.dataset.scroll) * (document.dir === 'rtl' ? -1 : 1);
+        list.scrollBy({ left: dir * list.clientWidth * 0.8, behavior: 'smooth' });
+      }),
+    );
+  });
 </script>
 
 <style>
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-block-end: var(--space-3);
+  }
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
-    margin-block-end: var(--space-3);
   }
   .chip {
-    padding-block: 0.4rem;
-    padding-inline: 1.1rem;
-    border: 2px solid var(--c-mustard);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.5rem;
+    padding-block: 0.25rem;
+    padding-inline: 1rem;
+    border: 0;
     border-radius: var(--radius-pill);
-    background: var(--c-cream);
-    color: var(--c-ink);
+    background: rgb(244 233 216 / 9%);
+    color: var(--c-paper);
     font: 600 1rem var(--font-body);
     cursor: pointer;
   }
+  .chip img {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    margin-inline-start: -0.7rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .chip:hover {
+    background: rgb(244 233 216 / 16%);
+  }
   .chip[aria-pressed='true'] {
-    background: var(--c-mustard);
+    background: var(--c-paper);
+    color: var(--c-ink);
   }
-  .grid {
+  .arrows {
+    display: flex;
+    gap: var(--space-1);
+  }
+  .arrow {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-    gap: var(--space-3);
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(244 233 216 / 9%);
+    color: var(--c-paper);
+    cursor: pointer;
   }
-  .grid :global(.ep[hidden]) {
+  .arrow:hover {
+    background: rgb(244 233 216 / 18%);
+  }
+  .is-grid .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(11.5rem, 42vw), 1fr));
+    gap: var(--space-4) var(--space-3);
+  }
+  .is-rail .list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(10.5rem, 42vw, 14.5rem);
+    gap: var(--space-3);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    padding-inline: var(--gutter);
+    margin-inline: calc(var(--gutter) * -1);
+    padding-block-end: var(--space-2);
+    scrollbar-width: none;
+  }
+  .is-rail .list::-webkit-scrollbar {
     display: none;
+  }
+  .is-rail .list > :global(.ep) {
+    scroll-snap-align: start;
+  }
+  .list :global(.ep[hidden]) {
+    display: none;
+  }
+  @media (max-width: 40rem) {
+    .arrows {
+      display: none;
+    }
+    .tools {
+      margin-inline: calc(var(--gutter) * -1);
+    }
+    .chips {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-inline: var(--gutter);
+      padding-block: 4px;
+      scrollbar-width: none;
+    }
+    .chip {
+      flex: none;
+    }
+    .is-rail .list {
+      gap: var(--space-2);
+    }
   }
 </style>
