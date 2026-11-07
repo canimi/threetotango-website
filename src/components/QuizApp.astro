@@ -5,7 +5,7 @@ import { t } from '../i18n/t';
 ---
 
 <div
-  class="quiz"
+  class="quiz paper"
   data-quiz
   data-questions={JSON.stringify(questions)}
   data-label-progress={t('quiz.progress')}
@@ -43,7 +43,7 @@ import { t } from '../i18n/t';
 </div>
 
 <script>
-  import { scoreQuiz } from '../lib/quiz-score';
+  import { scoreQuiz, parseStart } from '../lib/quiz-score';
   import type { QuizQuestion } from '../data/quiz';
 
   const root = document.querySelector<HTMLElement>('[data-quiz]');
@@ -92,6 +92,15 @@ import { t } from '../i18n/t';
       play.hidden = false;
       render();
     });
+    // Coming from the inline first question on the home page: resume at question 2.
+    const first = parseStart(location.search, qs);
+    if (first !== null) {
+      picks.push(first);
+      start.hidden = true;
+      play.hidden = false;
+      render();
+    }
+
     back.addEventListener('click', () => {
       if (picks.length > 0) {
         picks.pop();
@@ -105,27 +114,48 @@ import { t } from '../i18n/t';
   .quiz {
     max-inline-size: 40rem;
     margin-inline: auto;
+    padding: clamp(1.5rem, 1rem + 3vw, 3rem);
   }
   .start {
     text-align: center;
+  }
+  .start p {
+    font-size: 1.15rem;
   }
   .start ul {
     list-style: none;
     padding: 0;
   }
   .progress-text {
-    margin: 0;
+    margin: 0 0 0.4rem;
     color: var(--c-ink-2);
     font-weight: 600;
   }
   .bar {
+    appearance: none;
     inline-size: 100%;
-    block-size: 0.6rem;
-    accent-color: var(--c-mustard);
+    block-size: 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgb(59 42 26 / 12%);
+  }
+  .bar::-webkit-progress-bar {
+    background: rgb(59 42 26 / 12%);
+  }
+  .bar::-webkit-progress-value {
+    background: var(--c-mustard);
+    border-radius: 999px;
+  }
+  .bar::-moz-progress-bar {
+    background: var(--c-mustard);
+    border-radius: 999px;
   }
   .q {
     font-family: var(--font-display);
     font-weight: 600;
+    font-size: clamp(1.4rem, 1.2rem + 1vw, 1.8rem);
+    color: var(--c-ink);
     margin-block: var(--space-3) var(--space-2);
   }
   .q:focus {
@@ -135,19 +165,21 @@ import { t } from '../i18n/t';
     display: grid;
     gap: var(--space-1);
   }
-  .answer {
+  .answers :global(.answer) {
     text-align: start;
-    padding: var(--space-2);
-    border: 2px solid var(--c-ink);
-    border-radius: var(--radius-card);
+    padding: 0.95rem 1.25rem;
+    border: 0;
+    border-radius: 18px;
     background: var(--c-cream);
+    box-shadow: inset 0 0 0 2px rgb(59 42 26 / 14%);
     color: var(--c-ink);
-    font: inherit;
+    font: 600 1rem/1.4 var(--font-body);
     cursor: pointer;
   }
-  .answer:hover,
-  .answer:focus-visible {
+  .answers :global(.answer:hover),
+  .answers :global(.answer:focus-visible) {
     background: var(--c-mustard);
+    box-shadow: inset 0 0 0 2px var(--c-mustard);
   }
   .back {
     margin-block-start: var(--space-2);
@@ -155,6 +187,7 @@ import { t } from '../i18n/t';
     border: 0;
     color: var(--c-ink-2);
     font: inherit;
+    font-weight: 600;
     text-decoration: underline;
     cursor: pointer;
   }

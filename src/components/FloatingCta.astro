@@ -1,0 +1,88 @@
+---
+import { t } from '../i18n/t';
+---
+
+<div class="fcta-sentinel" data-fcta-sentinel aria-hidden="true"></div>
+<div class="fcta" data-fcta hidden>
+  <a class="btn btn-lg" href="/tango-me">{t('cta.floating')}</a>
+  <button type="button" class="x" data-fcta-close aria-label={t('cta.floatingDismiss')}>
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+  </button>
+</div>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-fcta]');
+  const sentinel = document.querySelector<HTMLElement>('[data-fcta-sentinel]');
+  const KEY = 'ttw-fcta-hidden';
+  let dismissed = false;
+  try {
+    dismissed = sessionStorage.getItem(KEY) === '1';
+  } catch {
+    /* storage blocked */
+  }
+  if (box && sentinel && !dismissed && 'IntersectionObserver' in window) {
+    box.hidden = false;
+    new IntersectionObserver(([e]) => {
+      const past = !e.isIntersecting && e.boundingClientRect.top < 0;
+      box.classList.toggle('show', past);
+    }).observe(sentinel);
+    box.querySelector('[data-fcta-close]')!.addEventListener('click', () => {
+      box.remove();
+      try {
+        sessionStorage.setItem(KEY, '1');
+      } catch {
+        /* storage blocked */
+      }
+    });
+  }
+</script>
+
+<style>
+  .fcta-sentinel {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 1px;
+    block-size: 100svh;
+    pointer-events: none;
+  }
+  .fcta {
+    display: none;
+  }
+  @media (max-width: 52rem) {
+    .fcta {
+      position: fixed;
+      z-index: 40;
+      inset-inline: 0.75rem;
+      inset-block-end: max(0.75rem, env(safe-area-inset-bottom));
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(calc(100% + 1.5rem));
+      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    }
+    .fcta[hidden] {
+      display: none;
+    }
+    .fcta.show {
+      transform: none;
+    }
+    .fcta .btn {
+      flex: 1;
+      box-shadow: 0 12px 30px -8px rgb(var(--c-shadow) / 85%), 0 0 0 4px rgb(23 50 42 / 60%);
+    }
+    .x {
+      display: grid;
+      place-items: center;
+      inline-size: 2.75rem;
+      block-size: 2.75rem;
+      flex: none;
+      border: 0;
+      border-radius: 50%;
+      background: var(--c-wall-2);
+      color: var(--c-paper);
+      box-shadow: 0 8px 20px -6px rgb(var(--c-shadow) / 85%);
+      cursor: pointer;
+    }
+  }
+</style>

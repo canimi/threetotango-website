@@ -1,21 +1,39 @@
 ---
 import Base from '../../layouts/Base.astro';
 import QuizApp from '../../components/QuizApp.astro';
+import { characters } from '../../data/characters';
 import { t } from '../../i18n/t';
+
+const faces = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
 ---
 
 <Base title={`${t('quiz.pageTitle')} | ${t('brand.name')}`} description={t('quiz.pageDesc')} path="/quiz">
-  <div class="container wrap">
+  <div class="container page">
+    <div class="faces" aria-hidden="true">
+      {faces.map((c) => <img src={c.face} width="400" height="400" alt="" style={`--accent:${c.color}`} />)}
+    </div>
     <h1>{t('quiz.title')}</h1>
     <QuizApp />
   </div>
 </Base>
 
 <style>
-  .wrap {
-    padding-block: var(--space-4);
+  .faces {
+    display: flex;
+    justify-content: center;
+    margin-block-end: var(--space-2);
+  }
+  .faces img {
+    inline-size: 4.5rem;
+    block-size: 4.5rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--c-wall), 0 0 0 7px var(--accent);
+  }
+  .faces img + img {
+    margin-inline-start: -0.5rem;
   }
   h1 {
     text-align: center;
+    margin-block-end: var(--space-4);
   }
 </style>

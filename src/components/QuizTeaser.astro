@@ -1,0 +1,99 @@
+---
+import { questions } from '../data/quiz';
+import { characters } from '../data/characters';
+import { t } from '../i18n/t';
+
+const q = questions[0];
+const faces = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
+---
+
+<section class="quiz-teaser container" id="quiz" aria-labelledby="quiz-title">
+  <div class="card paper">
+    <div class="head">
+      <div class="faces" aria-hidden="true">
+        {faces.map((c) => <img src={c.face} width="400" height="400" alt="" loading="lazy" style={`--accent:${c.color}`} />)}
+      </div>
+      <h2 id="quiz-title">{t('quizTeaser.title')}</h2>
+      <p class="sub">{t('quizTeaser.sub')}</p>
+    </div>
+    <div class="q">
+      <p class="count">{t('quizTeaser.firstQuestion')}</p>
+      <p class="question">{q.text}</p>
+      <ul class="answers">
+        {q.answers.map((a, i) => (
+          <li><a class="answer" href={`/quiz?start=${i}`}>{a.text}</a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .quiz-teaser {
+    padding-block: var(--space-5) var(--space-4);
+  }
+  .card {
+    display: grid;
+    gap: var(--space-4);
+    padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
+  }
+  @media (min-width: 56rem) {
+    .card {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      align-items: center;
+      gap: var(--space-5);
+    }
+  }
+  .faces {
+    display: flex;
+    margin-block-end: var(--space-3);
+  }
+  .faces img {
+    inline-size: 4rem;
+    block-size: 4rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--c-paper), 0 0 0 6px var(--accent);
+  }
+  .faces img + img {
+    margin-inline-start: -0.6rem;
+  }
+  h2 {
+    color: var(--c-ink);
+  }
+  .sub {
+    margin: 0;
+    color: var(--c-ink-2);
+    font-size: 1.1rem;
+  }
+  .count {
+    margin: 0 0 0.25rem;
+    color: var(--c-ink-2);
+    font-weight: 600;
+  }
+  .question {
+    margin: 0 0 var(--space-2);
+    font: 600 1.45rem/1.25 var(--font-display);
+  }
+  .answers {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .answer {
+    display: block;
+    padding: 0.95rem 1.25rem;
+    border-radius: 18px;
+    background: var(--c-cream);
+    box-shadow: inset 0 0 0 2px rgb(59 42 26 / 14%);
+    color: var(--c-ink);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .answer:hover {
+    background: var(--c-mustard);
+    box-shadow: inset 0 0 0 2px var(--c-mustard);
+  }
+</style>

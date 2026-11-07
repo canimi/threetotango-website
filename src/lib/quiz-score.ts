@@ -13,3 +13,14 @@ export function scoreQuiz(answerIdx: number[], qs: QuizQuestion[] = questions): 
   });
   return quizCats.reduce((best, cat) => (totals[cat] > totals[best] ? cat : best), quizCats[0]);
 }
+
+/**
+ * Reads the inline-quiz first answer from a query string (`?start=<answerIdx>`).
+ * Returns the answer index for question 1, or null if missing or out of range.
+ */
+export function parseStart(search: string, qs: QuizQuestion[] = questions): number | null {
+  const raw = new URLSearchParams(search).get('start');
+  if (raw === null || !/^\d+$/.test(raw)) return null;
+  const idx = Number(raw);
+  return qs.length > 0 && idx < qs[0].answers.length ? idx : null;
+}

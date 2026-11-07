@@ -27,25 +27,20 @@ const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').
     <h1>{verdict}</h1>
     <p class="nick">{c.nickname}</p>
     <div class="portrait">
-    <img
-        src={c.portrait}
-        width="480"
-        height="480"
-        alt={`${t('cats.portraitAlt')} ${c.name}`}
-      />
+      <img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} />
     </div>
     <ul class="lines">{lines.map((l) => <li>{l}</li>)}</ul>
 
-    <a class="btn cta" href="/tango-me">{t('cta.tangoFree')}</a>
+    <a class="btn btn-lg cta" href="/tango-me">{t('cta.tangoFreeLong')}</a>
     <p class="hint">{t('quiz.shareHint')}</p>
 
     <div class="actions" data-share data-url={shareUrl} data-text={`${t('quiz.shareText')} ${c.name}.`} data-copied={t('quiz.copied')}>
-      <button type="button" class="btn" data-copy>{t('quiz.copyLink')}</button>
-      <button type="button" class="btn" data-native hidden>{t('quiz.share')}</button>
+      <button type="button" class="btn btn-ghost" data-copy>{t('quiz.copyLink')}</button>
+      <button type="button" class="btn btn-ghost" data-native hidden>{t('quiz.share')}</button>
     </div>
     <p class="status" role="status" data-status></p>
 
-    <p><a href="/quiz">{t('quiz.retake')}</a></p>
+    <p class="retake"><a href="/quiz">{t('quiz.retake')}</a></p>
   </div>
 </Base>
 
@@ -74,57 +69,53 @@ const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').
 
 <style>
   .wrap {
-    padding-block: var(--space-4);
+    padding-block: var(--space-4) var(--space-5);
     text-align: center;
   }
   .kicker {
     margin: 0;
-    color: var(--c-ink-2);
+    color: var(--c-paper-2);
     font-weight: 600;
   }
   h1 {
-    font-size: clamp(2.5rem, 10vw, 4rem);
+    font-size: clamp(2.8rem, 2rem + 4vw, 4.8rem);
     margin-block: var(--space-1) 0;
   }
   .nick {
-    margin: 0 0 var(--space-2);
-    font-family: var(--font-display);
-    font-weight: 600;
-    border-block-end: 4px solid var(--accent);
-    display: inline-block;
+    margin: 0 0 var(--space-4);
+    font: 600 1.4rem var(--font-display);
+    color: var(--accent);
   }
   .portrait {
     margin-inline: auto;
-    inline-size: min(100%, 20rem);
+    inline-size: min(70%, 18rem);
+    aspect-ratio: 3 / 4;
     overflow: hidden;
-    border-radius: var(--radius-card);
-    border: 4px solid var(--accent);
+    border-radius: 999px 999px 26px 26px;
+    background: var(--c-caddy);
+    box-shadow: 0 0 0 8px var(--c-wall), 0 0 0 11px var(--accent), 0 40px 70px -30px rgb(var(--c-shadow) / 90%);
   }
   .portrait img {
     display: block;
     inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 1;
+    block-size: 100%;
     object-fit: cover;
-    object-position: var(--pos);
-    transform: scale(var(--zoom, 1));
-    transform-origin: var(--pos);
   }
   .lines {
     list-style: none;
     padding: 0;
-    max-inline-size: 36rem;
+    max-inline-size: 34rem;
     margin-inline: auto;
-    margin-block: var(--space-3);
+    margin-block: var(--space-4);
+    font-size: 1.15rem;
   }
   .lines li {
-    margin-block-end: var(--space-1);
-  }
-  .cta {
-    font-size: 1.25rem;
+    margin-block-end: var(--space-2);
   }
   .hint {
-    color: var(--c-ink-2);
+    color: var(--c-paper-2);
+    max-inline-size: 30rem;
+    margin-inline: auto;
   }
   .actions {
     display: flex;
@@ -132,14 +123,12 @@ const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').
     gap: var(--space-1);
     justify-content: center;
   }
-  button.btn {
-    border: 0;
-    font-size: 1rem;
-    cursor: pointer;
-  }
   .status {
     min-block-size: 1.5rem;
-    color: var(--c-ink-2);
+    color: var(--c-paper-2);
+  }
+  .retake {
+    font-weight: 600;
   }
   [hidden] {
     display: none !important;
