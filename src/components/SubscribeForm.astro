@@ -1,0 +1,234 @@
+---
+import { t } from '../i18n/t';
+
+interface Props {
+  source: 'gift' | 'tango-me' | 'footer';
+}
+const { source } = Astro.props;
+const errors = JSON.stringify({
+  invalid_email: t('subscribe.errors.invalid_email'),
+  rate_limited: t('subscribe.errors.rate_limited'),
+  wrong_code: t('subscribe.errors.wrong_code'),
+  expired: t('subscribe.errors.expired'),
+  locked: t('subscribe.errors.locked'),
+  server: t('subscribe.errors.server'),
+});
+---
+
+<div
+  class="sub-form"
+  data-subscribe
+  data-source={source}
+  data-errors={errors}
+  data-sending={t('subscribe.sending')}
+  data-verifying={t('subscribe.verifying')}
+  data-submit={t('subscribe.submit')}
+  data-verify={t('subscribe.verify')}
+  data-resent={t('subscribe.resent')}
+>
+  <noscript><p class="note">{t('subscribe.noscript')}</p></noscript>
+
+  <form class="step" data-step-email novalidate hidden>
+    <label for={`email-${source}`}>{t('subscribe.emailLabel')}</label>
+    <div class="row">
+      <input
+        id={`email-${source}`}
+        name="email"
+        type="email"
+        inputmode="email"
+        autocomplete="email"
+        placeholder={t('subscribe.emailPlaceholder')}
+        required
+      />
+      <button type="submit" class="btn" data-email-btn>{t('subscribe.submit')}</button>
+    </div>
+  </form>
+
+  <form class="step" data-step-code novalidate hidden>
+    <p class="intro">{t('subscribe.codeIntro')} <strong data-email-shown></strong></p>
+    <label for={`code-${source}`}>{t('subscribe.codeLabel')}</label>
+    <div class="row">
+      <input
+        id={`code-${source}`}
+        name="code"
+        type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        required
+      />
+      <button type="submit" class="btn" data-code-btn>{t('subscribe.verify')}</button>
+    </div>
+    <p class="links">
+      <button type="button" class="link" data-resend>{t('subscribe.resend')}</button>
+      <button type="button" class="link" data-change>{t('subscribe.changeEmail')}</button>
+    </p>
+  </form>
+
+  <div class="step done" data-step-done hidden tabindex="-1">
+    <p class="done-title">{t('subscribe.successTitle')}</p>
+    <p>{t('subscribe.successBody')}</p>
+  </div>
+
+  <p class="msg" data-msg role="alert" hidden></p>
+</div>
+
+<script>
+  import { api } from '../lib/api';
+  import { isValidEmail, isValidCode } from '../lib/validate';
+
+  document.querySelectorAll<HTMLElement>('[data-subscribe]').forEach((root) => {
+    const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const source = root.dataset.source as 'gift' | 'tango-me' | 'footer';
+    const errors: Record<string, string> = JSON.parse(root.dataset.errors ?? '{}');
+    const emailForm = q<HTMLFormElement>('[data-step-email]');
+    const codeForm = q<HTMLFormElement>('[data-step-code]');
+    const done = q('[data-step-done]');
+    const msg = q('[data-msg]');
+    const emailInput = emailForm.elements.namedItem('email') as HTMLInputElement;
+    const codeInput = codeForm.elements.namedItem('code') as HTMLInputElement;
+    const emailBtn = q<HTMLButtonElement>('[data-email-btn]');
+    const codeBtn = q<HTMLButtonElement>('[data-code-btn]');
+    const resendBtn = q<HTMLButtonElement>('[data-resend]');
+    let email = '';
+
+    const say = (text: string) => {
+      msg.textContent = text;
+      msg.hidden = text === '';
+    };
+    const show = (step: 'email' | 'code' | 'done', focus = true) => {
+      emailForm.hidden = step !== 'email';
+      codeForm.hidden = step !== 'code';
+      done.hidden = step !== 'done';
+      say('');
+      if (!focus) return;
+      if (step === 'email') emailInput.focus();
+      if (step === 'code') codeInput.focus();
+      if (step === 'done') done.focus();
+    };
+    const busy = (btn: HTMLButtonElement, on: boolean, idle: string, working: string) => {
+      btn.disabled = on;
+      btn.textContent = on ? working : idle;
+    };
+
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (emailBtn.disabled) return;
+      const value = emailInput.value.trim();
+      if (!isValidEmail(value)) return say(errors.invalid_email);
+      busy(emailBtn, true, root.dataset.submit!, root.dataset.sending!);
+      const res = await api.subscribe(value, source);
+      busy(emailBtn, false, root.dataset.submit!, root.dataset.sending!);
+      if (!res.ok) return say(errors[res.error]);
+      email = value;
+      q('[data-email-shown]').textContent = email;
+      codeInput.value = '';
+      show('code');
+    });
+
+    codeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (codeBtn.disabled) return;
+      const code = codeInput.value.trim();
+      if (!isValidCode(code)) return say(errors.wrong_code);
+      busy(codeBtn, true, root.dataset.verify!, root.dataset.verifying!);
+      const res = await api.verify(email, code);
+      busy(codeBtn, false, root.dataset.verify!, root.dataset.verifying!);
+      if (!res.ok) return say(errors[res.error]);
+      show('done');
+    });
+
+    resendBtn.addEventListener('click', async () => {
+      if (resendBtn.disabled) return;
+      resendBtn.disabled = true;
+      const res = await api.subscribe(email, source);
+      resendBtn.disabled = false;
+      say(res.ok ? root.dataset.resent! : errors[res.error]);
+    });
+
+    q('[data-change]').addEventListener('click', () => show('email'));
+
+    show('email', false);
+  });
+</script>
+
+<style>
+  .sub-form {
+    max-inline-size: 30rem;
+    margin-inline: auto;
+    text-align: start;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-block-end: var(--space-1);
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  input {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    padding-block: 0.65rem;
+    padding-inline: 1rem;
+    border: 2px solid var(--c-ink-2);
+    border-radius: var(--radius-pill);
+    background: var(--c-cream);
+    color: var(--c-ink);
+    font: inherit;
+  }
+  input:focus-visible,
+  .link:focus-visible,
+  .btn:focus-visible {
+    outline: 3px solid var(--c-ink);
+    outline-offset: 2px;
+  }
+  .btn {
+    border: 0;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .intro {
+    margin-block: 0 var(--space-2);
+  }
+  .links {
+    display: flex;
+    gap: var(--space-3);
+    margin-block: var(--space-2) 0;
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--c-ink);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .msg {
+    margin-block: var(--space-2) 0;
+    font-weight: 600;
+  }
+  .done {
+    text-align: center;
+  }
+  .done:focus {
+    outline: none;
+  }
+  .done-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-block: 0 var(--space-1);
+  }
+  .note {
+    margin: 0;
+  }
+</style>

@@ -76,7 +76,8 @@
     "title": "Weekly report from Luka",
     "sub": "She thinks you're a suspect.",
     "body": "One short email a week: new episodes, behind-the-scenes, and a free GIF pack as a thank you.",
-    "cta": "Get the free GIF"
+    "cta": "Get the free GIF",
+    "seeGift": "See what is in the free gift"
   },
   "bts": {
     "teaserTitle": "Behind the scenes",
@@ -170,5 +171,41 @@
         "line3": "You rarely react. When you do, people remember it for years."
       }
     }
+  },
+  "subscribe": {
+    "emailLabel": "Your email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Send my code",
+    "sending": "Sending...",
+    "codeIntro": "We sent a 6-digit code to",
+    "codeLabel": "6-digit code",
+    "verify": "Unlock my gift",
+    "verifying": "Checking...",
+    "resend": "Resend code",
+    "resent": "A new code is on its way.",
+    "changeEmail": "Change email",
+    "successTitle": "Check your inbox — your gift is on its way",
+    "successBody": "Can't see it in a minute? Look in spam or promotions.",
+    "noscript": "Please enable JavaScript to sign up. The form needs it to send your code.",
+    "errors": {
+      "invalid_email": "That email doesn't look right. Check for typos and try again.",
+      "rate_limited": "Too many codes requested for this email. Wait an hour, then try again.",
+      "wrong_code": "That code isn't right. Check the email and try again.",
+      "expired": "That code has expired. Tap \"Resend code\" for a fresh one.",
+      "locked": "Too many wrong tries. Request a new code to continue.",
+      "server": "Something went wrong on our side. Please try again in a moment."
+    }
+  },
+  "gift": {
+    "pageTitle": "Your free Three To Tango gift",
+    "pageDesc": "Join the weekly report from Luka and get a free animated GIF and phone wallpapers.",
+    "title": "A free gift from the household",
+    "sub": "Join the weekly report from Luka. The cats insist you take something on your way in.",
+    "previewAlt": "Preview of the free Three To Tango GIF and phone wallpapers",
+    "youGet": "What you get",
+    "item1": "An animated Three To Tango GIF, made for your chats",
+    "item2": "Phone wallpapers with the whole household on them",
+    "item3": "The weekly report from Luka. She thinks you're a suspect.",
+    "unsubscribe": "One short email a week. Unsubscribe anytime, with one click."
   }
 }

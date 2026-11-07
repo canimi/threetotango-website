@@ -4,6 +4,7 @@ import Hero from '../components/Hero.astro';
 import CharacterCard from '../components/CharacterCard.astro';
 import EpisodeGrid from '../components/EpisodeGrid.astro';
 import BeforeAfter from '../components/BeforeAfter.astro';
+import SubscribeForm from '../components/SubscribeForm.astro';
 import { characterIds } from '../data/characters';
 import { latestWithHero } from '../lib/episodes';
 import { getEpisodes, basename } from '../lib/site-episodes';
@@ -52,7 +53,8 @@ const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
     <h2>{t('newsletter.title')}</h2>
     <p class="lead">{t('newsletter.sub')}</p>
     <p class="sub">{t('newsletter.body')}</p>
-    <a class="btn" href="/gift">{t('newsletter.cta')}</a>
+    <SubscribeForm source="footer" />
+    <p class="gift-link"><a href="/gift">{t('newsletter.seeGift')}</a></p>
   </section>
 
   <section class="container block bts">
@@ -94,6 +96,9 @@ const latestHref = latest ? `/episodes/${latest.slug}` : '/episodes';
   .center {
     text-align: center;
     margin-block-start: var(--space-3);
+  }
+  .gift-link {
+    margin-block-start: var(--space-2);
   }
   .final,
   .newsletter {

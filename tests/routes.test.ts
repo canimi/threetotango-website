@@ -18,6 +18,7 @@ describe('built routes', () => {
     'behind-the-scenes/index.html',
     'links/index.html',
     'privacy/index.html',
+    'gift/index.html',
     'contact/index.html',
     '404.html',
     ...fixture.map((e) => `episodes/${e.slug}/index.html`),
@@ -45,6 +46,22 @@ describe('built routes', () => {
     it('links quiz, gift and behind the scenes', () => {
       for (const h of ['/quiz', '/gift', '/behind-the-scenes'])
         expect(page()).toContain(`href="${h}"`);
+    });
+  });
+
+  describe('gift and subscribe', () => {
+    it('gift page has the form, preview and unsubscribe line', () => {
+      const p = html('gift/index.html');
+      expect(p).toContain('data-source="gift"');
+      expect(p).toContain('autocomplete="one-time-code"');
+      expect(p).toContain('inputmode="numeric"');
+      expect(p).toContain('/img/gift/preview.webp');
+      expect(p).toMatch(/width="960"[^>]*height="540"|height="540"[^>]*width="960"/);
+      expect(p).toContain('Unsubscribe anytime');
+      expect(p).toContain('Check your inbox — your gift is on its way');
+    });
+    it('home newsletter section embeds the footer-source form', () => {
+      expect(html('index.html')).toContain('data-source="footer"');
     });
   });
 
