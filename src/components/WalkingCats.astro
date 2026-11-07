@@ -1,0 +1,119 @@
+---
+import { walkSprites, type WalkSprite } from '../lib/cast-assets';
+
+interface Props {
+  /** Injectable for tests; defaults to the build-time filesystem check. */
+  sprites?: WalkSprite[];
+}
+const { sprites = walkSprites() } = Astro.props;
+const H = 44; // rendered height inside the 64px header
+const style = (s: WalkSprite) => {
+  const w = Math.round((s.frameWidth * H) / s.frameHeight);
+  return [
+    `--w:${w}px`,
+    `--h:${H}px`,
+    `--strip:${w * s.frames}px`,
+    `--frames:${s.frames}`,
+    `--gait:${(s.frames / s.fps).toFixed(3)}s`,
+    `--sheet:url(${s.src})`,
+  ].join(';');
+};
+---
+
+{
+  sprites.length > 0 && (
+    <div class="walkers" data-walkers aria-hidden="true">
+      {sprites.map((s) => (
+        <span class="walker" data-walker={s.id} style={style(s)}><i /></span>
+      ))}
+    </div>
+  )
+}
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-walkers]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (box && !reduce.matches) {
+    const cats = Array.from(box.querySelectorAll<HTMLElement>('[data-walker]'));
+    let i = 0;
+    let timer = 0;
+    const walk = () => {
+      if (document.hidden) return;
+      const cat = cats[i % cats.length];
+      i++;
+      cat.classList.remove('go');
+      void cat.offsetWidth; // restart the crossing animation on this one element
+      cat.classList.add('go');
+    };
+    cats.forEach((c) => c.addEventListener('animationend', (e) => e.animationName.includes('cross') && c.classList.remove('go')));
+    const run = () => {
+      clearInterval(timer);
+      timer = window.setInterval(walk, 10000);
+    };
+    document.addEventListener('visibilitychange', () => {
+      box.classList.toggle('paused', document.hidden);
+      if (document.hidden) clearInterval(timer);
+      else run();
+    });
+    window.setTimeout(() => {
+      walk();
+      run();
+    }, 2500);
+  }
+</script>
+
+<style>
+  .walkers {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .walker {
+    position: absolute;
+    inset-block-end: 4px;
+    left: 0;
+    inline-size: var(--w);
+    block-size: var(--h);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(calc(var(--w) * -1));
+  }
+  /* The gait moves a strip inside a one-frame window: transform only, no repaint. */
+  .walker i {
+    display: block;
+    inline-size: var(--strip);
+    block-size: var(--h);
+    background: var(--sheet) 0 0 / var(--strip) var(--h) no-repeat;
+  }
+  .walker.go {
+    opacity: 0.9;
+    animation: cross 7s linear forwards;
+  }
+  .walker.go i {
+    animation: gait var(--gait) steps(var(--frames)) infinite;
+  }
+  .paused .walker,
+  .paused .walker i {
+    animation-play-state: paused;
+  }
+  @keyframes gait {
+    to {
+      transform: translateX(calc(var(--strip) * -1));
+    }
+  }
+  @keyframes cross {
+    from {
+      transform: translateX(calc(var(--w) * -1));
+    }
+    to {
+      transform: translateX(100vw);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .walkers {
+      display: none;
+    }
+  }
+</style>

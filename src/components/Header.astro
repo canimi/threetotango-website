@@ -1,5 +1,6 @@
 ---
 import { t } from '../i18n/t';
+import WalkingCats from './WalkingCats.astro';
 
 interface Props {
   path: string;
@@ -15,6 +16,7 @@ const current = (href: string) => path === href || path.startsWith(`${href}/`);
 
 <div class="header-sentinel" data-header-sentinel aria-hidden="true"></div>
 <header class="site-header" data-site-header>
+  <WalkingCats />
   <div class="container bar">
     <a class="wordmark" href="/" aria-label={t('nav.home')}>Three <span class="to">To</span> Tango</a>
     <nav class="nav-wide" aria-label={t('nav.main')}>
@@ -22,7 +24,7 @@ const current = (href: string) => path === href || path.startsWith(`${href}/`);
         {links.map((l) => <li><a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a></li>)}
       </ul>
     </nav>
-    <a class="btn head-cta" href="/tango-me">
+    <a class="btn head-cta" href="/tango-me" data-magnetic>
       <span class="long">{t('cta.tangoFree')}</span>
       <span class="short">{t('cta.tangoCompact')}</span>
     </a>
@@ -73,6 +75,8 @@ const current = (href: string) => path === href || path.startsWith(`${href}/`);
     border-block-end-color: rgb(255 207 110 / 14%);
   }
   .bar {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -127,9 +131,10 @@ const current = (href: string) => path === href || path.startsWith(`${href}/`);
     color: var(--c-lamp);
   }
   .head-cta {
-    min-block-size: 2.6rem;
+    min-block-size: 44px;
     padding-inline: 1.2rem;
     font-size: 1rem;
+    white-space: nowrap;
   }
   .short {
     display: none;
@@ -204,9 +209,18 @@ const current = (href: string) => path === href || path.startsWith(`${href}/`);
       display: inline;
     }
     .head-cta {
-      min-block-size: 2.4rem;
+      min-block-size: 44px;
       padding-inline: 0.95rem;
       font-size: 0.95rem;
+    }
+  }
+  @media (max-width: 23.5rem) {
+    .wordmark {
+      font-size: 1.05rem;
+    }
+    .head-cta {
+      padding-inline: 0.8rem;
+      font-size: 0.9rem;
     }
   }
 </style>
