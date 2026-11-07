@@ -1,4 +1,8 @@
 -- Three To Tango website schema (database: ttw). Idempotent: safe to run repeatedly.
+-- All app objects live in schema ttw; every query must schema-qualify (ttw.table).
+
+create schema if not exists ttw;
+set search_path to ttw;
 
 create table if not exists episodes (
   id            text primary key default gen_random_uuid()::text,
@@ -104,3 +108,5 @@ create table if not exists sessions (
 );
 create index if not exists sessions_expires_idx on sessions (expires_at);
 create index if not exists sessions_email_idx on sessions (lower(email));
+
+reset search_path;
