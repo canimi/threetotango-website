@@ -15,7 +15,9 @@ const style = (s: WalkSprite) => {
     `--strip:${w * s.frames}px`,
     `--frames:${s.frames}`,
     `--gait:${(s.frames / s.fps).toFixed(3)}s`,
-    `--sheet:url(${s.src})`,
+    s.src2x
+      ? `--sheet:image-set(url(${s.src}) 1x, url(${s.src2x}) 2x)`
+      : `--sheet:url(${s.src})`,
   ].join(';');
 };
 ---

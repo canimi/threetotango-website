@@ -9,6 +9,9 @@ interface Props {
 }
 const { cats = lineupCats() } = Astro.props;
 const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
+// Believable relative sizes on the shared floor (fraction of the figure box height):
+// Budy sits tallest (ears), Caddy is the widest silhouette, Luka is the compact one.
+const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
 ---
 
 <div class:list={['lineup', cutouts ? 'is-cutout' : 'is-portrait']} data-lineup role="group" aria-label={t('hero.lineupLabel')}>
@@ -21,15 +24,15 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
             class="cat"
             href={`/cats/${c.id}`}
             data-cast-open={c.id}
-            style={`--accent:${ch.color}`}
+            style={`--accent:${ch.color};--k:${scale[c.id] ?? 0.9}`}
             aria-label={t('hero.meet').replace('{name}', ch.name)}
           >
             <span class="bubble" aria-hidden="true">{t(`hero.bubbles.${c.id}`)}</span>
             <span class="figure">
               {cutouts && c.cutout ? (
-                <img src={c.cutout} width="600" height="900" alt="" decoding="async" fetchpriority="high" />
+                <img src={c.cutout} width={c.width ?? 800} height={c.height ?? 900} alt="" loading="eager" fetchpriority="high" />
               ) : (
-                <img src={c.face} width="400" height="400" alt="" decoding="async" fetchpriority="high" />
+                <img src={c.face} width="400" height="400" alt="" loading="eager" fetchpriority="high" />
               )}
             </span>
             <span class="name" aria-hidden="true">{ch.name}</span>
@@ -39,11 +42,18 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     }
     <a class="cat slot" href="/tango-me" data-drop aria-label={t('hero.yourCatLabel')}>
       <span class="figure">
-        <svg class="sil" viewBox="0 0 120 160" aria-hidden="true">
-          <path
-            d="M30 154 C21 121 27 93 42 79 C34 70 31 58 34 46 L29 16 L49 33 C56 30 64 30 71 33 L91 16 L86 46 C89 58 86 70 78 79 C93 93 99 121 90 154 Z M90 150 C108 149 116 130 104 113"
-          ></path>
-        </svg>
+        {
+          cutouts ? (
+            <svg class="sil sil-sit" viewBox="0 0 100 120" aria-hidden="true">
+              <path d="M30 116 C25 104 25 90 30 80 C27 73 26 65 28 58 C23 53 21 45 23 38 L22 20 L34 28 C39 26 45 26 50 28 L61 19 L61 38 C62 46 60 52 56 57 C71 62 83 77 86 95 C88 107 84 116 76 116 Z" />
+              <path class="tail" d="M77 116 C91 117 99 108 96 96" />
+            </svg>
+          ) : (
+            <svg class="sil" viewBox="0 0 120 160" aria-hidden="true">
+              <path d="M30 154 C21 121 27 93 42 79 C34 70 31 58 34 46 L29 16 L49 33 C56 30 64 30 71 33 L91 16 L86 46 C89 58 86 70 78 79 C93 93 99 121 90 154 Z M90 150 C108 149 116 130 104 113" />
+            </svg>
+          )
+        }
         <span class="drop-msg" aria-hidden="true">{t('hero.dropNow')}</span>
       </span>
       <span class="name">{t('hero.yourCat')}</span>
@@ -134,18 +144,11 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     align-items: flex-start;
     gap: var(--gap);
   }
-  /* In cutout mode --figure is the standing height: three overlapping cats + the slot ≈ 2.4 heights wide. */
-  .is-cutout .row {
-    --figure: clamp(14rem, 100cqi / 2.4, min(36rem, 62svh));
-    align-items: flex-end;
-  }
-  .is-cutout .row {
-    gap: 0;
-  }
   .cat {
     position: relative;
     display: grid;
     justify-items: center;
+    align-content: start;
     gap: 0.6rem;
     flex: 0 0 auto;
     min-inline-size: 44px;
@@ -161,6 +164,22 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     transform-origin: 50% 100%;
     transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
   }
+  .name {
+    font: 600 clamp(1.05rem, 0.9rem + 0.4vw, 1.35rem) / 1.1 var(--font-display);
+    text-align: center;
+    text-shadow: 0 2px 12px rgb(var(--c-shadow) / 80%);
+  }
+  .cat:hover .figure,
+  .cat:focus-visible .figure {
+    transform: rotate(-4deg) scale(1.04);
+  }
+  .cat:focus-visible .name {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+
+  /* ---- Fallback: round face portholes ---- */
   .is-portrait .figure {
     aspect-ratio: 1;
     border-radius: 50%;
@@ -176,45 +195,156 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     block-size: 100%;
     object-fit: cover;
   }
-  .is-cutout .cat:not(.slot) {
-    margin-inline-end: calc(var(--figure) * -0.06);
-  }
-  .is-cutout .figure {
-    inline-size: calc(var(--figure) * 0.62);
-    block-size: var(--figure);
-  }
-  .is-cutout .figure img {
-    inline-size: auto;
-    max-inline-size: calc(var(--figure) * 0.95);
-    block-size: var(--figure);
-    object-fit: contain;
-    object-position: 50% 100%;
-    filter: drop-shadow(0 18px 18px rgb(var(--c-shadow) / 70%));
-  }
-  .name {
-    font: 600 clamp(1.05rem, 0.9rem + 0.4vw, 1.35rem) / 1.1 var(--font-display);
-    text-shadow: 0 2px 12px rgb(var(--c-shadow) / 80%);
-  }
-  .cat:hover .figure,
-  .cat:focus-visible .figure {
-    transform: rotate(-4deg) scale(1.04);
-  }
-  .cat:focus-visible .name {
-    outline: 3px solid var(--c-lamp);
-    outline-offset: 4px;
-    border-radius: 6px;
-  }
   .is-portrait .cat:focus-visible .figure {
     box-shadow:
       0 0 0 4px var(--c-wall),
       0 0 0 7px var(--c-lamp),
       0 28px 40px -18px rgb(var(--c-shadow) / 95%);
   }
+  .is-portrait .slot .figure {
+    border-radius: 50%;
+    border: 3px dashed var(--c-mustard);
+    background: rgb(227 162 26 / 8%);
+    place-items: center;
+  }
+  .is-portrait .slot:hover .figure,
+  .is-portrait .slot:focus-visible .figure,
+  .is-portrait .slot.is-over .figure {
+    background: rgb(255 207 110 / 18%);
+    border-color: var(--c-lamp);
+  }
+  .is-portrait .slot:focus-visible .figure {
+    box-shadow: 0 0 0 4px var(--c-wall), 0 0 0 7px var(--c-lamp);
+  }
+  .is-portrait .sil {
+    inline-size: 58%;
+  }
+  .floor {
+    position: absolute;
+    z-index: 0;
+    inset-inline: -4%;
+    inset-block-end: 2.2rem;
+    block-size: 3.5rem;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(var(--c-shadow) / 75%), transparent);
+    pointer-events: none;
+  }
+
+  /* ---- Cutouts: four even columns, one floor line ---- */
+  /* (vars hold cqi tokens; they resolve where used, against .lineup) */
+  .is-cutout {
+    --col: calc(100cqi / 4);
+    --F: min(calc(var(--col) * 1.24), 56svh);
+  }
+  .is-cutout .row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+  .is-cutout .figure {
+    inline-size: 100%;
+    block-size: var(--F);
+  }
+  .is-cutout .figure img {
+    position: relative;
+    z-index: 1;
+    inline-size: auto;
+    block-size: calc(var(--F) * var(--k));
+    max-inline-size: 112%; /* at most ~6% into each neighbour */
+    object-fit: contain;
+    object-position: 50% 100%;
+  }
+  /* Soft contact shadow where each cat meets the floor */
+  .is-cutout .figure::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    inset-inline: 10%;
+    inset-block-end: -0.55rem;
+    block-size: 1.4rem;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(var(--c-shadow) / 85%), rgb(var(--c-shadow) / 0%));
+  }
+  .is-cutout .floor {
+    inset-inline: 0;
+    inset-block-end: auto;
+    inset-block-start: calc(var(--F) - 0.25rem);
+    block-size: 1px;
+    border-radius: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 207 110 / 22%) 15%, rgb(255 207 110 / 22%) 85%, transparent);
+  }
+  .is-cutout .sil-sit {
+    position: relative;
+    z-index: 1;
+    block-size: calc(var(--F) * 0.8);
+    inline-size: auto;
+  }
+  .is-cutout .slot .figure::after {
+    inset-inline: 22%;
+    opacity: 0.6;
+  }
+
+  /* The empty spot's silhouette (both modes) */
+  .sil {
+    fill: rgb(227 162 26 / 12%);
+    stroke: var(--c-mustard);
+    stroke-width: 2.5;
+    stroke-dasharray: 6 5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    overflow: visible;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+  }
+  .sil .tail {
+    fill: none;
+  }
+  .slot:hover .sil,
+  .slot:focus-visible .sil,
+  .slot.is-over .sil {
+    fill: rgb(255 207 110 / 26%);
+    stroke: var(--c-lamp);
+  }
+  .is-cutout .slot:focus-visible .sil {
+    stroke-width: 3.5;
+  }
+  .slot .name {
+    color: var(--c-lamp);
+  }
+  .hint {
+    position: absolute;
+    inset-block-start: calc(100% + 0.2rem);
+    inset-inline: -1rem;
+    text-wrap: balance;
+    color: var(--c-paper-2);
+    font-size: 0.85rem;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .drop-msg {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 8%;
+    inset-block-end: 35%;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: rgb(23 50 42 / 88%);
+    color: var(--c-lamp);
+    font: 600 0.95rem / 1.2 var(--font-display);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .slot.is-over .drop-msg {
+    opacity: 1;
+  }
+  .slot.is-over .figure {
+    transform: scale(1.06);
+  }
 
   /* Speech bubble: paper, little tail, pops on hover/focus. */
   .bubble {
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     inset-block-start: -0.4rem;
     inset-inline-start: 58%;
     padding: 0.35rem 0.8rem;
@@ -231,98 +361,13 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     pointer-events: none;
   }
   .is-cutout .bubble {
-    inset-block-start: 6%;
+    inset-block-start: calc(var(--F) * (1 - var(--k)) - 1.2rem);
+    inset-inline-start: 52%;
   }
   .cat:hover .bubble,
   .cat:focus-visible .bubble {
     opacity: 1;
     transform: none;
-  }
-
-  /* The empty spot: dashed mustard silhouette, and the drop zone. */
-  .slot .figure {
-    aspect-ratio: 1;
-    border-radius: 50%;
-    border: 3px dashed var(--c-mustard);
-    background: rgb(227 162 26 / 8%);
-    place-items: center;
-    transition:
-      transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1),
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-  }
-  .is-cutout .slot {
-    margin-inline-start: calc(var(--figure) * 0.12);
-  }
-  .is-cutout .slot .figure {
-    inline-size: calc(var(--figure) * 0.5);
-    block-size: auto;
-  }
-  .sil {
-    inline-size: 58%;
-    block-size: auto;
-    fill: rgb(227 162 26 / 16%);
-    stroke: var(--c-mustard);
-    stroke-width: 3;
-    stroke-dasharray: 7 6;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-  .slot .name {
-    color: var(--c-lamp);
-  }
-  .hint {
-    position: absolute;
-    inset-block-start: calc(100% + 0.2rem);
-    inset-inline: -1rem;
-    text-wrap: balance;
-    color: var(--c-paper-2);
-    font-size: 0.85rem;
-    line-height: 1.3;
-    text-align: center;
-  }
-  .slot:hover .figure,
-  .slot:focus-visible .figure,
-  .slot.is-over .figure {
-    background: rgb(255 207 110 / 18%);
-    border-color: var(--c-lamp);
-  }
-  .slot:focus-visible .figure {
-    box-shadow: 0 0 0 4px var(--c-wall), 0 0 0 7px var(--c-lamp);
-  }
-  .drop-msg {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding: 1rem;
-    border-radius: 50%;
-    background: rgb(23 50 42 / 82%);
-    color: var(--c-lamp);
-    font: 600 0.95rem / 1.2 var(--font-display);
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
-  .slot.is-over .drop-msg {
-    opacity: 1;
-  }
-  .slot.is-over .figure {
-    transform: scale(1.08);
-  }
-
-  .floor {
-    position: absolute;
-    z-index: 0;
-    inset-inline: -4%;
-    inset-block-end: 2.2rem;
-    block-size: 3.5rem;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(var(--c-shadow) / 75%), transparent);
-    pointer-events: none;
-  }
-  .is-cutout .floor {
-    inset-block-end: 1.9rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -336,13 +381,21 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     }
   }
 
+  @media (max-width: 63.99rem) {
+    .hint {
+      display: none;
+    }
+  }
+
   /* Phones: one swipeable row, the empty spot first. */
   @media (max-width: 47.99rem) {
     .lineup {
       margin-inline: -16px;
     }
-    .row {
+    .row,
+    .is-cutout .row {
       --figure: clamp(6rem, 27vw, 7.5rem);
+      display: flex;
       gap: 0.9rem;
       overflow-x: auto;
       overscroll-behavior-x: contain;
@@ -351,11 +404,18 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
       padding: 1.6rem 16px 0.25rem;
       scrollbar-width: none;
     }
-    .row::-webkit-scrollbar {
-      display: none;
+    .is-cutout {
+      --col: clamp(8.5rem, 36vw, 10.5rem);
+      --F: calc(var(--col) * 1.12);
     }
     .is-cutout .row {
-      --figure: clamp(10rem, 46vw, 13rem);
+      gap: 0;
+    }
+    .is-cutout .cat {
+      inline-size: var(--col);
+    }
+    .row::-webkit-scrollbar {
+      display: none;
     }
     .cat {
       scroll-snap-align: start;
@@ -363,14 +423,15 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
     .slot {
       order: -1;
     }
-    .hint {
-      display: none;
-    }
+    .hint,
     .bubble {
       display: none;
     }
     .floor {
       inset-block-end: 1.4rem;
+    }
+    .is-cutout .floor {
+      display: none;
     }
   }
 </style>

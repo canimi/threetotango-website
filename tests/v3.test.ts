@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { lineupCats, walkSprites } from '../src/lib/cast-assets';
+import { lineupCats, walkSprites, imageSize } from '../src/lib/cast-assets';
 import { stashPhoto, takePendingPhoto, idbKV, PENDING_KEY, PENDING_TTL_MS, type KV } from '../src/lib/pending-photo';
 import { magnet, tilt } from '../src/lib/pointer-math';
 import WalkingCats from '../src/components/WalkingCats.astro';
@@ -81,6 +81,36 @@ describe('v3 hero', () => {
     });
     expect(full).toContain('is-cutout');
     expect(full).toContain('src="/img/cast/cast-budy.webp"');
+  });
+});
+
+describe('real cast assets', () => {
+  it('reads intrinsic sizes from PNG and WebP headers', () => {
+    for (const id of ['luka', 'budy', 'caddy']) {
+      const png = imageSize(join('public', 'img', 'cast', `cast-${id}.png`));
+      const webp = imageSize(join('public', 'img', 'cast', `cast-${id}.webp`));
+      if (!png && !webp) continue; // assets not committed in this checkout
+      expect(webp).toEqual(png);
+      expect(png?.height).toBe(900);
+    }
+    expect(imageSize('does/not/exist.png')).toBeNull();
+  });
+
+  it('the built hero uses the real cutouts with their true width/height once all three exist', () => {
+    const cats = lineupCats();
+    if (!cats.every((c) => c.cutout)) return;
+    const h = home();
+    expect(h).toContain('lineup is-cutout');
+    for (const c of cats) expect(h).toContain(`src="${c.cutout}" width="${c.width}" height="${c.height}"`);
+    expect(h).not.toMatch(/cast-[a-z]+\.webp"[^>]*decoding="async"/);
+  });
+
+  it('uses the @2x walk sheet through image-set when its frame count matches', () => {
+    const j2 = JSON.stringify({ frames: 8, frameWidth: 192, frameHeight: 128, fps: 12 });
+    const root = tempPublic({ 'walk-luka.webp': 'x', 'walk-luka.json': walkJson, 'walk-luka@2x.webp': 'x', 'walk-luka@2x.json': j2 });
+    expect(walkSprites(root)[0].src2x).toBe('/img/cast/walk-luka@2x.webp');
+    const bad = tempPublic({ 'walk-luka.webp': 'x', 'walk-luka.json': walkJson, 'walk-luka@2x.webp': 'x', 'walk-luka@2x.json': j2.replace('"frames":8', '"frames":9') });
+    expect(walkSprites(bad)[0].src2x).toBeUndefined();
   });
 });
 
