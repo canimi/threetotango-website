@@ -15,6 +15,14 @@ import { t } from '../i18n/t';
         <li>{t('gift.item2')}</li>
         <li>{t('gift.item3')}</li>
       </ul>
+      <div class="preview" role="img" aria-label={t('gift.previewAlt')}>
+        {(['luka', 'budy', 'caddy'] as const).map((id, i) => (
+          <img class={`wall w${i}`} src={`/gift/preview/wall-${id}.webp`} width="360" height="640" alt="" loading="lazy" decoding="async" />
+        ))}
+        {(['luka', 'budy', 'caddy', 'nora'] as const).map((id, i) => (
+          <img class={`sticker s${i}`} src={`/gift/preview/react-${id}.webp`} width="300" height="300" alt="" loading="lazy" decoding="async" />
+        ))}
+      </div>
     </div>
     <div class="form paper">
       <SubscribeForm source="gift" />
@@ -46,6 +54,54 @@ import { t } from '../i18n/t';
   }
   .gets li {
     margin-block-end: var(--space-1);
+  }
+  /* Scrapbook preview: three phone wallpapers fanned out, reaction stickers stuck on top */
+  .preview {
+    position: relative;
+    block-size: clamp(17rem, 30vw, 22rem);
+    margin-block-start: var(--space-4);
+  }
+  .wall {
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 32%;
+    block-size: auto;
+    aspect-ratio: 9 / 16;
+    border-radius: 14px;
+    border: 4px solid var(--c-paper);
+    box-shadow: 0 20px 40px -20px rgb(var(--c-shadow) / 95%);
+    object-fit: cover;
+    background: var(--c-wall-2);
+  }
+  .w0 { inset-inline-start: 2%; transform: rotate(-7deg); }
+  .w1 { inset-inline-start: 33%; transform: translateY(-4%); z-index: 1; }
+  .w2 { inset-inline-start: 64%; transform: rotate(6deg); }
+  .sticker {
+    position: absolute;
+    z-index: 2;
+    inline-size: 22%;
+    block-size: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 4px solid var(--c-paper);
+    box-shadow: 0 10px 22px -10px rgb(var(--c-shadow) / 95%);
+    background: var(--c-mustard);
+    object-fit: cover;
+  }
+  .s0 { inset-block-end: -6%; inset-inline-start: -3%; transform: rotate(-10deg); }
+  .s1 { inset-block-end: 4%; inset-inline-start: 26%; transform: rotate(8deg); }
+  .s2 { inset-block-end: -8%; inset-inline-start: 55%; transform: rotate(-6deg); }
+  .s3 { inset-block-end: 8%; inset-inline-end: -4%; transform: rotate(9deg); }
+  @media (prefers-reduced-motion: no-preference) {
+    .sticker {
+      animation: bob 3.2s ease-in-out infinite;
+    }
+    .s1 { animation-delay: -0.8s; }
+    .s2 { animation-delay: -1.6s; }
+    .s3 { animation-delay: -2.4s; }
+  }
+  @keyframes bob {
+    50% { translate: 0 -6px; }
   }
   .form {
     padding: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);

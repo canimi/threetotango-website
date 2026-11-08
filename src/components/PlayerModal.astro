@@ -105,7 +105,22 @@ import { t } from '../i18n/t';
       const el = (ev.target as Element).closest<HTMLElement>('[data-player]');
       if (!el || dialog.contains(el)) return;
       ev.preventDefault();
-      open(el);
+      // The tapped card grows into the player (same-document view transition, where supported).
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+      const thumb = el.querySelector<HTMLElement>('img') ?? el;
+      if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        open(el);
+        return;
+      }
+      thumb.style.viewTransitionName = 'ep-open';
+      const vt = doc.startViewTransition(() => {
+        thumb.style.viewTransitionName = '';
+        stage.style.viewTransitionName = 'ep-open';
+        open(el);
+      });
+      void vt.finished.finally(() => {
+        stage.style.viewTransitionName = '';
+      });
     });
     dialog.querySelector('[data-player-close]')!.addEventListener('click', () => dialog.close());
     dialog.addEventListener('click', (ev) => {

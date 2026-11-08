@@ -25,7 +25,7 @@ const others = characterIds.filter((x) => x !== id);
   <div class="container page" style={`--accent:${c.color}`}>
     <p class="back"><a href="/cats">{t('cats.back')}</a></p>
     <div class="top">
-      <div class="window"><img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} /></div>
+      <div class="window"><img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} style={`view-transition-name:cast-${id}`} /></div>
       <div>
         <h1>{c.name}</h1>
         <p class="nick">{c.nickname}</p>

@@ -57,6 +57,23 @@ const fresh = isNew(e.publishedAt);
     position: relative;
     min-inline-size: 0;
   }
+  /* Scrapbook: a strip of mustard tape holds each rail card to the wall. */
+  .ep-rail::before {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    inset-block-start: -0.55rem;
+    inset-inline-start: 50%;
+    inline-size: 3.6rem;
+    block-size: 1.15rem;
+    background: rgb(255 207 110 / 72%);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+    transform: translateX(-50%) rotate(-4deg);
+    pointer-events: none;
+  }
+  .ep-rail:nth-child(even)::before {
+    transform: translateX(-50%) rotate(3.5deg);
+  }
   .thumb {
     position: relative;
     display: block;

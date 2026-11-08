@@ -66,9 +66,9 @@ const EAGER = 12;
     <div class="copy">
       <h1 class="sr-only">{t('hero.h1')}</h1>
       <CastLineup />
-      <div class="pitch">
-        <p class="line">{t('hero.line')}</p>
-        <a class="btn btn-lg" href="/tango-me" data-magnetic>{t('cta.tangoFreeLong')}</a>
+      <div class="pitch" data-pitch data-guest-line={t('hero.guest.line')} data-guest-cta={t('hero.guest.cta')}>
+        <p class="line" aria-live="polite" data-pitch-line>{t('hero.line')}</p>
+        <a class="btn btn-lg" href="/tango-me" data-magnetic data-pitch-cta>{t('cta.tangoFreeLong')}</a>
       </div>
     </div>
 
@@ -161,6 +161,19 @@ const EAGER = 12;
       }
       btn.setAttribute('aria-pressed', String(!v.muted));
       btn.textContent = (v.muted ? btn.dataset.on : btn.dataset.off) ?? '';
+    });
+  }
+
+  // A visitor's cat joined the lineup (CastLineup): make the pitch personal.
+  const pitch = document.querySelector<HTMLElement>('[data-pitch]');
+  if (pitch) {
+    const line = pitch.querySelector<HTMLElement>('[data-pitch-line]')!;
+    const cta = pitch.querySelector<HTMLElement>('[data-pitch-cta]')!;
+    document.addEventListener('ttw:guest', (ev) => {
+      const name = String((ev as CustomEvent<{ name: string }>).detail?.name ?? '').slice(0, 30);
+      line.textContent = (pitch.dataset.guestLine ?? '').replace('{name}', name);
+      cta.textContent = (pitch.dataset.guestCta ?? '').replace('{name}', name);
+      pitch.classList.add('is-personal');
     });
   }
 
@@ -261,6 +274,9 @@ const EAGER = 12;
     justify-items: start;
     gap: var(--space-3);
     margin-block-start: var(--space-4);
+  }
+  .is-personal .line {
+    color: var(--c-lamp);
   }
   .line {
     max-inline-size: 34ch;

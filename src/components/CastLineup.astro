@@ -14,7 +14,13 @@ const cutouts = cats.length > 0 && cats.every((c) => c.cutout);
 const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
 ---
 
-<div class:list={['lineup', cutouts ? 'is-cutout' : 'is-portrait']} data-lineup role="group" aria-label={t('hero.lineupLabel')}>
+<div
+  class:list={['lineup', cutouts ? 'is-cutout' : 'is-portrait']}
+  data-lineup
+  role="group"
+  aria-label={t('hero.lineupLabel')}
+  data-guest-i18n={JSON.stringify({ defaultName: t('hero.guest.defaultName'), hint: t('hero.guest.hint') })}
+>
   <div class="row" data-lineup-row>
     {
       cats.map((c) => {
@@ -27,7 +33,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
             style={`--accent:${ch.color};--k:${scale[c.id] ?? 0.9}`}
             aria-label={t('hero.meet').replace('{name}', ch.name)}
           >
-            <span class="bubble" aria-hidden="true">{t(`hero.bubbles.${c.id}`)}</span>
+            <span class="bubble" aria-hidden="true" data-guest-line={t(`hero.guest.bubbles.${c.id}`)}>{t(`hero.bubbles.${c.id}`)}</span>
             <span class="figure">
               {cutouts && c.cutout ? (
                 <img src={c.cutout} width={c.width ?? 800} height={c.height ?? 900} alt="" loading="eager" fetchpriority="high" />
@@ -55,13 +61,24 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
           )
         }
         <span class="drop-msg" aria-hidden="true">{t('hero.dropNow')}</span>
+        <span class="guest" data-guest hidden>
+          <span class="guest-badge" aria-hidden="true">{t('hero.guest.badge')}</span>
+          <span class="guest-photo"><img data-guest-img alt={t('hero.guest.photoAlt')} /></span>
+        </span>
       </span>
-      <span class="name">{t('hero.yourCat')}</span>
-      <span class="hint" aria-hidden="true">{t('hero.yourCatHint')}</span>
+      <span class="name" data-guest-name>{t('hero.yourCat')}</span>
+      <span class="hint" aria-hidden="true" data-guest-hint>{t('hero.yourCatHint')}</span>
     </a>
     <input type="file" accept="image/*,.heic" data-drop-input hidden tabindex="-1" aria-hidden="true" />
   </div>
   <div class="floor" aria-hidden="true"></div>
+  <div class="guest-bar" data-guest-bar hidden>
+    <label class="guest-field">
+      <span>{t('hero.guest.nameLabel')}</span>
+      <input type="text" maxlength="30" autocomplete="off" placeholder={t('hero.guest.namePlaceholder')} data-guest-input />
+    </label>
+    <button type="button" class="guest-change" data-guest-change>{t('hero.guest.change')}</button>
+  </div>
 </div>
 
 <script>
@@ -83,24 +100,120 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     });
   });
 
+  // Cats turn toward the cursor (fine pointers, motion allowed). Each cat has its own temper:
+  // Budy reacts fast and big, Luka a little, Caddy barely and late.
+  if (root && !reduce && window.matchMedia('(pointer: fine) and (hover: hover)').matches) {
+    const temper: Record<string, { amp: number; ease: number }> = {
+      budy: { amp: 1, ease: 0.16 },
+      luka: { amp: 0.6, ease: 0.09 },
+      caddy: { amp: 0.25, ease: 0.03 },
+    };
+    const cats = Array.from(root.querySelectorAll<HTMLElement>('[data-cast-open]')).map((el) => ({
+      img: el.querySelector<HTMLElement>('.figure img'),
+      t: temper[el.dataset.castOpen ?? ''] ?? { amp: 0.5, ease: 0.08 },
+      ry: 0,
+      rx: 0,
+      ty: 0,
+      rxT: 0,
+      el,
+    }));
+    let mx = -1;
+    let my = -1;
+    let raf = 0;
+    let visible = true;
+    const tick = () => {
+      raf = 0;
+      let moving = false;
+      for (const c of cats) {
+        if (!c.img) continue;
+        let goalY = 0;
+        let goalX = 0;
+        if (mx >= 0) {
+          const r = c.el.getBoundingClientRect();
+          const dx = (mx - (r.left + r.width / 2)) / window.innerWidth;
+          const dy = (my - (r.top + r.height * 0.35)) / window.innerHeight;
+          goalY = Math.max(-1, Math.min(1, dx * 2.2)) * 14 * c.t.amp;
+          goalX = Math.max(-1, Math.min(1, dy * 2)) * -6 * c.t.amp;
+        }
+        c.ry += (goalY - c.ry) * c.t.ease;
+        c.rx += (goalX - c.rx) * c.t.ease;
+        if (Math.abs(goalY - c.ry) > 0.05 || Math.abs(goalX - c.rx) > 0.05) moving = true;
+        c.img.style.setProperty('--ry', `${c.ry.toFixed(2)}deg`);
+        c.img.style.setProperty('--rx', `${c.rx.toFixed(2)}deg`);
+        c.img.style.setProperty('--tx', `${(c.ry * 0.35).toFixed(2)}px`);
+      }
+      if (moving && visible) raf = requestAnimationFrame(tick);
+    };
+    const kick = () => {
+      if (!raf && visible) raf = requestAnimationFrame(tick);
+    };
+    window.addEventListener('pointermove', (e) => { mx = e.clientX; my = e.clientY; kick(); }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', () => { mx = -1; kick(); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) kick(); }).observe(root);
+    }
+  }
+
   // "+ Your cat": click to pick, or drop a photo; hand it to /tango-me via IndexedDB.
   const slot = root?.querySelector<HTMLAnchorElement>('[data-drop]');
   const input = root?.querySelector<HTMLInputElement>('[data-drop-input]');
   if (slot && input) {
+    // The photo joins the lineup right here (no AI, no upload): the cats react, the hero CTA
+    // becomes personal, and the photo + name are handed to /tango-me when the visitor continues.
+    const guest = root!.querySelector<HTMLElement>('[data-guest]')!;
+    const img = root!.querySelector<HTMLImageElement>('[data-guest-img]')!;
+    const bar = root!.querySelector<HTMLElement>('[data-guest-bar]')!;
+    const nameEl = root!.querySelector<HTMLElement>('[data-guest-name]')!;
+    const hintEl = root!.querySelector<HTMLElement>('[data-guest-hint]')!;
+    const nameInput = root!.querySelector<HTMLInputElement>('[data-guest-input]')!;
+    const i18n = JSON.parse(root!.dataset.guestI18n ?? '{}');
+    let objectUrl = '';
+    const announce = () => {
+      const name = nameInput.value.trim();
+      nameEl.textContent = name || i18n.defaultName;
+      try {
+        if (name) sessionStorage.setItem('ttw.pendingName', name);
+        else sessionStorage.removeItem('ttw.pendingName');
+      } catch {
+        /* storage blocked */
+      }
+      document.dispatchEvent(new CustomEvent('ttw:guest', { detail: { name: name || i18n.defaultName } }));
+    };
     const go = async (file: File | undefined) => {
-      if (file && 'indexedDB' in window) {
+      if (!file) return;
+      if ('indexedDB' in window) {
         try {
           await stashPhoto(idbKV(), file);
         } catch {
           /* storage blocked: Tango Me just starts empty */
         }
       }
-      window.location.assign(slot.href);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(file);
+      img.onerror = () => img.closest('.guest-photo')?.classList.add('no-preview'); // e.g. HEIC on desktop Chrome
+      img.closest('.guest-photo')?.classList.remove('no-preview');
+      img.src = objectUrl;
+      guest.hidden = false;
+      bar.hidden = false;
+      root!.classList.add('has-guest');
+      hintEl.textContent = i18n.hint;
+      root!.querySelectorAll<HTMLElement>('.bubble[data-guest-line]').forEach((b) => (b.textContent = b.dataset.guestLine ?? ''));
+      announce();
+      nameInput.focus({ preventScroll: true });
     };
+    nameInput.addEventListener('input', announce);
+    nameInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        window.location.assign(slot.href);
+      }
+    });
+    root!.querySelector('[data-guest-change]')!.addEventListener('click', () => input.click());
     slot.addEventListener('click', (ev) => {
       if (ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
       ev.preventDefault();
-      input.click();
+      if (root!.classList.contains('has-guest')) window.location.assign(slot.href);
+      else input.click();
     });
     input.addEventListener('change', () => void go(input.files?.[0]));
     let depth = 0;
@@ -248,6 +361,10 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
   .is-cutout .figure img {
     position: relative;
     z-index: 1;
+    /* Cursor follow (desktop): set by the script as --ry / --rx / --tx */
+    transform: perspective(700px) translateX(var(--tx, 0px)) rotateY(var(--ry, 0deg)) rotateX(var(--rx, 0deg));
+    transform-origin: 50% 100%;
+    will-change: transform;
     inline-size: auto;
     block-size: calc(var(--F) * var(--k));
     max-inline-size: 112%; /* at most ~6% into each neighbour */
@@ -341,6 +458,109 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     transform: scale(1.06);
   }
 
+  /* ---- Guest: the visitor's own cat joins the lineup ---- */
+  .guest {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: end center;
+    padding-block-end: 6%;
+  }
+  .guest[hidden] {
+    display: none;
+  }
+  .has-guest .slot .sil {
+    opacity: 0;
+  }
+  .guest-photo {
+    inline-size: min(84%, 13rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--c-wall-2) center / 46% no-repeat
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFCF6E'%3E%3Cellipse cx='6' cy='9' rx='2' ry='2.6'/%3E%3Cellipse cx='10' cy='5.5' rx='2' ry='2.6'/%3E%3Cellipse cx='14' cy='5.5' rx='2' ry='2.6'/%3E%3Cellipse cx='18' cy='9' rx='2' ry='2.6'/%3E%3Cpath d='M12 10c-3.5 0-6.5 4-6.5 6.6C5.5 19 7.6 20 12 20s6.5-1 6.5-3.4C18.5 14 15.5 10 12 10z'/%3E%3C/svg%3E");
+    box-shadow: 0 0 0 4px var(--c-paper), 0 0 0 9px var(--c-mustard), 0 18px 40px -10px rgb(var(--c-shadow) / 70%);
+  }
+  .guest-photo img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    object-fit: cover;
+  }
+  .guest-photo.no-preview img {
+    visibility: hidden;
+  }
+  .guest-badge {
+    position: absolute;
+    inset-block-start: 4%;
+    inset-inline-start: 50%;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    background: var(--c-rug);
+    color: var(--c-paper);
+    font: 700 0.72rem / 1.2 var(--font-display);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%) rotate(-4deg);
+  }
+  .guest-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem 0.9rem;
+    margin-block-start: 2.4rem;
+  }
+  .guest-bar[hidden] {
+    display: none;
+  }
+  .guest-field {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--c-paper-2);
+    font-size: 0.95rem;
+  }
+  .guest-field input {
+    inline-size: 11rem;
+    padding: 0.5rem 0.9rem;
+    border: 2px solid var(--c-mustard);
+    border-radius: var(--radius-pill);
+    background: rgb(23 50 42 / 85%);
+    color: var(--c-paper);
+    font: 600 1rem var(--font-display);
+  }
+  .guest-change {
+    padding: 0.4rem 0.2rem;
+    border: 0;
+    background: none;
+    color: var(--c-lamp);
+    font: 600 0.95rem var(--font-body);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .has-guest .bubble {
+    opacity: 1;
+    transform: rotate(-2deg);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .guest:not([hidden]) .guest-photo {
+      animation: guest-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+    }
+    .has-guest .cat:nth-child(1) .bubble { transition-delay: 0.25s; }
+    .has-guest .cat:nth-child(2) .bubble { transition-delay: 0.55s; }
+    .has-guest .cat:nth-child(3) .bubble { transition-delay: 0.85s; }
+  }
+  @keyframes guest-pop {
+    from {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+  }
+
   /* Speech bubble: paper, little tail, pops on hover/focus. */
   .bubble {
     position: absolute;
@@ -426,6 +646,11 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     .hint,
     .bubble {
       display: none;
+    }
+    .guest-bar {
+      justify-content: center;
+      margin-block-start: 0.75rem;
+      padding-inline: 16px;
     }
     .floor {
       inset-block-end: 1.4rem;

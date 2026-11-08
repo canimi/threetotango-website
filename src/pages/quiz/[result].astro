@@ -14,6 +14,7 @@ const lines = [1, 2, 3].map((n) => t(`quiz.results.${id}.line${n}`));
 const verdict = `${t('quiz.youAre')} ${c.name}.`;
 const path = `/quiz/${id}`;
 const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').href;
+const personality = { luka: 'genius', budy: 'chatterbox', caddy: 'unbothered' }[id];
 ---
 
 <Base
@@ -31,7 +32,8 @@ const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').
     </div>
     <ul class="lines">{lines.map((l) => <li>{l}</li>)}</ul>
 
-    <a class="btn btn-lg cta" href="/tango-me">{t('cta.tangoFreeLong')}</a>
+    <a class="btn btn-lg cta" href={`/tango-me?personality=${personality}`}>{t('quiz.bridge').replace('{name}', c.name)}</a>
+    <p class="bridge-sub">{t('quiz.bridgeSub')}</p>
     <p class="hint">{t('quiz.shareHint')}</p>
 
     <div class="actions" data-share data-url={shareUrl} data-text={`${t('quiz.shareText')} ${c.name}.`} data-copied={t('quiz.copied')}>
@@ -68,6 +70,11 @@ const shareUrl = new URL(path, Astro.site ?? 'https://threetotango.canimi.app').
 </script>
 
 <style>
+  .bridge-sub {
+    margin: 0.6rem 0 0;
+    color: var(--c-paper-2);
+    font-size: 0.95rem;
+  }
   .wrap {
     padding-block: var(--space-4) var(--space-5);
     text-align: center;

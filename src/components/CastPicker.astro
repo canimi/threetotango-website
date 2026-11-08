@@ -56,7 +56,7 @@ const starring = (n: number) =>
           style={`--accent:${c.color}`}
         >
           <div class="window">
-            <img src={c.full} width="600" height="800" loading="lazy" decoding="async" alt={`${t('cats.portraitAlt')} ${c.name}`} />
+            <img src={c.full} width="600" height="800" loading="lazy" decoding="async" alt={`${t('cats.portraitAlt')} ${c.name}`} style={`view-transition-name:cast-${id}`} />
           </div>
           <div class="about">
             <h3>{c.name}<span class="nick">{c.nickname}</span></h3>

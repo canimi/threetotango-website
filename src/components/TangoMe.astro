@@ -477,6 +477,25 @@ const i18n = JSON.stringify({
   });
 
   // ---- boot ----
+  // Deep links from the home page: ?scene=…&personality=… (scene showcase, quiz result) and the
+  // name typed in the hero lineup.
+  {
+    const params = new URLSearchParams(window.location.search);
+    const pick = (field: string, value: string | null) => {
+      if (!value) return;
+      const r = form.querySelector<HTMLInputElement>(`input[name="${field}"][value="${CSS.escape(value)}"]`);
+      if (r) r.checked = true;
+    };
+    pick('scene', params.get('scene'));
+    pick('personality', params.get('personality'));
+    let pendingName = '';
+    try {
+      pendingName = sessionStorage.getItem('ttw.pendingName') ?? '';
+    } catch {
+      /* storage blocked */
+    }
+    if (!nameInput.value && pendingName) nameInput.value = pendingName.slice(0, 30);
+  }
   wizard.hidden = false;
   render();
   const resume = loadActive();

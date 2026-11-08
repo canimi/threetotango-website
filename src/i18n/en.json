@@ -67,7 +67,23 @@
     "yourCat": "+ Your cat",
     "yourCatHint": "Drop a photo or tap to pick one",
     "yourCatLabel": "Add your cat: pick or drop a photo to start Tango Me",
-    "dropNow": "Let go to add your cat"
+    "dropNow": "Let go to add your cat",
+    "guest": {
+      "badge": "New cast member",
+      "hint": "Joins the household",
+      "line": "{name} just moved in. Luka has questions.",
+      "cta": "Make {name} 3D — free",
+      "nameLabel": "Your cat's name",
+      "namePlaceholder": "Name",
+      "change": "Change photo",
+      "defaultName": "Your cat",
+      "photoAlt": "Your cat",
+      "bubbles": {
+        "luka": "Who let this one in?",
+        "budy": "Do they share snacks?",
+        "caddy": "…fine."
+      }
+    }
   },
   "household": {
     "title": "The household",
@@ -98,7 +114,10 @@
     "afterAlt": "The same cat as a 3D character in Nora's living room",
     "storyAlt": "The story-format version of the same result",
     "slotLabel": "Your cat here",
-    "slotAlt": "Luka, Budy and Caddy with an empty spot for your cat"
+    "slotAlt": "Luka, Budy and Caddy with an empty spot for your cat",
+    "scenesTitle": "Pick a scene. We'll handle the casting.",
+    "scenesNote": "The tuxedo cat is a stand-in. Your cat takes its spot.",
+    "sceneCta": "Use this scene"
   },
   "episodes": {
     "title": "On the sofa tonight",
@@ -218,7 +237,9 @@
         "line2": "Your home is your kingdom and your calendar is mostly naps.",
         "line3": "You rarely react. When you do, people remember it for years."
       }
-    }
+    },
+    "bridge": "Put your cat next to {name}",
+    "bridgeSub": "Same energy, your cat. Free, about a minute."
   },
   "subscribe": {
     "emailLabel": "Your email",
@@ -355,5 +376,10 @@
     "details": "Episode page",
     "watchInstagram": "Watch on Instagram",
     "watchYoutube": "Open on YouTube"
+  },
+  "marquee": {
+    "a": "New episode every week|Luka suspects everything|Budy wants a snack|Caddy is napping|Put your cat in the show",
+    "b": "Wordless|Zero dialogue, all drama|Nora never wins|Lettuce is a crime scene|15 years old, still unbothered",
+    "label": "Three To Tango"
   }
 }

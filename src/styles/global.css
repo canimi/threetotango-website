@@ -311,3 +311,50 @@ video {
     display: none;
   }
 }
+
+/* ---- Page transitions (cross-document View Transitions; browsers without support just navigate) ---- */
+@view-transition {
+  navigation: auto;
+}
+.site-header {
+  view-transition-name: site-header;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+}
+::view-transition-group(*) {
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ---- Scrapbook touches: hand-drawn mustard scribble under section titles ---- */
+.head h2,
+.scenes-head h3 {
+  position: relative;
+  inline-size: fit-content;
+}
+.head h2::after {
+  content: '';
+  position: absolute;
+  inset-inline: -0.2em -0.4em;
+  inset-block-end: -0.38em;
+  block-size: 0.45em;
+  background: no-repeat center / 100% 100%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 24' preserveAspectRatio='none'%3E%3Cpath d='M4 15 C60 6 120 20 180 10 S270 8 296 13' fill='none' stroke='%23E3A21A' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M30 20 C100 13 170 22 260 16' fill='none' stroke='%23E3A21A' stroke-width='2.5' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+#household .head h2,
+#household .head h2::after {
+  margin-inline: auto;
+}

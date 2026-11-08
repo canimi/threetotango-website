@@ -16,6 +16,7 @@ create table if not exists episodes (
   video_url     text,
   hero_mp4_path text,
   characters    text[] default '{}',  -- NULL = not yet tagged (episode import retries tagging)
+  short_title   text,                 -- clean 2-5 word title written by Gemini at import; NULL = retry
   is_hidden     boolean not null default false,
   created_at    timestamptz not null default now(),
   unique (platform, external_id)
@@ -113,3 +114,4 @@ reset search_path;
 
 -- Migration for DBs created before 'characters' became nullable (idempotent):
 alter table ttw.episodes alter column characters drop not null;
+alter table ttw.episodes add column if not exists short_title text;

@@ -1,0 +1,90 @@
+---
+import { t } from '../i18n/t';
+
+interface Props {
+  /** Which line set from i18n `marquee` to show. */
+  set?: 'a' | 'b';
+  tone?: 'mustard' | 'rug';
+  tilt?: number;
+}
+const { set = 'a', tone = 'mustard', tilt = -1.5 } = Astro.props;
+const items = t(`marquee.${set}`).split('|');
+---
+
+<div class:list={['marquee', `m-${tone}`]} style={`--tilt:${tilt}deg`} aria-hidden="true">
+  <div class="track">
+    {
+      [0, 1].map(() => (
+        <span class="run">
+          {items.map((s) => (
+            <>
+              <span class="item">{s}</span>
+              <svg class="paw" viewBox="0 0 24 24" width="22" height="22">
+                <ellipse cx="6" cy="9" rx="2" ry="2.6" />
+                <ellipse cx="10" cy="5.5" rx="2" ry="2.6" />
+                <ellipse cx="14" cy="5.5" rx="2" ry="2.6" />
+                <ellipse cx="18" cy="9" rx="2" ry="2.6" />
+                <path d="M12 10c-3.5 0-6.5 4-6.5 6.6C5.5 19 7.6 20 12 20s6.5-1 6.5-3.4C18.5 14 15.5 10 12 10z" />
+              </svg>
+            </>
+          ))}
+        </span>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .marquee {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    margin-inline: -2vw;
+    padding-block: 0.7rem;
+    transform: rotate(var(--tilt));
+    box-shadow: 0 14px 30px -18px rgb(var(--c-shadow) / 90%);
+  }
+  .m-mustard {
+    background: var(--c-mustard);
+    color: var(--c-ink);
+  }
+  .m-rug {
+    background: var(--c-rug);
+    color: var(--c-paper);
+  }
+  .track {
+    display: flex;
+    inline-size: max-content;
+    animation: slide 38s linear infinite;
+  }
+  .marquee:hover .track {
+    animation-play-state: paused;
+  }
+  .run {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    padding-inline-end: 1.4rem;
+  }
+  .item {
+    font: 600 clamp(1.05rem, 0.9rem + 0.6vw, 1.45rem) / 1 var(--font-display);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .paw {
+    flex: none;
+    fill: currentColor;
+    opacity: 0.55;
+  }
+  @keyframes slide {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .track {
+      animation: none;
+    }
+  }
+</style>

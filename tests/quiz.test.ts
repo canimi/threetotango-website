@@ -70,6 +70,8 @@ describe('built quiz pages', () => {
     expect(h).toContain(`/img/refs/${id}.webp`);
     expect(h).not.toContain('/img/quiz/');
     expect(h).toContain('href="/tango-me"');
+    const p = { luka: 'genius', budy: 'chatterbox', caddy: 'unbothered' }[id];
+    expect(h).toContain(`href="/tango-me?personality=${p}"`);
     expect(h).toContain('href="/quiz"');
   });
   it('has no nora result', () => {

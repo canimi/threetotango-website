@@ -12,6 +12,7 @@ const { compact = false } = Astro.props;
 const demo = demoAssets();
 const steps = [1, 2, 3].map((n) => ({ title: t(`showcase.step${n}`), body: t(`showcase.step${n}Body`) }));
 const trio = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
+const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'window-birds', 'kitchen-table'] as const;
 ---
 
 {
@@ -52,11 +53,144 @@ const trio = (['luka', 'budy', 'caddy'] as const).map((id) => characters[id]);
           )}
         </div>
       </div>
+      <div class="container scenes-wrap">
+        <div class="scenes-head">
+          <h3>{t('showcase.scenesTitle')}</h3>
+          <p>{t('showcase.scenesNote')}</p>
+        </div>
+        <ul class="scenes" role="list">
+          {scenes.map((id, i) => (
+            <li style={`--tilt:${[-2.5, 1.8, -1.2, 2.4, -1.8, 1.4][i]}deg`}>
+              <a class="polaroid" href={`/tango-me?scene=${id}`} aria-label={`${t(`tango.scenes.${id}`)}: ${t('showcase.sceneCta')}`}>
+                <span class="tape" aria-hidden="true"></span>
+                <img src={`/img/scenes/${id}.webp`} width="800" height="1004" loading="lazy" decoding="async" alt="" />
+                <span class="cap">{t(`tango.scenes.${id}`)}</span>
+                <span class="use" aria-hidden="true">{t('showcase.sceneCta')} →</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )
 }
 
 <style>
+  /* ---- Scene showcase: scrapbook polaroids, each one deep-links into Tango Me ---- */
+  .scenes-wrap {
+    margin-block-start: var(--space-5);
+  }
+  .scenes-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    margin-block-end: var(--space-3);
+  }
+  .scenes-head h3 {
+    margin: 0;
+    font-size: clamp(1.5rem, 1.2rem + 1vw, 2.1rem);
+  }
+  .scenes-head p {
+    margin: 0;
+    color: var(--c-paper-2);
+  }
+  .scenes {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(0.75rem, 1.6vw, 1.6rem);
+    margin: 0;
+    padding: var(--space-2) 0 var(--space-3);
+    list-style: none;
+  }
+  .polaroid {
+    position: relative;
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.55rem 0.55rem 0.8rem;
+    border-radius: 4px;
+    background: var(--c-paper);
+    color: var(--c-ink);
+    text-decoration: none;
+    box-shadow: 0 22px 40px -22px rgb(var(--c-shadow) / 95%), 0 2px 0 rgb(0 0 0 / 8%);
+    transform: rotate(var(--tilt));
+    transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1), box-shadow 0.3s ease;
+  }
+  .polaroid img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 800 / 1004;
+    object-fit: cover;
+    border-radius: 2px;
+    background: var(--c-wall-2);
+  }
+  .tape {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: -0.7rem;
+    inset-inline-start: 50%;
+    inline-size: 4.2rem;
+    block-size: 1.4rem;
+    background: rgb(255 207 110 / 70%);
+    transform: translateX(-50%) rotate(calc(var(--tilt) * -1.6));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
+  }
+  .cap {
+    font: 600 1rem / 1.2 var(--font-display);
+    text-align: center;
+  }
+  .use {
+    position: absolute;
+    inset-inline: 0.55rem;
+    inset-block-end: 2.6rem;
+    padding: 0.45rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-mustard);
+    color: var(--c-ink);
+    font: 600 0.9rem var(--font-display);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .polaroid:hover,
+  .polaroid:focus-visible {
+    transform: rotate(0deg) translateY(-6px) scale(1.03);
+    box-shadow: 0 30px 50px -22px rgb(var(--c-shadow) / 95%), 0 0 0 3px var(--c-lamp);
+    outline: none;
+  }
+  .polaroid:hover .use,
+  .polaroid:focus-visible .use {
+    opacity: 1;
+    transform: none;
+  }
+  @media (max-width: 63.99rem) {
+    .scenes {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      margin-inline: calc(var(--gutter-min) * -1);
+      padding-inline: var(--gutter-min);
+      scrollbar-width: none;
+    }
+    .scenes::-webkit-scrollbar {
+      display: none;
+    }
+    .scenes li {
+      flex: 0 0 min(46vw, 13rem);
+      scroll-snap-align: start;
+    }
+    .use {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .polaroid {
+      transition: none;
+    }
+  }
   .tango-band {
     position: relative;
     padding-block: var(--space-5);
