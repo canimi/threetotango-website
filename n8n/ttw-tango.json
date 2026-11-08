@@ -1872,6 +1872,28 @@
           }
         }
       }
+    },
+    {
+      "name": "Notify TTW Errors",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3800,
+        1400
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__TTW_ERRORS_WORKFLOW_ID__"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      }
     }
   ],
   "connections": {
@@ -2622,6 +2644,11 @@
         [
           {
             "node": "Fail By Execution",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify TTW Errors",
             "type": "main",
             "index": 0
           }

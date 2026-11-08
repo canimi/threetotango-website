@@ -996,6 +996,7 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "saveDataSuccessExecution": "none"
+    "saveDataSuccessExecution": "none",
+    "errorWorkflow": "__TTW_ERRORS_WORKFLOW_ID__ (id of TTW · Errors after import)"
   }
 }

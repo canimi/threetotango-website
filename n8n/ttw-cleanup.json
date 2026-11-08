@@ -1,0 +1,441 @@
+{
+  "name": "TTW · Cleanup",
+  "nodes": [
+    {
+      "name": "Nightly 03:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 3 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "mediaBase",
+              "type": "string",
+              "value": "http://ttw-web:8081/media/"
+            },
+            {
+              "id": "c3",
+              "name": "backupDir",
+              "type": "string",
+              "value": "uploads/backups/"
+            },
+            {
+              "id": "c4",
+              "name": "today",
+              "type": "string",
+              "value": "={{ $now.setZone('Europe/Berlin').toFormat('yyyy-LL-dd') }}"
+            },
+            {
+              "id": "c5",
+              "name": "keepDays",
+              "type": "number",
+              "value": 14
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Backup Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select json_build_object('format', 'ttw-backup-v1', 'created_at', now(), 'tables', json_build_object('episodes', coalesce((select json_agg(t) from ttw.episodes t), '[]'::json), 'subscribers', coalesce((select json_agg(t) from ttw.subscribers t), '[]'::json), 'generations', coalesce((select json_agg(t) from ttw.generations t), '[]'::json), 'waitlist', coalesce((select json_agg(t) from ttw.waitlist t), '[]'::json), 'daily_budget', coalesce((select json_agg(t) from ttw.daily_budget t), '[]'::json), 'sessions', coalesce((select json_agg(t) from ttw.sessions t), '[]'::json), 'email_codes', coalesce((select json_agg(t) from ttw.email_codes t), '[]'::json), 'ip_attempts', coalesce((select json_agg(t) from ttw.ip_attempts t), '[]'::json))) as backup",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Backup To File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ 'ttw-' + $('Config').first().json.today + '.json' }}"
+        }
+      }
+    },
+    {
+      "name": "Upload Backup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $('Config').first().json.mediaBase + $('Config').first().json.backupDir + 'ttw-' + $('Config').first().json.today + '.json' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {
+          "timeout": 30000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__TTW_MEDIA_KEY_CREDENTIAL_ID__",
+          "name": "TTW Media Key"
+        }
+      }
+    },
+    {
+      "name": "Old Backup Names",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Backups are named by date, so the copies that fall out of the window can be deleted by name.\n// Days keepDays..keepDays+6 are removed, so a week of missed nights still gets cleaned up.\nconst c = $('Config').first().json;\nconst out = [];\nfor (let i = 0; i < 7; i++) {\n  const day = $now.setZone('Europe/Berlin').minus({ days: c.keepDays + i }).toFormat('yyyy-LL-dd');\n  out.push({ json: { url: c.mediaBase + c.backupDir + 'ttw-' + day + '.json' } });\n}\nreturn out;"
+      }
+    },
+    {
+      "name": "Delete Old Backup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__TTW_MEDIA_KEY_CREDENTIAL_ID__",
+          "name": "TTW Media Key"
+        }
+      }
+    },
+    {
+      "name": "Purge Expired Rows",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1540,
+        300
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Expired Generations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1760,
+        300
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id from ttw.generations where expires_at < now() and not gallery_opt_in and status in ('done', 'failed') order by expires_at limit 500",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "File List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Config').first().json;\nconst out = [];\nfor (const it of $input.all()) {\n  const id = String(it.json.id || '');\n  if (!/^[A-Za-z0-9_-]+$/.test(id)) continue;\n  for (const kind of ['post', 'story']) out.push({ json: { id, url: c.mediaBase + 'tango/' + id + '-' + kind + '.jpg' } });\n}\nreturn out;"
+      }
+    },
+    {
+      "name": "Delete Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        300
+      ],
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__TTW_MEDIA_KEY_CREDENTIAL_ID__",
+          "name": "TTW Media Key"
+        }
+      }
+    },
+    {
+      "name": "Ids With Files Gone",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// A row is removed only when both of its images are gone (deleted now = 204/200, or already missing = 404).\n// Anything else (401, 5xx, network error) keeps the row so the next night tries again.\nconst files = $('File List').all();\nconst state = {};\n$input.all().forEach((it, i) => {\n  const id = files[i] && files[i].json.id;\n  if (!id) return;\n  const code = Number(it.json.statusCode || 0);\n  const gone = code === 200 || code === 204 || code === 404;\n  state[id] = (state[id] === undefined ? true : state[id]) && gone;\n});\nconst ids = Object.keys(state).filter((k) => state[k]);\nconst kept = Object.keys(state).length - ids.length;\nreturn [{ json: { ids: JSON.stringify(ids), count: ids.length, kept } }];"
+      }
+    },
+    {
+      "name": "Delete Generation Rows",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2640,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with d as (delete from ttw.generations where id in (select jsonb_array_elements_text($1::jsonb)) and not gallery_opt_in and expires_at < now() returning id) select count(*)::int as generations_deleted from d",
+        "options": {
+          "queryReplacement": "={{ [ $json.ids ] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Nightly 03:30": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Backup Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backup Query": {
+      "main": [
+        [
+          {
+            "node": "Backup To File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backup To File": {
+      "main": [
+        [
+          {
+            "node": "Upload Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Backup": {
+      "main": [
+        [
+          {
+            "node": "Old Backup Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Old Backup Names": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Backup": {
+      "main": [
+        [
+          {
+            "node": "Purge Expired Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Purge Expired Rows": {
+      "main": [
+        [
+          {
+            "node": "Expired Generations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expired Generations": {
+      "main": [
+        [
+          {
+            "node": "File List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File List": {
+      "main": [
+        [
+          {
+            "node": "Delete Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Image": {
+      "main": [
+        [
+          {
+            "node": "Ids With Files Gone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids With Files Gone": {
+      "main": [
+        [
+          {
+            "node": "Delete Generation Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin",
+    "executionTimeout": 600,
+    "errorWorkflow": "__TTW_ERRORS_WORKFLOW_ID__ (id of TTW · Errors after import)"
+  }
+}

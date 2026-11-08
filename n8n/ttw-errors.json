@@ -1,0 +1,105 @@
+{
+  "name": "TTW · Errors",
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Throttle And Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttle And Format": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called By Workflow": {
+      "main": [
+        [
+          {
+            "node": "Throttle And Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Throttle And Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// One alert per workflow per 30 minutes; repeats in that window are counted and reported in the next alert.\nconst d = $input.first().json || {};\nconst ex = d.execution || {};\nconst trg = d.trigger || {};\nconst wf = d.workflow || {};\nconst wfName = String(wf.name || 'unknown workflow');\nconst err = ex.error || trg.error || {};\nconst message = String(err.message || err.description || 'No error message').slice(0, 800);\nconst node = String(ex.lastNodeExecuted || (err.node && err.node.name) || '-');\nconst url = ex.url || (ex.id ? 'https://n8n.canimi.app/workflow/' + (wf.id || '') + '/executions/' + ex.id : '');\n\nconst store = $getWorkflowStaticData('global');\nstore.alerts = store.alerts || {};\nconst now = Date.now();\nconst prev = store.alerts[wfName] || { last: 0, suppressed: 0 };\nif (now - prev.last < 30 * 60 * 1000) {\n  prev.suppressed = (prev.suppressed || 0) + 1;\n  store.alerts[wfName] = prev;\n  return [];\n}\nconst suppressed = prev.suppressed || 0;\nstore.alerts[wfName] = { last: now, suppressed: 0 };\n\nconst when = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });\nconst lines = [\n  'A Three To Tango workflow failed.',\n  '',\n  'Workflow: ' + wfName,\n  'Node: ' + node,\n  'Time (Berlin): ' + when,\n  'Mode: ' + String(ex.mode || '-'),\n  '',\n  'Error:',\n  message,\n  '',\n  url ? 'Open the execution: ' + url : 'No execution link (the trigger itself failed).',\n];\nif (suppressed > 0) lines.push('', 'It also failed ' + suppressed + ' more time(s) in the previous 30 minutes (no separate emails were sent).');\nlines.push('', 'You get at most one email per workflow every 30 minutes.');\nreturn [{ json: { subject: '[TTW] Workflow failed: ' + wfName, text: lines.join('\\n') } }];"
+      }
+    },
+    {
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "Three To Tango Alerts <avcican@gmail.com>",
+        "toEmail": "avcican@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "FtJ7S9RAcyOsbZK9",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "name": "Called By Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        420
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

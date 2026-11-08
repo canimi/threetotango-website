@@ -926,6 +926,7 @@
     "executionOrder": "v1",
     "saveDataSuccessExecution": "all",
     "saveDataErrorExecution": "all",
-    "executionTimeout": 280
+    "executionTimeout": 280,
+    "errorWorkflow": "__TTW_ERRORS_WORKFLOW_ID__ (id of TTW · Errors after import)"
   }
 }

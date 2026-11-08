@@ -25,3 +25,13 @@ Media lives in the named volume `ttw_media` (mounted at `/usr/share/nginx/media`
 2. In Portainer add a second stack from `docker-compose.umami.yml` with `UMAMI_DB_USER`, `UMAMI_DB_PASSWORD`, `UMAMI_APP_SECRET` (and `N8N_NETWORK` if changed).
 3. In Cloudflare Zero Trust add a tunnel route `stats.canimi.app` -> `http://umami:3000`.
 4. Log in to Umami, create the website, copy its id into `PUBLIC_UMAMI_ID` on the main stack and redeploy it (the id is baked in at build time).
+
+## Nightly cleanup, backups and error alerts (n8n)
+- **TTW · Cleanup** (`n8n/ttw-cleanup.json`, daily 03:30 Europe/Berlin):
+  1. Exports every `ttw.*` table as one JSON file to `PUT http://ttw-web:8081/media/uploads/backups/ttw-YYYY-MM-DD.json` (`/media/uploads/` is never served publicly) and deletes the copies older than 14 days.
+  2. Deletes expired `email_codes` (1 day after expiry), expired `sessions`, `ip_attempts` older than 2 days.
+  3. Deletes the images of Tango Me generations past `expires_at` (30 days; `gallery_opt_in` rows are kept), then their rows. A row is only deleted when both images are gone (204/404); otherwise it is retried the next night.
+  - The three HTTP nodes authenticate with an n8n **Header Auth** credential named `TTW Media Key` (header `X-TTW-Key`, value = `TTW_MEDIA_KEY`). After importing, select it on the nodes.
+  - Raw user photos are never stored (Tango Me sends them inline to Gemini), so there are no upload files to expire.
+  - Restore: open the JSON, each key under `tables` is a list of rows for `ttw.<table>`; insert them with `json_populate_recordset` (e.g. `insert into ttw.subscribers select * from json_populate_recordset(null::ttw.subscribers, '<rows json>')`).
+- **TTW · Errors** (`n8n/ttw-errors.json`): error workflow for Subscribe, Episode import and Cleanup; Tango Me keeps its own Error Trigger (refunds the budget) and calls TTW · Errors from it. Emails avcican@gmail.com, at most one email per workflow per 30 minutes.
