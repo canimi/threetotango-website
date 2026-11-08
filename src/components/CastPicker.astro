@@ -176,11 +176,27 @@ const starring = (n: number) =>
   .panel:focus-visible {
     outline-offset: 8px;
   }
-  @media (min-width: 52rem) {
-    .panel {
-      grid-template-columns: minmax(0, 22rem) minmax(0, 36rem);
-      gap: var(--space-5);
-    }
+  .panel {
+    justify-items: center;
+    text-align: center;
+  }
+  .about {
+    inline-size: min(100%, 36rem);
+  }
+  .about h3 {
+    justify-content: center;
+  }
+  .about .line {
+    margin-inline: auto;
+  }
+  .about .traits {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    margin-inline: auto;
+    text-align: start;
+  }
+  .about .mini {
+    justify-content: center;
   }
   @media (prefers-reduced-motion: no-preference) {
     .panel:not([hidden]) {
