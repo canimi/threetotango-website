@@ -57,7 +57,7 @@ describe('v3 hero', () => {
   it('uses the face crops while the cutouts are missing (no <img> to a missing file)', () => {
     const cats = lineupCats(tempPublic({}));
     expect(cats.map((c) => c.cutout)).toEqual([null, null, null]);
-    expect(cats.map((c) => c.face)).toEqual(['/img/cast/luka-face.webp', '/img/cast/budy-face.webp', '/img/cast/caddy-face.webp']);
+    expect(cats.map((c) => c.face)).toEqual(['/img/cast/luka-face.webp?v=2', '/img/cast/budy-face.webp?v=2', '/img/cast/caddy-face.webp?v=2']);
   });
 
   it('picks cutouts when they land, preferring webp over png', () => {
