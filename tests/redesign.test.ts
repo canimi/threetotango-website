@@ -1,3 +1,4 @@
+import { builtCss } from './built-css';
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -55,10 +56,7 @@ describe('home redesign', () => {
     const h = home();
     expect(h).toMatch(/<a class="thumb[^"]*"[^>]*data-player="(youtube|mp4|instagram)"/);
     expect(h).toMatch(/<span class="play[^"]*" aria-hidden="true"[^>]*>/);
-    const css = readdirSync('dist/_astro')
-      .filter((f) => f.endsWith('.css'))
-      .map((f) => readFileSync(join('dist/_astro', f), 'utf8'))
-      .join('\n');
+    const css = builtCss();
     const rule = css.match(/\.play\[data-astro-cid-[^\]]+\]\{[^}]*\}/g)?.find((r) => r.includes('36px'));
     expect(rule).toBeTruthy();
     expect(rule).toMatch(/inset-inline-start:\.65rem/);

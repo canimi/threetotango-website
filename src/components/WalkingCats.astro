@@ -65,10 +65,15 @@ const style = (s: WalkSprite) => {
       if (document.hidden) clearInterval(timer);
       else run();
     });
-    window.setTimeout(() => {
-      walk();
-      run();
-    }, FIRST_MS);
+    const start = () => {
+      box.classList.add('ready');
+      window.setTimeout(() => {
+        walk();
+        run();
+      }, FIRST_MS);
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
   }
 </script>
 
@@ -96,6 +101,9 @@ const style = (s: WalkSprite) => {
     display: block;
     inline-size: var(--strip);
     block-size: var(--h);
+  }
+  /* Sprite sheets are decoration: they only download after the page has loaded (see script). */
+  .walkers.ready .walker i {
     background: var(--sheet) 0 0 / var(--strip) var(--h) no-repeat;
   }
   .walker.go {

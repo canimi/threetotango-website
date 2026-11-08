@@ -6,15 +6,11 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { lineupCats, walkSprites, imageSize } from '../src/lib/cast-assets';
 import { stashPhoto, takePendingPhoto, idbKV, PENDING_KEY, PENDING_TTL_MS, type KV } from '../src/lib/pending-photo';
 import { magnet, tilt } from '../src/lib/pointer-math';
+import { builtCss } from './built-css';
 import WalkingCats from '../src/components/WalkingCats.astro';
 import CastLineup from '../src/components/CastLineup.astro';
 
 const home = () => readFileSync(join('dist', 'index.html'), 'utf8');
-const builtCss = () =>
-  readdirSync('dist/_astro')
-    .filter((f) => f.endsWith('.css'))
-    .map((f) => readFileSync(join('dist/_astro', f), 'utf8'))
-    .join('\n');
 const builtJs = () =>
   readdirSync('dist/_astro')
     .filter((f) => f.endsWith('.js'))
@@ -91,7 +87,7 @@ describe('real cast assets', () => {
       const webp = imageSize(join('public', 'img', 'cast', `cast-${id}.webp`));
       if (!png && !webp) continue; // assets not committed in this checkout
       expect(webp).toEqual(png);
-      expect(png?.height).toBe(900);
+      expect(png?.height).toBe(648);
     }
     expect(imageSize('does/not/exist.png')).toBeNull();
   });

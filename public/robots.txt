@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /media/uploads/
+
+Sitemap: https://threetotango.canimi.app/sitemap.xml

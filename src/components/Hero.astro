@@ -84,17 +84,16 @@ const EAGER = 12;
             {heroSrc ? (
               <video
                 data-hero-video
-                autoplay
                 muted
                 loop
                 playsinline
-                preload="metadata"
+                preload="none"
                 poster={shown.thumbnailUrl || undefined}
                 width="360"
                 height="640"
                 aria-label={t('hero.videoLabel')}
               >
-                <source src={heroSrc} type="video/mp4" />
+                <source data-src={heroSrc} type="video/mp4" />
               </video>
             ) : shown.thumbnailUrl ? (
               <img src={shown.thumbnailUrl} width="360" height="640" alt={`${t('episodes.thumbAlt')} ${shown.title}`} />
@@ -131,13 +130,29 @@ const EAGER = 12;
   const btn = document.querySelector<HTMLButtonElement>('[data-sound]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // The preview video is not part of first paint: its source is attached after the page has
+  // loaded, so it never competes with fonts and images on a slow phone connection.
+  let visible = true;
+  const attach = () => {
+    const src = v?.querySelector<HTMLSourceElement>('source[data-src]');
+    if (!v || !src) return;
+    src.src = src.dataset.src ?? '';
+    src.removeAttribute('data-src');
+    v.load();
+  };
+  if (v) {
+    const start = () => {
+      attach();
+      if (!reduce && visible) void v.play().catch(() => {});
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+  }
+
   if (v && btn) {
-    if (reduce) {
-      v.removeAttribute('autoplay');
-      v.pause();
-      btn.textContent = btn.dataset.play ?? '';
-    }
+    if (reduce) btn.textContent = btn.dataset.play ?? '';
     btn.addEventListener('click', () => {
+      attach();
       if (v.paused) {
         v.muted = false;
         void v.play();
@@ -153,7 +168,8 @@ const EAGER = 12;
   if (hero && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => {
       hero.classList.toggle('offscreen', !e.isIntersecting);
-      if (v && v.muted && !reduce) {
+      visible = e.isIntersecting;
+      if (v && v.muted && !reduce && !v.querySelector('source[data-src]')) {
         if (e.isIntersecting) void v.play().catch(() => {});
         else v.pause();
       }
