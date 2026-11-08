@@ -116,7 +116,7 @@
     "slotLabel": "Your cat here",
     "slotAlt": "Luka, Budy and Caddy with an empty spot for your cat",
     "scenesTitle": "Pick a scene. We'll handle the casting.",
-    "scenesNote": "The tuxedo cat is a stand-in. Your cat takes its spot.",
+    "scenesNote": "Your cat joins Luka, Budy and Caddy in the scene you pick.",
     "sceneCta": "Use this scene"
   },
   "episodes": {
