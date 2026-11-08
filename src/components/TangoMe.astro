@@ -148,6 +148,7 @@ const i18n = JSON.stringify({
     createSubmitter,
   } from '../lib/tango-flow';
   import { idbKV, takePendingPhoto } from '../lib/pending-photo';
+  import { track } from '../lib/track';
 
   const root = document.querySelector<HTMLElement>('[data-tango]')!;
   const i18n = JSON.parse(root.dataset.i18n ?? '{}');
@@ -310,6 +311,7 @@ const i18n = JSON.stringify({
       clearActive();
       stopLines();
       if (r.status === 'done' && r.urls) {
+        track('tango-done');
         waiting.hidden = true;
         result.hidden = false;
         q<HTMLImageElement>('[data-out-img]').src = r.urls.post;
@@ -319,6 +321,7 @@ const i18n = JSON.stringify({
         q('[data-copy]').hidden = !r.share;
         result.focus();
       } else {
+        track('tango-failed', { reason: r.error === 'not_cat' ? 'not_cat' : 'server' });
         backToWizard(r.error === 'not_cat' ? E.not_cat : E.server, r.error);
       }
     } catch {
@@ -358,11 +361,13 @@ const i18n = JSON.stringify({
       }
       render();
       setErr('form', E[res.error] ?? E.server);
+      track('tango-refused', { reason: res.error });
       if (res.error === 'used') q('[data-used]').hidden = false;
       if (res.error === 'invalid' || res.error === 'not_cat') submitter.reset();
       return;
     }
     saveActive(res.id);
+    track('tango-start', { scene: scene(), personality: (form.elements.namedItem('personality') as RadioNodeList).value });
     void watch(res.id);
   }
 
@@ -390,6 +395,7 @@ const i18n = JSON.stringify({
     const res = await api.subscribe(value, 'tango-me');
     btn.disabled = false;
     if (!res.ok) return setErr('form', SE[res.error]);
+    track('email-code-sent', { source: 'tango-me' });
     email = value;
     q('[data-email-shown]').textContent = email;
     codeInput.value = '';
@@ -405,6 +411,7 @@ const i18n = JSON.stringify({
     const res = await api.verify(email, code);
     btn.disabled = false;
     if (!res.ok) return setErr('form', SE[res.error]);
+    track('email-verified', { source: 'tango-me' });
     token = res.token;
     saveToken(res.token);
     await submit();
@@ -434,6 +441,7 @@ const i18n = JSON.stringify({
     btn.disabled = true;
     const res = await api.waitlist(token, kind, currentId);
     if (res.ok) {
+      track('waitlist', { kind });
       btn.textContent = R.listed;
       note(R.listed);
     } else if (res.error === 'bad_token') {

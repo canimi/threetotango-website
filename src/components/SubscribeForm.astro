@@ -75,6 +75,7 @@ const errors = JSON.stringify({
 
 <script>
   import { api } from '../lib/api';
+  import { track } from '../lib/track';
   import { isValidEmail, isValidCode, normalizeCode } from '../lib/validate';
 
   document.querySelectorAll<HTMLElement>('[data-subscribe]').forEach((root) => {
@@ -120,6 +121,7 @@ const errors = JSON.stringify({
       const res = await api.subscribe(value, source);
       busy(emailBtn, false, root.dataset.submit!, root.dataset.sending!);
       if (!res.ok) return say(errors[res.error]);
+      track('email-code-sent', { source });
       email = value;
       q('[data-email-shown]').textContent = email;
       codeInput.value = '';
@@ -135,6 +137,7 @@ const errors = JSON.stringify({
       const res = await api.verify(email, code);
       busy(codeBtn, false, root.dataset.verify!, root.dataset.verifying!);
       if (!res.ok) return say(errors[res.error]);
+      track('email-verified', { source });
       show('done');
     });
 

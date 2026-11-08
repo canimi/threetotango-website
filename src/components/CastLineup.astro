@@ -83,6 +83,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
 
 <script>
   import { idbKV, stashPhoto } from '../lib/pending-photo';
+  import { track } from '../lib/track';
 
   const root = document.querySelector<HTMLElement>('[data-lineup]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -181,6 +182,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     };
     const go = async (file: File | undefined) => {
       if (!file) return;
+      track('lineup-photo');
       if ('indexedDB' in window) {
         try {
           await stashPhoto(idbKV(), file);

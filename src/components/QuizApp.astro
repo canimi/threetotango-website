@@ -44,6 +44,7 @@ import { t } from '../i18n/t';
 
 <script>
   import { scoreQuiz, parseStart } from '../lib/quiz-score';
+  import { track } from '../lib/track';
   import type { QuizQuestion } from '../data/quiz';
 
   const root = document.querySelector<HTMLElement>('[data-quiz]');
@@ -75,7 +76,9 @@ import { t } from '../i18n/t';
           b.addEventListener('click', () => {
             picks.push(idx);
             if (picks.length === qs.length) {
-              location.assign(`/quiz/${scoreQuiz(picks)}`);
+              const result = scoreQuiz(picks);
+              track('quiz-done', { cat: result });
+              location.assign(`/quiz/${result}`);
             } else {
               render();
             }
