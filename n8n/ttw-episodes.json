@@ -88,8 +88,7 @@
       "parameters": {
         "method": "GET",
         "url": "https://www.googleapis.com/youtube/v3/playlistItems",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "youTubeOAuth2Api",
+        "authentication": "genericCredentialType",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -115,12 +114,13 @@
               "neverError": true
             }
           }
-        }
+        },
+        "genericAuthType": "httpQueryAuth"
       },
       "credentials": {
-        "youTubeOAuth2Api": {
-          "id": "hZnSdCoT08I5GsQe",
-          "name": "YouTube account"
+        "httpQueryAuth": {
+          "id": "W5Nh2UD9jsHPI6UB",
+          "name": "TTW YouTube API key"
         }
       },
       "onError": "continueRegularOutput"
