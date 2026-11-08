@@ -358,3 +358,10 @@ video {
 #household .head h2::after {
   margin-inline: auto;
 }
+
+/* Tilted ribbons and stickers may poke past the viewport edge: never let them cause sideways scroll.
+   (clip, not hidden: it creates no scroll container, so the sticky header keeps working) */
+html,
+body {
+  overflow-x: clip;
+}
