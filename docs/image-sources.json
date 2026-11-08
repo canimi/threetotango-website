@@ -1,0 +1,18 @@
+{
+  "note": "Original 2K renders on the Megica CDN (GPT Image 2.5 Sunburst Edit, Medium). Rebuild site assets with /home/claude/process_assets.py logic: scenes 800x1004 webp, wallpapers zip, reaction GIFs.",
+  "files": {
+    "react-luka": "https://g.tlcdn.com/gen/1e2e8fce1d8b4aa09ccee83fd034769e.png",
+    "react-budy": "https://g.tlcdn.com/gen/427b0ed359d644ee8bdc9a33503c22eb.png",
+    "react-caddy": "https://g.tlcdn.com/gen/eab04a1aed32403ebac3aecbe245ad72.png",
+    "react-nora": "https://g.tlcdn.com/gen/4d047f090a8547f780ac079bc667611f.png",
+    "wall-luka": "https://g.tlcdn.com/gen/7af3b342c5d04821a93f9f583d15137c.png",
+    "wall-budy": "https://g.tlcdn.com/gen/c3c48dcd33784fa1a1cf5dd9c9c75e5f.png",
+    "wall-caddy": "https://g.tlcdn.com/gen/44401aab8f5148bb9e361dcb566d8af6.png",
+    "scene-kitchen-table": "https://g.tlcdn.com/gen/5adcf318c50e45b9880096c6110f2037.png",
+    "scene-sofa-gang": "https://g.tlcdn.com/gen/3e1d797574864978a2ce30a836fb2a3e.png",
+    "scene-fridge-heist": "https://g.tlcdn.com/gen/4f6f9db0e67149b89de9108d055f454d.png",
+    "scene-box-fort": "https://g.tlcdn.com/gen/e4af857fbbd34472bcb5836fcd1097bd.png",
+    "scene-window-birds": "https://g.tlcdn.com/gen/eec75fb847974d4bad0d440654fd3a48.png",
+    "scene-lettuce-crime": "https://g.tlcdn.com/gen/8000ad12a92a4e288fa058eca5d074bd.png"
+  }
+}
