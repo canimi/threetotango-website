@@ -152,7 +152,7 @@ create table if not exists ttw.gallery_like_ip (
 
 create table if not exists ttw.cat_of_week (
   week_start    date primary key,             -- Monday (Europe/Berlin) the win was announced
-  generation_id text not null unique references ttw.generations(id),
+  generation_id text not null unique references ttw.generations(id) on delete cascade,
   likes         int not null,
   created_at    timestamptz not null default now()
 );
@@ -166,3 +166,8 @@ create table if not exists ttw.bonus_credits (
   used_by       text references ttw.generations(id) on delete set null
 );
 create index if not exists bonus_credits_email_idx on ttw.bonus_credits (lower(email)) where used_by is null;
+
+-- cat_of_week: a removed winner must cascade away (idempotent upgrade of DBs created without cascade)
+alter table ttw.cat_of_week
+  drop constraint if exists cat_of_week_generation_id_fkey,
+  add constraint cat_of_week_generation_id_fkey foreign key (generation_id) references ttw.generations(id) on delete cascade;

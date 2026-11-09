@@ -42,7 +42,7 @@ create table if not exists gallery_like_ip (
 
 create table if not exists cat_of_week (
   week_start    date primary key,             -- Monday (Europe/Berlin) the win was announced
-  generation_id text not null unique references generations(id),
+  generation_id text not null unique references generations(id) on delete cascade,
   likes         int not null,
   created_at    timestamptz not null default now()
 );
