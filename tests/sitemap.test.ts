@@ -10,9 +10,12 @@ describe('sitemap and robots', () => {
   it('lists the main pages and every character page, not /links', () => {
     if (!existsSync('dist/sitemap.xml')) return; // only after a build
     const s = readFileSync('dist/sitemap.xml', 'utf8');
-    for (const p of ['/', '/tango-me/', '/cats/luka/', '/cats/nora/', '/episodes/', '/quiz/budy/', '/gift/', '/gallery/']) {
+    for (const p of ['/', '/tango-me', '/cats/luka', '/cats/nora', '/episodes', '/quiz/budy', '/gift', '/gallery']) {
       expect(s).toContain(`<loc>https://threetotango.canimi.app${p}</loc>`);
     }
-    expect(s).not.toContain('/links/');
+    expect(s).not.toContain('/links');
+    // canonical form: no trailing slash except the home page
+    expect(s).not.toMatch(/<loc>https:\/\/threetotango\.canimi\.app\/[^<]+\/<\/loc>/);
+    expect(s).toMatch(/<loc>https:\/\/threetotango\.canimi\.app\/episodes\/the-lettuce-incident<\/loc><lastmod>2026-11-01<\/lastmod>/);
   });
 });

@@ -59,7 +59,7 @@ const starring = (n: number) =>
             <img src={c.full} width="600" height="800" loading="lazy" decoding="async" alt={`${t('cats.portraitAlt')} ${c.name}`} style={`view-transition-name:cast-${id}`} />
           </div>
           <div class="about">
-            <h3>{c.name}<span class="nick">{c.nickname}</span></h3>
+            <h3>{c.name}{' '}<span class="nick">{c.nickname}</span></h3>
             <p class="line">{c.oneLiner}</p>
             <dl class="traits">
               <div>

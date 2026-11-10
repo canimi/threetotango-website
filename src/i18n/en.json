@@ -415,5 +415,19 @@
     "weekTitle": "Cat of the Week",
     "weekNewTitle": "New in the gallery",
     "weekCta": "See the gallery"
+  },
+  "seo": {
+    "homeTitle": "Three To Tango – A Wordless 3D-Animated Cat Comedy",
+    "homeDesc": "Nora lives her best life. Her three cats have other plans. A wordless 3D-animated cat comedy with Luka, Budy and Caddy. New episodes Mon, Wed, Fri, Sun.",
+    "episodesTitle": "Funny Cat Cartoon Episodes | Three To Tango",
+    "episodesDesc": "Watch every episode of Three To Tango, a wordless 3D-animated cat comedy: short, funny cat cartoons with Luka, Budy, Caddy and Nora.",
+    "catsTitle": "Meet the Cats: Luka, Budy, Caddy & Nora | Three To Tango",
+    "catsDesc": "Meet the household of Three To Tango, the 3D-animated cat comedy: Luka the genius, Budy the chatterbox, Caddy the unbothered and Nora, their human.",
+    "catSuffix": "of Three To Tango, a wordless 3D-animated cat comedy.",
+    "ogDefaultAlt": "Three To Tango: Luka, Budy and Caddy on a green sofa. A wordless 3D-animated cat comedy.",
+    "home": "Home",
+    "moreWith": "More with",
+    "moreEpisodes": "More episodes",
+    "meetCast": "Who is in this episode"
   }
 }

@@ -19,7 +19,7 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
   compact ? (
     <ol class="steps compact" aria-label={t('showcase.stepsLabel')}>
       {steps.map((s, i) => (
-        <li><span class="n" aria-hidden="true">{i + 1}</span><span><strong>{s.title}</strong> {s.body}</span></li>
+        <li><span class="n" aria-hidden="true">{i + 1}</span>{' '}<span><strong>{s.title}</strong> {s.body}</span></li>
       ))}
     </ol>
   ) : (
@@ -30,7 +30,7 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
           <p class="lede">{t('showcase.sub')}</p>
           <ol class="steps" aria-label={t('showcase.stepsLabel')}>
             {steps.map((s, i) => (
-              <li><span class="n" aria-hidden="true">{i + 1}</span><span><strong>{s.title}</strong>{s.body}</span></li>
+              <li><span class="n" aria-hidden="true">{i + 1}</span>{' '}<span><strong>{s.title}</strong>{' '}{s.body}</span></li>
             ))}
           </ol>
           <a class="btn btn-lg" href="/tango-me" data-magnetic>{t('showcase.cta')}</a>
@@ -64,7 +64,7 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
               <a class="polaroid" href={`/tango-me?scene=${id}`} aria-label={`${t(`tango.scenes.${id}`)}: ${t('showcase.sceneCta')}`}>
                 <span class="tape" aria-hidden="true"></span>
                 <img src={`/img/scenes/${id}.webp`} width="800" height="1004" loading="lazy" decoding="async" alt="" />
-                <span class="cap">{t(`tango.scenes.${id}`)}</span>
+                <span class="cap">{t(`tango.scenes.${id}`)}</span>{' '}
                 <span class="use" aria-hidden="true">{t('showcase.sceneCta')} →</span>
               </a>
             </li>

@@ -82,6 +82,28 @@
         }
       },
       "executeOnce": true
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "-- SEO (2026-11-10): also in db/schema.sql. Idempotent.\nalter table ttw.episodes add column if not exists seo_description text;\nalter table ttw.episodes add column if not exists summary text;\nselect count(*)::int as cols from information_schema.columns where table_schema = 'ttw' and table_name = 'episodes' and column_name in ('seo_description','summary');",
+        "options": {}
+      },
+      "name": "Apply SEO columns",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        896,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
     }
   ],
   "connections": {
@@ -112,6 +134,17 @@
         [
           {
             "node": "Apply schema to ttw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply schema to ttw": {
+      "main": [
+        [
+          {
+            "node": "Apply SEO columns",
             "type": "main",
             "index": 0
           }

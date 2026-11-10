@@ -7,6 +7,10 @@ export interface Episode {
   slug: string;
   title: string;
   description: string;
+  /** Clean web meta description written at import (empty until generated). */
+  seoDescription?: string;
+  /** Short episode premise written at import from the caption (empty until generated). */
+  summary?: string;
   publishedAt: string;
   thumbnailUrl: string;
   videoUrl: string;
