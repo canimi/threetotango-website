@@ -15,13 +15,20 @@ ENV EPISODES_API_URL=$EPISODES_API_URL \
 ADD https://n8n.canimi.app/webhook/ttw-episodes /tmp/episodes.json
 RUN npm run build
 
-# Stage 2: serve with nginx
-FROM nginx:alpine
-RUN mkdir -p /etc/nginx/snippets /etc/nginx/templates /usr/share/nginx/media \
+# Stage: site builder (service ttw-builder) — rebuilds the site when the episode feed changes.
+FROM build AS builder
+ENV SITE_DIR=/srv/site APP_DIR=/app
+CMD ["node", "deploy/site-builder.mjs"]
+
+# Stage: serve with nginx (default target, service ttw-web). Serves /srv/site/current from volume ttw_site.
+FROM nginx:alpine AS web
+RUN mkdir -p /etc/nginx/snippets /etc/nginx/templates /usr/share/nginx/media /srv/site \
  && chown -R nginx:nginx /usr/share/nginx/media
 COPY deploy/security-headers.conf /etc/nginx/snippets/ttw-security.conf
 COPY deploy/ttw-proxy.inc.template /etc/nginx/templates/ttw-proxy.inc.template
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY deploy/media-internal.conf.template /etc/nginx/templates/media-internal.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY deploy/seed-site.sh /docker-entrypoint.d/05-ttw-seed-site.sh
+RUN chmod +x /docker-entrypoint.d/05-ttw-seed-site.sh
 EXPOSE 80 8081

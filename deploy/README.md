@@ -1,6 +1,15 @@
 # Deploying Three To Tango (maintainers)
 
-The site is one container (`ttw-web`: nginx + the built Astro site), deployed as a Portainer stack from this repository (`docker-compose.yml`).
+The site runs as two containers, deployed as a Portainer stack from this repository (`docker-compose.yml`):
+- `ttw-web`: nginx. Serves `/srv/site/current` from the shared volume `ttw_site` and proxies `/api/*` to n8n.
+- `ttw-builder`: keeps the static site in step with the episode feed (`deploy/site-builder.mjs`).
+
+## How new episodes reach the site
+Portainer CE only redeploys a Git stack from its webhook when the repository changed, and episodes come from n8n, not Git. So the site rebuilds itself:
+1. On start `ttw-web` publishes the site baked into its image as `releases/baked-<time>` (only when the image is new) and points the `current` symlink at it.
+2. `ttw-builder` builds once on start, then fetches `http://n8n-docker-n8n-1:5678/webhook/ttw-episodes` every `POLL_SECONDS` (default 600; public URL as fallback). When the feed changed it runs `astro build`, checks the output, copies it to `releases/b-<time>` and switches `current` atomically. A failed build, an empty feed or a feed with less than half the episodes is ignored: the live site stays.
+3. It keeps the live release plus the two newest others. `/build-info.json` shows the live build (time, episode count, latest slug).
+4. Code changes still need Portainer → Stacks → ttw → **Pull and redeploy**. Logs: Portainer → Containers → `ttw-builder` → Logs.
 
 ## Required environment variables
 Set them in Portainer (Stacks > Add stack > Environment variables). See `deploy/.env.example`.

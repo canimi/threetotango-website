@@ -3,11 +3,12 @@
 # Umami analytics is optional and lives in docker-compose.umami.yml (see deploy/README.md).
 services:
   ttw-web:
-    # Always rebuild on (re)deploy so new episode data is baked into the static site.
+    # nginx: serves /srv/site/current (shared volume ttw_site) + proxies /api/* to n8n.
     pull_policy: build
     build:
       context: .
       dockerfile: deploy/Dockerfile
+      target: web
       args:
         EPISODES_API_URL: ${EPISODES_API_URL:-https://n8n.canimi.app/webhook/ttw-episodes}
         PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
@@ -20,12 +21,37 @@ services:
       TTW_MEDIA_KEY: ${TTW_MEDIA_KEY:?set TTW_MEDIA_KEY}
     volumes:
       - ttw_media:/usr/share/nginx/media
+      - ttw_site:/srv/site
+    networks:
+      - n8n
+
+  ttw-builder:
+    # Rebuilds the static site when the n8n episode feed changes (no Portainer/GitHub webhook needed).
+    # A build only goes live when it finished and passed its checks; otherwise the live site stays.
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      target: builder
+      args:
+        EPISODES_API_URL: ${EPISODES_API_URL:-https://n8n.canimi.app/webhook/ttw-episodes}
+        PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
+    container_name: ttw-builder
+    restart: unless-stopped
+    environment:
+      PUBLIC_UMAMI_ID: ${PUBLIC_UMAMI_ID:-}
+      FEED_URL: ${FEED_URL:-http://n8n-docker-n8n-1:5678/webhook/ttw-episodes}
+      POLL_SECONDS: ${POLL_SECONDS:-600}
+    volumes:
+      - ttw_site:/srv/site
     networks:
       - n8n
 
 volumes:
   ttw_media:
     name: ttw_media
+  ttw_site:
+    name: ttw_site
 
 networks:
   n8n:
