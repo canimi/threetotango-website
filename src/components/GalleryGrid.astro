@@ -1,0 +1,202 @@
+---
+import { t } from '../i18n/t';
+import '../styles/gallery-cards.css';
+---
+
+<div class="gallery" data-gallery>
+  <section class="featured" data-featured hidden aria-labelledby="featured-title">
+    <h2 id="featured-title">{t('gallery.featuredLabel')}</h2>
+    <ul class="grid one" data-featured-slot role="list"></ul>
+  </section>
+
+  <div class="toolbar" role="group" aria-label={t('gallery.sortLabel')}>
+    <button type="button" class="chip" data-sort="new" aria-pressed="true">{t('gallery.sortNew')}</button>
+    <button type="button" class="chip" data-sort="top" aria-pressed="false">{t('gallery.sortTop')}</button>
+  </div>
+
+  <ul class="grid" data-grid role="list" aria-busy="true" aria-label={t('gallery.loading')}>
+    {Array.from({ length: 8 }, () => <li class="gcard skeleton" aria-hidden="true" data-skeleton></li>)}
+  </ul>
+
+  <div class="more" data-more hidden>
+    <p class="more-error" data-more-error role="status"></p>
+    <button type="button" class="btn" data-more-btn>{t('gallery.more')}</button>
+  </div>
+
+  <div class="state" data-empty hidden>
+    <p>{t('gallery.emptyTitle')}</p>
+    <a class="btn" href="/tango-me">{t('gallery.emptyCta')}</a>
+  </div>
+  <div class="state" data-error hidden role="alert">
+    <p>{t('gallery.error')}</p>
+    <button type="button" class="btn" data-retry>{t('gallery.retry')}</button>
+  </div>
+</div>
+
+<script>
+  import { fetchGallery, deviceId, likedStore, buildCard, formatWeek, setLoadError } from '../lib/gallery';
+  import type { GalleryItem } from '../lib/gallery';
+
+  const root = document.querySelector<HTMLElement>('[data-gallery]');
+  if (root) {
+    const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const grid = q<HTMLUListElement>('[data-grid]');
+    const featuredBox = q<HTMLElement>('[data-featured]');
+    const featuredSlot = q<HTMLUListElement>('[data-featured-slot]');
+    const more = q<HTMLElement>('[data-more]');
+    const moreBtn = q<HTMLButtonElement>('[data-more-btn]');
+    const moreError = q<HTMLElement>('[data-more-error]');
+    const empty = q<HTMLElement>('[data-empty]');
+    const errorBox = q<HTMLElement>('[data-error]');
+    const sortBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-sort]')];
+
+    const liked = likedStore();
+    const device = deviceId();
+    let sort: 'new' | 'top' = 'new';
+    let next: number | null = 0;
+    let busy = false;
+    let epoch = 0;
+
+    const build = (item: GalleryItem) => buildCard(item, liked, device);
+
+    const setState = (s: 'ok' | 'empty' | 'error') => {
+      empty.hidden = s !== 'empty';
+      errorBox.hidden = s !== 'error';
+      grid.hidden = s !== 'ok';
+      document.querySelector<HTMLElement>('.toolbar')!.hidden = s !== 'ok';
+    };
+
+    async function load(reset: boolean) {
+      if (busy) return;
+      busy = true;
+      const mine = ++epoch;
+      if (reset) {
+        grid.setAttribute('aria-busy', 'true');
+        grid.replaceChildren(...Array.from({ length: 8 }, () => {
+          const li = document.createElement('li');
+          li.className = 'gcard skeleton';
+          li.setAttribute('aria-hidden', 'true');
+          return li;
+        }));
+        more.hidden = true;
+        next = 0;
+      }
+      moreBtn.disabled = true;
+      setLoadError(moreError, false);
+      const page = await fetchGallery({ sort, offset: next ?? 0, limit: 24 });
+      busy = false;
+      moreBtn.disabled = false;
+      if (mine !== epoch) return;
+      grid.removeAttribute('aria-busy');
+      if (!page) {
+        if (reset) {
+          grid.replaceChildren();
+          featuredBox.hidden = true;
+          setState('error');
+        } else {
+          setLoadError(moreError, true);
+        }
+        return;
+      }
+      if (reset) grid.replaceChildren();
+      grid.append(...page.items.map(build));
+      next = page.next;
+      more.hidden = next === null;
+      if (reset) {
+        featuredSlot.replaceChildren();
+        featuredBox.hidden = !page.featured;
+        if (page.featured) {
+          const card = build(page.featured);
+          const week = document.createElement('span');
+          week.className = 'week';
+          week.textContent = formatWeek(page.featured.weekStart);
+          card.querySelector('.cap')?.after(week);
+          card.classList.add('is-featured');
+          featuredSlot.append(card);
+        }
+        setState(page.items.length === 0 && !page.featured ? 'empty' : 'ok');
+      }
+    }
+
+    sortBtns.forEach((b) =>
+      b.addEventListener('click', () => {
+        const s = b.dataset.sort === 'top' ? 'top' : 'new';
+        if (s === sort) return;
+        sort = s;
+        sortBtns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        busy = false;
+        void load(true);
+      }),
+    );
+    moreBtn.addEventListener('click', () => void load(false));
+    root.querySelector('[data-retry]')?.addEventListener('click', () => {
+      setState('ok');
+      void load(true);
+    });
+    void load(true);
+  }
+</script>
+
+<style is:global>
+  .gallery .toolbar {
+    display: flex;
+    gap: var(--space-1);
+    margin-block: var(--space-3);
+  }
+  .gallery .chip {
+    min-block-size: 44px;
+    padding: 0.5rem 1.1rem;
+    border: 2px solid var(--c-mustard);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--c-paper);
+    font: 600 1rem var(--font-display);
+    cursor: pointer;
+  }
+  .gallery .chip[aria-pressed='true'] {
+    background: var(--c-mustard);
+    color: var(--c-on-mustard);
+  }
+  .gallery .chip:focus-visible,
+  .gallery .heart:focus-visible {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 3px;
+  }
+  .gallery .featured h2 {
+    margin-block: 0 var(--space-2);
+  }
+  .gallery .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1rem, 2.4vw, 1.8rem);
+    margin: 0;
+    padding: var(--space-2) 0 var(--space-3);
+    list-style: none;
+  }
+  .gallery .grid.one {
+    grid-template-columns: minmax(0, 18rem);
+    padding-block-end: 0;
+  }
+  @media (min-width: 56rem) {
+    .gallery .grid:not(.one) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .gallery .more-error {
+    margin: 0;
+  }
+  .gallery .more-error:empty {
+    display: none;
+  }
+  .gallery .more,
+  .gallery .state {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    margin-block: var(--space-3);
+    text-align: center;
+  }
+  .gallery [hidden] {
+    display: none;
+  }
+</style>

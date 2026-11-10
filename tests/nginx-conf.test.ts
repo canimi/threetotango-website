@@ -11,9 +11,29 @@ describe('nginx.conf', () => {
     ['= /api/tango/start', '/webhook/ttw-tango-start'],
     ['/api/tango/status/', '/webhook/ttw-tango-status?id=$1'],
     ['/tango-me/r/', '/webhook/ttw-tango-share?id=$1'],
+    ['= /api/gallery', '/webhook/ttw-gallery$is_args$args'],
+    ['= /api/gallery/like', '/webhook/ttw-gallery-like'],
+    ['= /api/gallery/optin', '/webhook/ttw-gallery-optin'],
+    ['= /gallery/mod', '/webhook/ttw-gallery-mod$is_args$args'],
   ])('maps %s to %s', (loc, target) => {
     expect(conf).toContain(loc);
     expect(conf).toContain(`$n8n${target}`);
+  });
+  it('caches gallery list 30s', () => {
+    expect(conf).toMatch(
+      /location = \/api\/gallery \{[^}]*add_header Cache-Control "public, max-age=30";[^}]*include \/etc\/nginx\/snippets\/ttw-security\.conf;/,
+    );
+  });
+  it('does not cache gallery list errors (no always flag)', () => {
+    expect(conf).not.toMatch(/Cache-Control "public, max-age=30" always/);
+  });
+  it('gallery mod page hides n8n Referrer-Policy', () => {
+    expect(conf).toMatch(/= \/gallery\/mod \{[^}]*proxy_hide_header Referrer-Policy;/);
+  });
+  it('limits JSON bodies', () => {
+    for (const loc of ['= /api/gallery/like', '= /api/gallery/optin']) {
+      expect(conf).toMatch(new RegExp(`location ${loc.replace(/[/]/g, '\\/')} \\{[^}]*client_max_body_size 2k;`));
+    }
   });
   it('validates ids and 404s the rest of /api/', () => {
     expect(conf).toContain('([A-Za-z0-9_-]{1,64})$');
@@ -67,7 +87,7 @@ describe('proxy key (R13)', () => {
     expect(p).toContain('proxy_set_header X-TTW-Proxy-Key "${TTW_PROXY_KEY}";');
   });
   it('every proxy location includes the rendered proxy snippet', () => {
-    expect(conf.match(/include \/etc\/nginx\/conf\.d\/ttw-proxy\.inc;/g)?.length).toBe(6);
+    expect(conf.match(/include \/etc\/nginx\/conf\.d\/ttw-proxy\.inc;/g)?.length).toBe(10);
   });
   it('media root cannot be deleted', () => {
     const m = readFileSync('deploy/media-internal.conf.template', 'utf8');
@@ -78,6 +98,9 @@ describe('proxy key (R13)', () => {
 describe('deploy prep', () => {
   it('share location hides n8n CSP', () => {
     expect(conf).toMatch(/ttw-tango-share\?id=\$1;\s*[^}]*proxy_hide_header Content-Security-Policy;/);
+  });
+  it('gallery mod page hides n8n CSP', () => {
+    expect(conf).toMatch(/= \/gallery\/mod \{[^}]*proxy_hide_header Content-Security-Policy;/);
   });
   it('hides X-Powered-By on proxied locations', () => {
     expect(readFileSync('deploy/ttw-proxy.inc.template', 'utf8')).toContain('proxy_hide_header X-Powered-By;');

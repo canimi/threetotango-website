@@ -71,7 +71,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "select json_build_object('format', 'ttw-backup-v1', 'created_at', now(), 'tables', json_build_object('episodes', coalesce((select json_agg(t) from ttw.episodes t), '[]'::json), 'subscribers', coalesce((select json_agg(t) from ttw.subscribers t), '[]'::json), 'generations', coalesce((select json_agg(t) from ttw.generations t), '[]'::json), 'waitlist', coalesce((select json_agg(t) from ttw.waitlist t), '[]'::json), 'daily_budget', coalesce((select json_agg(t) from ttw.daily_budget t), '[]'::json), 'sessions', coalesce((select json_agg(t) from ttw.sessions t), '[]'::json), 'email_codes', coalesce((select json_agg(t) from ttw.email_codes t), '[]'::json), 'ip_attempts', coalesce((select json_agg(t) from ttw.ip_attempts t), '[]'::json))) as backup",
+        "query": "select json_build_object('format', 'ttw-backup-v1', 'created_at', now(), 'tables', json_build_object('episodes', coalesce((select json_agg(t) from ttw.episodes t), '[]'::json), 'subscribers', coalesce((select json_agg(t) from ttw.subscribers t), '[]'::json), 'generations', coalesce((select json_agg(t) from ttw.generations t), '[]'::json), 'waitlist', coalesce((select json_agg(t) from ttw.waitlist t), '[]'::json), 'daily_budget', coalesce((select json_agg(t) from ttw.daily_budget t), '[]'::json), 'sessions', coalesce((select json_agg(t) from ttw.sessions t), '[]'::json), 'email_codes', coalesce((select json_agg(t) from ttw.email_codes t), '[]'::json), 'ip_attempts', coalesce((select json_agg(t) from ttw.ip_attempts t), '[]'::json), 'gallery_likes', coalesce((select json_agg(t) from ttw.gallery_likes t), '[]'::json), 'gallery_like_ip', coalesce((select json_agg(t) from ttw.gallery_like_ip t), '[]'::json), 'cat_of_week', coalesce((select json_agg(t) from ttw.cat_of_week t), '[]'::json), 'bonus_credits', coalesce((select json_agg(t) from ttw.bonus_credits t), '[]'::json))) as backup",
         "options": {}
       },
       "credentials": {
@@ -188,7 +188,7 @@
       "executeOnce": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted",
+        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1), d as (delete from ttw.gallery_like_ip where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted, (select count(*) from d)::int as gallery_like_ip_deleted",
         "options": {}
       },
       "credentials": {
@@ -209,7 +209,7 @@
       "executeOnce": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "select id from ttw.generations where expires_at < now() and not gallery_opt_in and status in ('done', 'failed') order by expires_at limit 500",
+        "query": "select id from ttw.generations where expires_at < now() and status in ('done', 'failed') order by expires_at limit 500",
         "options": {}
       },
       "credentials": {
@@ -285,7 +285,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with d as (delete from ttw.generations where id in (select jsonb_array_elements_text($1::jsonb)) and not gallery_opt_in and expires_at < now() returning id) select count(*)::int as generations_deleted from d",
+        "query": "with d as (delete from ttw.generations where id in (select jsonb_array_elements_text($1::jsonb)) and expires_at < now() returning id) select count(*)::int as generations_deleted from d",
         "options": {
           "queryReplacement": "={{ [ $json.ids ] }}"
         }

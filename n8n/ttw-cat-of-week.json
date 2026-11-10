@@ -1,0 +1,241 @@
+{
+  "name": "TTW · Cat of the Week",
+  "nodes": [
+    {
+      "name": "Monday 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pick And Record Winner",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with cand as (select g.id, g.email, coalesce(g.cat_name, 'A cat') as name, count(l.*)::int as likes, g.gallery_approved_at from ttw.generations g join ttw.gallery_likes l on l.generation_id = g.id and l.created_at >= now() - interval '7 days' where g.gallery_status = 'approved' and not exists (select 1 from ttw.cat_of_week c where c.generation_id = g.id) group by g.id, g.email, g.cat_name, g.gallery_approved_at order by count(l.*) desc, g.gallery_approved_at asc, g.id asc limit 1), w as (insert into ttw.cat_of_week (week_start, generation_id, likes) select (now() at time zone 'Europe/Berlin')::date, id, likes from cand on conflict (week_start) do nothing returning generation_id, week_start, likes), b as (insert into ttw.bonus_credits (email, reason, source_id) select c.email, 'cat_of_week', c.id from cand c where exists (select 1 from w) returning id) select c.id, c.email, c.name, w.likes, to_char(w.week_start, 'YYYY-MM-DD') as week_start, (select count(*) from b)::int as credits from cand c join w on w.generation_id = c.id",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Fetch Story Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "=http://ttw-web:8081/media/tango/{{ $json.id }}-story.jpg",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__TTW_MEDIA_KEY_CREDENTIAL_ID__",
+          "name": "TTW Media Key"
+        }
+      }
+    },
+    {
+      "name": "Build Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const w = $('Pick And Record Winner').first().json;\nconst bin = $input.first().binary;\nconst hasImage = !!(bin && bin.data);\nconst esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\nconst site = 'https://threetotango.canimi.app';\nconst isTest = /(@ttw-test\\.invalid|\\+ttwtest@gmail\\.com)$/i.test(String(w.email || ''));\nconst pre = isTest ? '[TEST] ' : '';\nconst rawName = String(w.name || 'A cat').replace(/[\\r\\n]+/g, ' ');\nconst name = esc(rawName);\nconst shareUrl = site + '/tango-me/r/' + encodeURIComponent(w.id);\nconst caption = 'Cat of the Week: ' + rawName + ' 🏆 Moved in with Luka, Budy and Caddy — and survived. Put your cat in the show: threetotango.canimi.app/tango-me';\nconst wrap = (inner) => '<div style=\"font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#222\">' + inner + '</div>';\nconst btn = 'display:inline-block;padding:12px 22px;border-radius:8px;font-weight:bold;text-decoration:none;background:#E1AD01;color:#222;';\nconst ownerHtml = wrap('<h2 style=\"margin:0 0 8px\">' + name + ' is Cat of the Week</h2>'\n  + '<p style=\"color:#666\">' + esc(w.likes) + ' likes in the last 7 days. Week of ' + esc(w.week_start) + '. The 9:16 story image is attached' + (hasImage ? '' : ' (could not be loaded)') + '.</p>'\n  + '<p style=\"margin:16px 0 4px;font-weight:bold\">Caption (copy and paste)</p>'\n  + '<p style=\"background:#faf6ea;padding:12px;border-radius:8px;white-space:pre-wrap\">' + esc(caption) + '</p>'\n  + '<p style=\"margin:16px 0 4px;font-weight:bold\">Share link</p>'\n  + '<p><a href=\"' + esc(shareUrl) + '\">' + esc(shareUrl) + '</a></p>');\nconst winnerHtml = wrap('<h2 style=\"margin:0 0 8px\">' + name + ' is Cat of the Week 🏆</h2>'\n  + '<p>Your cat got the most likes in the Three To Tango gallery this week.</p>'\n  + '<p><img src=\"' + esc(site + '/media/tango/' + w.id + '-post.jpg') + '\" alt=\"' + name + '\" style=\"width:100%;max-width:480px;border-radius:8px\"></p>'\n  + '<p><a href=\"' + esc(shareUrl) + '\">Share ' + name + '’s page</a></p>'\n  + '<p style=\"margin:16px 0\">You earned one more free Tango Me.</p>'\n  + '<p><a href=\"' + esc(site + '/tango-me') + '\" style=\"' + btn + '\">Put another cat in the show</a></p>');\nreturn [{ json: { winnerEmail: String(w.email || ''), sendWinner: !/@ttw-test\\.invalid$/i.test(String(w.email || '')), ownerSubject: pre + 'Cat of the Week: ' + rawName + ' — story ready', ownerHtml, winnerSubject: pre + rawName + ' is Cat of the Week 🏆', winnerHtml, hasImage }, binary: hasImage ? { data: bin.data } : {} }];"
+      }
+    },
+    {
+      "name": "Email Owner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        -100
+      ],
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "Three To Tango <avcican@gmail.com>",
+        "toEmail": "avcican@gmail.com",
+        "subject": "={{ $json.ownerSubject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.ownerHtml }}",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "={{ $json.hasImage ? \"data\" : \"\" }}"
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "FtJ7S9RAcyOsbZK9",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "name": "Send Winner Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.sendWinner }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Email Winner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        120
+      ],
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "Three To Tango <avcican@gmail.com>",
+        "toEmail": "={{ $json.winnerEmail }}",
+        "subject": "={{ $json.winnerSubject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.winnerHtml }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "FtJ7S9RAcyOsbZK9",
+          "name": "Gmail SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Monday 09:00": {
+      "main": [
+        [
+          {
+            "node": "Pick And Record Winner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick And Record Winner": {
+      "main": [
+        [
+          {
+            "node": "Fetch Story Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Story Image": {
+      "main": [
+        [
+          {
+            "node": "Build Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Winner Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Winner Email?": {
+      "main": [
+        [
+          {
+            "node": "Email Winner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin",
+    "errorWorkflow": "__TTW_ERRORS_WORKFLOW_ID__ (id of TTW · Errors after import)"
+  }
+}

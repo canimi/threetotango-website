@@ -115,3 +115,70 @@ reset search_path;
 -- Migration for DBs created before 'characters' became nullable (idempotent):
 alter table ttw.episodes alter column characters drop not null;
 alter table ttw.episodes add column if not exists short_title text;
+
+-- ============================================================
+-- v2a gallery (spec: docs/superpowers/specs/2026-11-10-gallery-design.md §1)
+-- ============================================================
+alter table ttw.generations add column if not exists gallery_status text not null default 'none';
+alter table ttw.generations add column if not exists gallery_mod_hash text;
+alter table ttw.generations add column if not exists gallery_remove_hash text;
+alter table ttw.generations add column if not exists gallery_approved_at timestamptz;
+alter table ttw.generations add column if not exists uses_bonus boolean not null default false;
+
+do $$
+begin
+  alter table ttw.generations add constraint generations_gallery_status_check
+    check (gallery_status in ('none','pending','approved','rejected','removed'));
+exception when duplicate_object then null;
+end
+$$;
+
+create index if not exists generations_gallery_approved_idx on ttw.generations (gallery_approved_at desc) where gallery_status = 'approved';
+
+create table if not exists ttw.gallery_likes (
+  generation_id text not null references ttw.generations(id) on delete cascade,
+  voter_hash    text not null,              -- sha256(device_id || '|' || ip)
+  created_at    timestamptz not null default now(),
+  primary key (generation_id, voter_hash)
+);
+create index if not exists gallery_likes_created_idx on ttw.gallery_likes (created_at);
+
+create table if not exists ttw.gallery_like_ip (
+  ip_hash text not null,
+  day     date not null,
+  count   int not null default 0,
+  primary key (ip_hash, day)
+);
+
+create table if not exists ttw.cat_of_week (
+  week_start    date primary key,             -- Monday (Europe/Berlin) the win was announced
+  generation_id text not null unique references ttw.generations(id) on delete cascade,
+  likes         int not null,
+  created_at    timestamptz not null default now()
+);
+
+create table if not exists ttw.bonus_credits (
+  id            bigserial primary key,
+  email         text not null,
+  reason        text not null check (reason in ('cat_of_week')),
+  source_id     text,                          -- winning generation id
+  granted_at    timestamptz not null default now(),
+  used_by       text references ttw.generations(id) on delete set null,
+  used_at       timestamptz                    -- set when claimed; NULL = unused (survives used_by -> NULL on delete)
+);
+alter table ttw.bonus_credits add column if not exists used_at timestamptz;
+-- "unused" = used_at is null (idempotent upgrade of the old used_by-based partial index)
+do $$
+begin
+  if exists (select 1 from pg_indexes where schemaname = 'ttw' and indexname = 'bonus_credits_email_idx'
+             and indexdef not like '%used_at IS NULL%') then
+    drop index ttw.bonus_credits_email_idx;
+  end if;
+end
+$$;
+create index if not exists bonus_credits_email_idx on ttw.bonus_credits (lower(email)) where used_at is null;
+
+-- cat_of_week: a removed winner must cascade away (idempotent upgrade of DBs created without cascade)
+alter table ttw.cat_of_week
+  drop constraint if exists cat_of_week_generation_id_fkey,
+  add constraint cat_of_week_generation_id_fkey foreign key (generation_id) references ttw.generations(id) on delete cascade;

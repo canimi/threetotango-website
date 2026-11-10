@@ -123,7 +123,9 @@ const i18n = JSON.stringify({
       <button type="button" class="btn alt" data-copy>{t('tango.result.copyShare')}</button>
       <button type="button" class="btn alt" data-waitlist="hd">{t('tango.result.hd')}</button>
       <button type="button" class="btn alt" data-waitlist="mug">{t('tango.result.mug')}</button>
+      <button type="button" class="btn alt" data-gallery-add hidden>{t('tango.result.galleryAdd')}</button>
     </div>
+    <p class="ok" data-gallery-note role="status" hidden></p>
     <p class="ok" data-result-msg role="status" hidden></p>
     <p class="err" data-result-err role="alert" hidden></p>
     <p><a href="/quiz">{t('tango.result.quizCta')}</a></p>
@@ -133,6 +135,7 @@ const i18n = JSON.stringify({
 
 <script>
   import { api } from '../lib/api';
+  import { optinFailureAction } from '../lib/gallery';
   import { isValidEmail, normalizeCode, isValidCode } from '../lib/validate';
   import {
     validateUpload,
@@ -302,6 +305,15 @@ const i18n = JSON.stringify({
     q<HTMLElement>(`[data-panel="${n}"] h2`).focus();
     setErr('form', message);
   }
+  const galleryBox = () => form.elements.namedItem('gallery') as HTMLInputElement;
+  function showGalleryState() {
+    const add = q<HTMLButtonElement>('[data-gallery-add]');
+    const gnote = q('[data-gallery-note]');
+    add.disabled = false;
+    add.hidden = galleryBox().checked;
+    gnote.textContent = galleryBox().checked ? i18n.result.galleryWaiting : '';
+    gnote.hidden = !galleryBox().checked;
+  }
   async function watch(id: string) {
     currentId = id;
     showWaiting();
@@ -319,6 +331,7 @@ const i18n = JSON.stringify({
         q<HTMLAnchorElement>('[data-dl-story]').href = r.urls.story;
         q<HTMLElement>('[data-copy]').dataset.url = r.share ?? '';
         q('[data-copy]').hidden = !r.share;
+        showGalleryState();
         result.focus();
       } else {
         track('tango-failed', { reason: r.error === 'not_cat' ? 'not_cat' : 'server' });
@@ -367,6 +380,7 @@ const i18n = JSON.stringify({
       return;
     }
     saveActive(res.id);
+    if (galleryBox().checked) track('gallery-optin', { from: 'form' });
     track('tango-start', { scene: scene(), personality: (form.elements.namedItem('personality') as RadioNodeList).value });
     void watch(res.id);
   }
@@ -457,6 +471,38 @@ const i18n = JSON.stringify({
       note('', R.listError);
     }
   }
+  q<HTMLButtonElement>('[data-gallery-add]').addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget as HTMLButtonElement;
+    const R: Record<string, string> = i18n.result;
+    if (!token) return note('', R.galleryError);
+    btn.disabled = true;
+    const res = await api.galleryOptin(token, currentId);
+    if (res.ok) {
+      track('gallery-optin', { from: 'result' });
+      btn.hidden = true;
+      note('');
+      const gnote = q('[data-gallery-note]');
+      gnote.textContent = R.gallerySent;
+      gnote.hidden = false;
+    } else if (optinFailureAction(res.error) === 'waiting') {
+      btn.hidden = true;
+      note('');
+      const gnote = q('[data-gallery-note]');
+      gnote.textContent = R.galleryWaiting;
+      gnote.hidden = false;
+    } else if (optinFailureAction(res.error) === 'bad_token') {
+      btn.disabled = false;
+      dropToken();
+      if (wizard.hidden) note('', E.bad_token);
+      else {
+        go(4);
+        setErr('form', E.bad_token);
+      }
+    } else {
+      btn.disabled = false;
+      note('', R.galleryError);
+    }
+  });
   all<HTMLButtonElement>('[data-waitlist]').forEach((b) =>
     b.addEventListener('click', () => joinList(b.dataset.waitlist as 'hd' | 'mug', b)),
   );
@@ -481,6 +527,7 @@ const i18n = JSON.stringify({
     form.reset();
     clearPreview();
     note('');
+    q('[data-gallery-note]').hidden = true;
     go(1);
   });
 

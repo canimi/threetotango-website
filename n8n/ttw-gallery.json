@@ -1,0 +1,1627 @@
+{
+  "name": "TTW · Gallery",
+  "nodes": [
+    {
+      "name": "Mod GET Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        192
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "ttw-gallery-mod",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Mod GET Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse Mod GET",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const q = $input.first().json.query || {};\nconst pick = (v) => { const x = Array.isArray(v) ? v[0] : v; return typeof x === 'string' ? x : ''; };\nconst id = pick(q.id), a = pick(q.a), t = pick(q.t);\nconst valid = /^[A-Za-z0-9_-]{1,64}$/.test(id) && ['approve', 'reject', 'remove'].includes(a) && /^[A-Za-z0-9_-]{43}$/.test(t);\nreturn [{ json: { id, a, t, valid } }];"
+      }
+    },
+    {
+      "name": "Mod GET Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Read Mod Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id, cat_name, scene from ttw.generations where id = $1 and (($2::text in ('approve','reject') and gallery_status = 'pending' and gallery_mod_hash = encode(sha256(convert_to($3::text,'UTF8')),'hex')) or ($2::text = 'remove' and gallery_remove_hash = encode(sha256(convert_to($3::text,'UTF8')),'hex')))",
+        "options": {
+          "queryReplacement": "={{ [ $(\"Parse Mod GET\").first().json.id, $(\"Parse Mod GET\").first().json.a, $(\"Parse Mod GET\").first().json.t ] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "name": "Build Mod Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\nconst shell = (title, inner) => '<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>' + esc(title) + '</title><style>body{margin:0;background:#faf6ea;color:#222;font-family:Arial,sans-serif}main{max-width:480px;margin:0 auto;padding:24px 16px;text-align:center}img{width:100%;height:auto;border-radius:8px;margin:12px 0}button{background:#E1AD01;color:#222;border:0;border-radius:8px;padding:14px 26px;font-size:18px;font-weight:bold;cursor:pointer}p.s{color:#666}</style></head><body><main>' + inner + '</main></body></html>';\nconst p = $('Parse Mod GET').first().json;\nconst row = $input.first().json;\nif (!row || typeof row.id !== 'string' || row.id.length === 0) {\n  return [{ json: { html: shell('Gallery moderation', '<p>This link has already been used.</p>') } }];\n}\nconst name = esc(row.cat_name || 'this cat');\nconst label = p.a === 'approve' ? 'Approve ' + name : (p.a === 'reject' ? 'Reject' : 'Remove');\nconst inner = '<h1>' + name + '</h1><p class=\"s\">' + esc(row.scene || '') + '</p>'\n  + '<img src=\"/media/tango/' + esc(p.id) + '-post.jpg\" alt=\"' + name + '\" width=\"480\" height=\"600\">'\n  + '<form method=\"post\" action=\"/gallery/mod\">'\n  + '<input type=\"hidden\" name=\"id\" value=\"' + esc(p.id) + '\">'\n  + '<input type=\"hidden\" name=\"a\" value=\"' + esc(p.a) + '\">'\n  + '<input type=\"hidden\" name=\"t\" value=\"' + esc(p.t) + '\">'\n  + '<button type=\"submit\">' + label + '</button></form>';\nreturn [{ json: { html: shell('Gallery moderation', inner) } }];"
+      }
+    },
+    {
+      "name": "Respond Mod Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex"
+              }
+            ]
+          }
+        },
+        "responseBody": "={{ $json.html }}"
+      }
+    },
+    {
+      "name": "Respond Mod GET Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        192
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex"
+              }
+            ]
+          }
+        },
+        "responseBody": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><title>Gallery moderation</title></head><body><p>This link is not valid.</p></body></html>"
+      }
+    },
+    {
+      "name": "Respond 404 (mod GET)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        288
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    },
+    {
+      "name": "Mod POST Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        704
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ttw-gallery-mod",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Mod POST Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        704
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse Mod POST",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        608
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const q = $input.first().json.body || {};\nconst pick = (v) => { const x = Array.isArray(v) ? v[0] : v; return typeof x === 'string' ? x : ''; };\nconst id = pick(q.id), a = pick(q.a), t = pick(q.t);\nconst valid = /^[A-Za-z0-9_-]{1,64}$/.test(id) && ['approve', 'reject', 'remove'].includes(a) && /^[A-Za-z0-9_-]{43}$/.test(t);\nreturn [{ json: { id, a, t, valid } }];"
+      }
+    },
+    {
+      "name": "Mod POST Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        608
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Apply Decision",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        512
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with a as (update ttw.generations set gallery_status = case when $2::text = 'approve' then 'approved' else 'rejected' end, gallery_approved_at = case when $2::text = 'approve' then now() else gallery_approved_at end, expires_at = case when $2::text = 'approve' then 'infinity'::timestamptz else expires_at end, gallery_mod_hash = null where id = $1 and $2::text in ('approve','reject') and gallery_status = 'pending' and gallery_mod_hash = encode(sha256(convert_to($3::text,'UTF8')),'hex') returning id), r as (update ttw.generations set gallery_status = 'removed', expires_at = now() where id = $1 and $2::text = 'remove' and gallery_remove_hash = encode(sha256(convert_to($3::text,'UTF8')),'hex') returning id), d as (delete from ttw.gallery_likes where generation_id in (select id from r)) select (select count(*) from a)::int + (select count(*) from r)::int as changed",
+        "options": {
+          "queryReplacement": "={{ [ $(\"Parse Mod POST\").first().json.id, $(\"Parse Mod POST\").first().json.a, $(\"Parse Mod POST\").first().json.t ] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "name": "Build Result Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        512
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\nconst shell = (title, inner) => '<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>' + esc(title) + '</title><style>body{margin:0;background:#faf6ea;color:#222;font-family:Arial,sans-serif}main{max-width:480px;margin:0 auto;padding:24px 16px;text-align:center}img{width:100%;height:auto;border-radius:8px;margin:12px 0}button{background:#E1AD01;color:#222;border:0;border-radius:8px;padding:14px 26px;font-size:18px;font-weight:bold;cursor:pointer}p.s{color:#666}</style></head><body><main>' + inner + '</main></body></html>';\nconst changed = Number($input.first().json.changed || 0);\nconst msg = changed > 0 ? 'Done. Luka has been informed.' : 'This link has already been used.';\nreturn [{ json: { html: shell('Gallery moderation', '<p>' + esc(msg) + '</p>') } }];"
+      }
+    },
+    {
+      "name": "Respond Result Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        512
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex"
+              }
+            ]
+          }
+        },
+        "responseBody": "={{ $json.html }}"
+      }
+    },
+    {
+      "name": "Respond Mod POST Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        704
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Robots-Tag",
+                "value": "noindex"
+              }
+            ]
+          }
+        },
+        "responseBody": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><title>Gallery moderation</title></head><body><p>This link is not valid.</p></body></html>"
+      }
+    },
+    {
+      "name": "Respond 404 (mod POST)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        800
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    },
+    {
+      "name": "Optin Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        1584
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ttw-gallery-optin",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Optin Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        1584
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse Optin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        1488
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const b = ($input.first().json.body && typeof $input.first().json.body === 'object') ? $input.first().json.body : {};\nconst s = (v) => (typeof v === 'string' ? v : '');\nconst token = s(b.token).trim();\nconst id = s(b.id).trim();\nconst valid = /^[A-Za-z0-9_-]{1,64}$/.test(id) && token.length > 0 && token.length <= 200;\nreturn [{ json: { id, token, valid } }];"
+      }
+    },
+    {
+      "name": "Optin Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        1488
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Check Token",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        1408
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select (select email from ttw.sessions where token_hash = encode(sha256(convert_to($1, 'UTF8')), 'hex') and expires_at > now() limit 1) as email",
+        "options": {
+          "queryReplacement": "={{ [ $json.token ] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "name": "Token OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        1344
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ typeof $json.email === \"string\" && $json.email.length > 0 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Set Opt-in",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1344,
+        1248
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update ttw.generations set gallery_opt_in = true where id = $1 and lower(email) = lower($2) and status = 'done' and gallery_status = 'none' returning id",
+        "options": {
+          "queryReplacement": "={{ [ $(\"Parse Optin\").first().json.id, $(\"Check Token\").first().json.email ] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "name": "Opt-in Updated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        1168
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ typeof $json.id === \"string\" && $json.id.length > 0 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Call Mod Request",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1792,
+        1072
+      ],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "XrvwelywOuZeFhSQ"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "name": "Respond 200 ok",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        1024
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "options": {
+          "responseCode": 200
+        },
+        "responseBody": "{\"ok\":true}"
+      }
+    },
+    {
+      "name": "Respond 500 server",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        1536
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "options": {
+          "responseCode": 500
+        },
+        "responseBody": "{\"ok\":false,\"error\":\"server\"}"
+      }
+    },
+    {
+      "name": "Respond 400 invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1792,
+        1264
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "options": {
+          "responseCode": 400
+        },
+        "responseBody": "{\"ok\":false,\"error\":\"invalid\"}"
+      }
+    },
+    {
+      "name": "Respond 401 bad_token",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        1488
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "options": {
+          "responseCode": 401
+        },
+        "responseBody": "{\"ok\":false,\"error\":\"bad_token\"}"
+      }
+    },
+    {
+      "name": "Respond 404 (optin)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        1680
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    },
+    {
+      "name": "List Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        2100
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "ttw-gallery",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "List Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        2100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        2004
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const q = $input.first().json.query || {};\nconst pick = (v) => { const x = Array.isArray(v) ? v[0] : v; return typeof x === 'string' ? x : ''; };\nconst num = (v, d, lo, hi) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };\nconst sort = pick(q.sort) === 'top' ? 'top' : 'new';\nreturn [{ json: { sort, offset: num(pick(q.offset), 0, 0, 2000), limit: num(pick(q.limit), 24, 1, 24) } }];"
+      }
+    },
+    {
+      "name": "Read Gallery",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        2004
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with items as (select g.id, coalesce(g.cat_name, 'A cat') as name, '/media/tango/' || g.id || '-post.jpg' as img, (select count(*) from ttw.gallery_likes l where l.generation_id = g.id)::int as likes, g.gallery_approved_at from ttw.generations g where g.gallery_status = 'approved'), pg as (select i.*, row_number() over (order by (case when $1::text = 'top' then i.likes else 0 end) desc, i.gallery_approved_at desc, i.id) as rn from items i) select jsonb_build_object('featured', (select jsonb_build_object('id', g.id, 'name', coalesce(g.cat_name, 'A cat'), 'img', '/media/tango/' || g.id || '-post.jpg', 'likes', (select count(*) from ttw.gallery_likes l where l.generation_id = g.id)::int, 'weekStart', to_char(c.week_start, 'YYYY-MM-DD')) from ttw.cat_of_week c join ttw.generations g on g.id = c.generation_id where g.gallery_status = 'approved' and c.week_start >= (now() at time zone 'Europe/Berlin')::date - 13 order by c.week_start desc limit 1), 'items', coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'img', p.img, 'likes', p.likes) order by p.rn) from pg p where p.rn > $2::int and p.rn <= $2::int + $3::int), '[]'::jsonb), 'next', case when (select count(*) from pg) > $2::int + $3::int then $2::int + $3::int else null end) as r",
+        "options": {
+          "queryReplacement": "={{ [ $json.sort, $json.offset, $json.limit ] }}"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Respond Gallery",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        1960
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.r) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Respond 500 (list)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        2100
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"server\"}",
+        "options": {
+          "responseCode": 500
+        }
+      }
+    },
+    {
+      "name": "Respond 404 (list)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        2200
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    },
+    {
+      "name": "Like Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        2700
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ttw-gallery-like",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Like Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        2700
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse Like",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        2604
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const j = $input.first().json;\nconst b = (j.body && typeof j.body === 'object') ? j.body : {};\nconst s = (v) => (typeof v === 'string' ? v : '');\nconst id = s(b.id).trim();\nconst device = s(b.device).trim();\nconst h = j.headers || {};\nconst ip = s(Array.isArray(h['x-real-ip']) ? h['x-real-ip'][0] : h['x-real-ip']).trim().slice(0, 64) || 'unknown';\nconst valid = /^[A-Za-z0-9_-]{1,64}$/.test(id) && /^[A-Za-z0-9_-]{16,64}$/.test(device);\nreturn [{ json: { id, device, ip, valid } }];"
+      }
+    },
+    {
+      "name": "Like Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        2604
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Write Like",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        2508
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with g as (select id from ttw.generations where id = $1::text and gallery_status = 'approved'), ins as (insert into ttw.gallery_likes (generation_id, voter_hash) select id, encode(sha256(convert_to($2::text || '|' || $3::text, 'UTF8')), 'hex') from g on conflict do nothing returning 1), ipc as (insert into ttw.gallery_like_ip (ip_hash, day, count) select encode(sha256(convert_to($3::text, 'UTF8')), 'hex'), current_date, 1 from ins on conflict (ip_hash, day) do update set count = ttw.gallery_like_ip.count + 1 where ttw.gallery_like_ip.count < 30 returning 1), chk as (select cast('TTW_LIKE_LIMIT' || i.n::text as int) as x from (select 1 as n from ins limit 1) i where not exists (select 1 from ipc)) select exists (select 1 from g) as ok, (select count(*) from ttw.gallery_likes where generation_id = $1::text)::int + (select count(*) from ins)::int as likes, not exists (select 1 from ins) as already, (select coalesce(sum(x), 0) from chk)::int as c",
+        "options": {
+          "queryReplacement": "={{ [ $json.id, $json.device, $json.ip ] }}"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Like Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        2412
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok === true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Respond Like ok",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2316
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, likes: Number($json.likes), already: $json.already === true }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Respond 400 invalid (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2508
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"invalid\"}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "name": "Like Limit?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        2700
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.message ?? $json.error?.message ?? '').includes('TTW_LIKE_LIMIT1') }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Respond 429 limit",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2604
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"limit\"}",
+        "options": {
+          "responseCode": 429
+        }
+      }
+    },
+    {
+      "name": "Respond 500 (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2796
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"server\"}",
+        "options": {
+          "responseCode": 500
+        }
+      }
+    },
+    {
+      "name": "Respond 404 (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        2800
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Mod GET Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mod GET Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mod GET Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse Mod GET",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (mod GET)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Mod GET": {
+      "main": [
+        [
+          {
+            "node": "Mod GET Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mod GET Valid?": {
+      "main": [
+        [
+          {
+            "node": "Read Mod Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Mod GET Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Mod Row": {
+      "main": [
+        [
+          {
+            "node": "Build Mod Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Mod Page": {
+      "main": [
+        [
+          {
+            "node": "Respond Mod Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mod POST Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mod POST Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mod POST Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse Mod POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (mod POST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Mod POST": {
+      "main": [
+        [
+          {
+            "node": "Mod POST Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mod POST Valid?": {
+      "main": [
+        [
+          {
+            "node": "Apply Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Mod POST Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Decision": {
+      "main": [
+        [
+          {
+            "node": "Build Result Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Result Page": {
+      "main": [
+        [
+          {
+            "node": "Respond Result Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optin Webhook": {
+      "main": [
+        [
+          {
+            "node": "Optin Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optin Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse Optin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (optin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Optin": {
+      "main": [
+        [
+          {
+            "node": "Optin Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optin Valid?": {
+      "main": [
+        [
+          {
+            "node": "Check Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Token": {
+      "main": [
+        [
+          {
+            "node": "Token OK?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token OK?": {
+      "main": [
+        [
+          {
+            "node": "Set Opt-in",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401 bad_token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Opt-in": {
+      "main": [
+        [
+          {
+            "node": "Opt-in Updated?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Opt-in Updated?": {
+      "main": [
+        [
+          {
+            "node": "Call Mod Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Mod Request": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Webhook": {
+      "main": [
+        [
+          {
+            "node": "List Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (list)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse List": {
+      "main": [
+        [
+          {
+            "node": "Read Gallery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Gallery": {
+      "main": [
+        [
+          {
+            "node": "Respond Gallery",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 (list)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Webhook": {
+      "main": [
+        [
+          {
+            "node": "Like Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse Like",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Like": {
+      "main": [
+        [
+          {
+            "node": "Like Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Valid?": {
+      "main": [
+        [
+          {
+            "node": "Write Like",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Like": {
+      "main": [
+        [
+          {
+            "node": "Like Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Like Limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Approved?": {
+      "main": [
+        [
+          {
+            "node": "Respond Like ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Limit?": {
+      "main": [
+        [
+          {
+            "node": "Respond 429 limit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "errorWorkflow": "__TTW_ERRORS_WORKFLOW_ID__ (id of TTW · Errors after import)"
+  }
+}

@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import EpisodeGrid from '../components/EpisodeGrid.astro';
 import TangoShowcase from '../components/TangoShowcase.astro';
+import CatOfWeek from '../components/CatOfWeek.astro';
 import CastPicker from '../components/CastPicker.astro';
 import QuizTeaser from '../components/QuizTeaser.astro';
 import SubscribeForm from '../components/SubscribeForm.astro';
@@ -28,6 +29,7 @@ const recent = episodes.slice(0, 12);
 
   <Marquee set="a" tone="mustard" tilt={-1.5} />
   <TangoShowcase />
+  <CatOfWeek />
 
   <section class="container block" id="household" aria-labelledby="household-title">
     <div class="head">

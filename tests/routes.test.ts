@@ -19,6 +19,7 @@ describe('built routes', () => {
     'links/index.html',
     'privacy/index.html',
     'gift/index.html',
+    'gallery/index.html',
     'tango-me/index.html',
     'contact/index.html',
     '404.html',
@@ -92,6 +93,14 @@ describe('built routes', () => {
     it('home newsletter section embeds the footer-source form', () => {
       expect(html('index.html')).toContain('data-source="footer"');
     });
+  });
+
+  it('gallery page is linked from the header and has the shell', () => {
+    const p = html('gallery/index.html');
+    expect(p).toContain('href="/gallery"');
+    expect(p).toContain('The gallery: cats who moved in | Three To Tango');
+    expect(p).toContain('data-gallery');
+    expect(p).toContain('href="/tango-me"');
   });
 
   it('episode page links prev/next and characters', () => {

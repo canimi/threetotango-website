@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import GalleryGrid from '../components/GalleryGrid.astro';
+import { t } from '../i18n/t';
+---
+
+<Base title={`${t('gallery.pageTitle')} | ${t('brand.name')}`} description={t('gallery.pageDesc')} path="/gallery">
+  <section class="container page">
+    <h1>{t('gallery.title')}</h1>
+    <p class="lede">{t('gallery.sub')}</p>
+    <GalleryGrid />
+  </section>
+  <section class="cta-band" aria-labelledby="gallery-cta">
+    <div class="container inner">
+      <h2 id="gallery-cta">{t('gallery.ctaTitle')}</h2>
+      <p>{t('gallery.ctaBody')}</p>
+      <a class="btn btn-lg" href="/tango-me" data-magnetic>{t('gallery.ctaButton')}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .lede {
+    margin-block: 0 var(--space-2);
+  }
+  .cta-band {
+    padding-block: var(--space-5);
+    background: var(--c-wall-2);
+    text-align: center;
+  }
+  .inner {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+  }
+  .inner h2,
+  .inner p {
+    margin: 0;
+  }
+</style>

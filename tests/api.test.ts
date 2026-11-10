@@ -66,3 +66,36 @@ describe('api.verify', () => {
     expect(await api.verify('a@b.co', '123456')).toEqual({ ok: false, error: 'server' });
   });
 });
+
+describe('api.galleryOptin', () => {
+  it('posts token and id to /api/gallery/optin', async () => {
+    const f = vi.fn().mockResolvedValue(reply(200, { ok: true }));
+    vi.stubGlobal('fetch', f);
+    expect(await api.galleryOptin('tok', 'abc_123-X')).toEqual({ ok: true });
+    const [url, init] = f.mock.calls[0];
+    expect(url).toBe('/api/gallery/optin');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ token: 'tok', id: 'abc_123-X' });
+  });
+  it('maps 401 to bad_token', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(401, { ok: false, error: 'bad_token' })));
+    expect(await api.galleryOptin('tok', 'abc')).toEqual({ ok: false, error: 'bad_token' });
+  });
+  it('maps body error invalid to invalid', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(400, { ok: false, error: 'invalid' })));
+    expect(await api.galleryOptin('tok', 'abc')).toEqual({ ok: false, error: 'invalid' });
+  });
+  it('maps network failure and 500 to server', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('down')));
+    expect(await api.galleryOptin('tok', 'abc')).toEqual({ ok: false, error: 'server' });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(500, 'boom')));
+    expect(await api.galleryOptin('tok', 'abc')).toEqual({ ok: false, error: 'server' });
+  });
+  it('rejects a bad id without calling fetch', async () => {
+    const f = vi.fn();
+    vi.stubGlobal('fetch', f);
+    expect(await api.galleryOptin('tok', '../x')).toEqual({ ok: false, error: 'invalid' });
+    expect(await api.galleryOptin('tok', '')).toEqual({ ok: false, error: 'invalid' });
+    expect(f).not.toHaveBeenCalled();
+  });
+});
