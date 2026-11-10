@@ -17,7 +17,8 @@
     "quiz": "Quiz",
     "home": "Three To Tango home",
     "menu": "Menu",
-    "social": "Follow the show"
+    "social": "Follow the show",
+    "gallery": "Gallery"
   },
   "footer": {
     "instagram": "Instagram",
@@ -381,5 +382,30 @@
     "a": "New episode every week|Luka suspects everything|Budy wants a snack|Caddy is napping|Put your cat in the show",
     "b": "Wordless|Zero dialogue, all drama|Nora never wins|Lettuce is a crime scene|15 years old, still unbothered",
     "label": "Three To Tango"
+  },
+  "gallery": {
+    "pageTitle": "The gallery: cats who moved in",
+    "pageDesc": "Cats who joined Nora's household through Tango Me, voted on by everyone. Meet this week's Cat of the Week.",
+    "title": "The gallery",
+    "sub": "Real cats who moved in with Luka, Budy and Caddy. Give the good ones a heart.",
+    "featuredLabel": "Cat of the Week",
+    "sortLabel": "Sort the gallery",
+    "sortNew": "Newest",
+    "sortTop": "Most loved",
+    "more": "Show more",
+    "loading": "Loading the gallery",
+    "emptyTitle": "No guests yet. Luka is relieved.",
+    "emptyCta": "Put your cat in the show",
+    "error": "The gallery is napping. Try again in a minute.",
+    "retry": "Try again",
+    "imgAlt": "{name}, a Tango Me guest of Nora's cats",
+    "likeLabel": "Like {name}",
+    "likeLimit": "Easy, Budy. Come back tomorrow.",
+    "likeGone": "This cat has left the building.",
+    "likeError": "Could not save that heart. Try again.",
+    "likesCount": "likes",
+    "ctaTitle": "Put your cat in the gallery",
+    "ctaBody": "Make your Tango Me episode still, tick the gallery box, and wait for Luka to approve.",
+    "ctaButton": "Try Tango Me free"
   }
 }

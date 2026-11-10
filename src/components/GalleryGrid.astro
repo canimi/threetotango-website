@@ -1,0 +1,328 @@
+---
+import { t } from '../i18n/t';
+---
+
+<div class="gallery" data-gallery>
+  <section class="featured" data-featured hidden aria-labelledby="featured-title">
+    <h2 id="featured-title">{t('gallery.featuredLabel')}</h2>
+    <ul class="grid one" data-featured-slot role="list"></ul>
+  </section>
+
+  <div class="toolbar" role="group" aria-label={t('gallery.sortLabel')}>
+    <button type="button" class="chip" data-sort="new" aria-pressed="true">{t('gallery.sortNew')}</button>
+    <button type="button" class="chip" data-sort="top" aria-pressed="false">{t('gallery.sortTop')}</button>
+  </div>
+
+  <ul class="grid" data-grid role="list" aria-busy="true" aria-label={t('gallery.loading')}>
+    {Array.from({ length: 8 }, () => <li class="gcard skeleton" aria-hidden="true" data-skeleton></li>)}
+  </ul>
+
+  <div class="more" data-more hidden>
+    <button type="button" class="btn" data-more-btn>{t('gallery.more')}</button>
+  </div>
+
+  <div class="state" data-empty hidden>
+    <p>{t('gallery.emptyTitle')}</p>
+    <a class="btn" href="/tango-me">{t('gallery.emptyCta')}</a>
+  </div>
+  <div class="state" data-error hidden role="alert">
+    <p>{t('gallery.error')}</p>
+    <button type="button" class="btn" data-retry>{t('gallery.retry')}</button>
+  </div>
+</div>
+
+<script>
+  import { fetchGallery, likeItem, deviceId, likedStore, renderCard, applyLike, formatWeek } from '../lib/gallery';
+  import type { GalleryItem } from '../lib/gallery';
+  import { track } from '../lib/track';
+
+  const root = document.querySelector<HTMLElement>('[data-gallery]');
+  if (root) {
+    const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const grid = q<HTMLUListElement>('[data-grid]');
+    const featuredBox = q<HTMLElement>('[data-featured]');
+    const featuredSlot = q<HTMLUListElement>('[data-featured-slot]');
+    const more = q<HTMLElement>('[data-more]');
+    const moreBtn = q<HTMLButtonElement>('[data-more-btn]');
+    const empty = q<HTMLElement>('[data-empty]');
+    const errorBox = q<HTMLElement>('[data-error]');
+    const sortBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-sort]')];
+
+    const liked = likedStore();
+    const device = deviceId();
+    let sort: 'new' | 'top' = 'new';
+    let next: number | null = 0;
+    let busy = false;
+    let epoch = 0;
+
+    const build = (item: GalleryItem) => {
+      const card = renderCard(item, liked.has(item.id));
+      const btn = card.querySelector<HTMLButtonElement>('button.heart')!;
+      btn.addEventListener('click', async () => {
+        if (btn.getAttribute('aria-pressed') === 'true' || btn.disabled) return;
+        const count = card.querySelector<HTMLElement>('.count')!;
+        const prev = Number(count.textContent) || 0;
+        btn.setAttribute('aria-pressed', 'true');
+        count.textContent = String(prev + 1);
+        btn.disabled = true;
+        const result = await likeItem(item.id, device);
+        btn.disabled = false;
+        applyLike(card, result, prev);
+        if (result.ok) {
+          liked.add(item.id);
+          if (!result.already) track('gallery-like');
+        }
+      });
+      return card;
+    };
+
+    const setState = (s: 'ok' | 'empty' | 'error') => {
+      empty.hidden = s !== 'empty';
+      errorBox.hidden = s !== 'error';
+      grid.hidden = s !== 'ok';
+      document.querySelector<HTMLElement>('.toolbar')!.hidden = s !== 'ok';
+    };
+
+    async function load(reset: boolean) {
+      if (busy) return;
+      busy = true;
+      const mine = ++epoch;
+      if (reset) {
+        grid.setAttribute('aria-busy', 'true');
+        grid.replaceChildren(...Array.from({ length: 8 }, () => {
+          const li = document.createElement('li');
+          li.className = 'gcard skeleton';
+          li.setAttribute('aria-hidden', 'true');
+          return li;
+        }));
+        more.hidden = true;
+        next = 0;
+      }
+      moreBtn.disabled = true;
+      const page = await fetchGallery({ sort, offset: next ?? 0, limit: 24 });
+      busy = false;
+      moreBtn.disabled = false;
+      if (mine !== epoch) return;
+      grid.removeAttribute('aria-busy');
+      if (!page) {
+        if (reset) {
+          grid.replaceChildren();
+          featuredBox.hidden = true;
+          setState('error');
+        }
+        return;
+      }
+      if (reset) grid.replaceChildren();
+      grid.append(...page.items.map(build));
+      next = page.next;
+      more.hidden = next === null;
+      if (reset) {
+        featuredSlot.replaceChildren();
+        featuredBox.hidden = !page.featured;
+        if (page.featured) {
+          const card = build(page.featured);
+          const week = document.createElement('span');
+          week.className = 'week';
+          week.textContent = formatWeek(page.featured.weekStart);
+          card.querySelector('.cap')?.after(week);
+          card.classList.add('is-featured');
+          featuredSlot.append(card);
+        }
+        setState(page.items.length === 0 && !page.featured ? 'empty' : 'ok');
+      }
+    }
+
+    sortBtns.forEach((b) =>
+      b.addEventListener('click', () => {
+        const s = b.dataset.sort === 'top' ? 'top' : 'new';
+        if (s === sort) return;
+        sort = s;
+        sortBtns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        busy = false;
+        void load(true);
+      }),
+    );
+    moreBtn.addEventListener('click', () => void load(false));
+    root.querySelector('[data-retry]')?.addEventListener('click', () => {
+      setState('ok');
+      void load(true);
+    });
+    void load(true);
+  }
+</script>
+
+<style is:global>
+  .gallery .toolbar {
+    display: flex;
+    gap: var(--space-1);
+    margin-block: var(--space-3);
+  }
+  .gallery .chip {
+    min-block-size: 44px;
+    padding: 0.5rem 1.1rem;
+    border: 2px solid var(--c-mustard);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--c-paper);
+    font: 600 1rem var(--font-display);
+    cursor: pointer;
+  }
+  .gallery .chip[aria-pressed='true'] {
+    background: var(--c-mustard);
+    color: var(--c-on-mustard);
+  }
+  .gallery .chip:focus-visible,
+  .gallery .heart:focus-visible {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 3px;
+  }
+  .gallery .featured h2 {
+    margin-block: 0 var(--space-2);
+  }
+  .gallery .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1rem, 2.4vw, 1.8rem);
+    margin: 0;
+    padding: var(--space-2) 0 var(--space-3);
+    list-style: none;
+  }
+  .gallery .grid.one {
+    grid-template-columns: minmax(0, 18rem);
+    padding-block-end: 0;
+  }
+  @media (min-width: 56rem) {
+    .gallery .grid:not(.one) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .gallery .gcard {
+    position: relative;
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.55rem 0.55rem 0.5rem;
+    border-radius: 4px;
+    background: var(--c-paper);
+    color: var(--c-ink);
+    box-shadow: 0 22px 40px -22px rgb(var(--c-shadow) / 95%), 0 2px 0 rgb(0 0 0 / 8%);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  .gallery .gcard:hover,
+  .gallery .gcard:focus-within {
+    transform: rotate(0deg) translateY(-4px);
+  }
+  .gallery .polaroid {
+    display: grid;
+    gap: 0.55rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .gallery .polaroid:focus-visible {
+    outline: 3px solid var(--c-mustard-dark);
+    outline-offset: 2px;
+  }
+  .gallery .polaroid img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 2px;
+    background: var(--c-wall-2);
+  }
+  .gallery .tape {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: -0.7rem;
+    inset-inline-start: 50%;
+    inline-size: 4.2rem;
+    block-size: 1.4rem;
+    background: rgb(255 207 110 / 70%);
+    transform: translateX(-50%) rotate(calc(var(--tilt, 0deg) * -1.6));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
+  }
+  .gallery .cap {
+    font: 600 1rem / 1.2 var(--font-display);
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .gallery .week {
+    justify-self: center;
+    padding: 0.15rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-mustard);
+    color: var(--c-on-mustard);
+    font: 600 0.85rem var(--font-display);
+  }
+  .gallery .likes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem 0.4rem;
+  }
+  .gallery .heart {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--c-rug);
+    cursor: pointer;
+  }
+  .gallery .heart svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .gallery .heart[aria-pressed='true'] svg {
+    fill: currentColor;
+  }
+  .gallery .count {
+    font: 600 1rem var(--font-display);
+    min-inline-size: 1.5ch;
+  }
+  .gallery .note {
+    flex-basis: 100%;
+    text-align: center;
+    color: var(--c-ink-2);
+    font-size: var(--step--1);
+  }
+  .gallery .note:empty {
+    display: none;
+  }
+  .gallery .skeleton {
+    aspect-ratio: 4 / 5.9;
+    transform: none;
+    background: linear-gradient(100deg, var(--c-wall-2) 30%, var(--c-wall-3) 50%, var(--c-wall-2) 70%) 0 0 / 200% 100%;
+    box-shadow: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .gallery .skeleton {
+      animation: gshimmer 1.4s linear infinite;
+    }
+  }
+  @keyframes gshimmer {
+    to { background-position: -200% 0; }
+  }
+  .gallery .more,
+  .gallery .state {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    margin-block: var(--space-3);
+    text-align: center;
+  }
+  .gallery [hidden] {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gallery .gcard {
+      transition: none;
+    }
+  }
+</style>

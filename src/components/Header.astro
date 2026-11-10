@@ -10,6 +10,7 @@ const { path } = Astro.props;
 const links = [
   { href: '/episodes', label: t('nav.episodes') },
   { href: '/cats', label: t('nav.cats') },
+  { href: '/gallery', label: t('nav.gallery') },
   { href: '/quiz', label: t('nav.quiz') },
 ];
 const current = (href: string) => path === href || path.startsWith(`${href}/`);
