@@ -751,6 +751,391 @@
           "responseCode": 404
         }
       }
+    },
+    {
+      "name": "List Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        2100
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "ttw-gallery",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "List Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        2100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        2004
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const q = $input.first().json.query || {};\nconst pick = (v) => { const x = Array.isArray(v) ? v[0] : v; return typeof x === 'string' ? x : ''; };\nconst num = (v, d, lo, hi) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };\nconst sort = pick(q.sort) === 'top' ? 'top' : 'new';\nreturn [{ json: { sort, offset: num(pick(q.offset), 0, 0, 2000), limit: num(pick(q.limit), 24, 1, 24) } }];"
+      }
+    },
+    {
+      "name": "Read Gallery",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        2004
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with items as (select g.id, coalesce(g.cat_name, 'A cat') as name, '/media/tango/' || g.id || '-post.jpg' as img, (select count(*) from ttw.gallery_likes l where l.generation_id = g.id)::int as likes, g.gallery_approved_at from ttw.generations g where g.gallery_status = 'approved'), pg as (select i.*, row_number() over (order by (case when $1::text = 'top' then i.likes else 0 end) desc, i.gallery_approved_at desc, i.id) as rn from items i) select jsonb_build_object('featured', (select jsonb_build_object('id', g.id, 'name', coalesce(g.cat_name, 'A cat'), 'img', '/media/tango/' || g.id || '-post.jpg', 'likes', (select count(*) from ttw.gallery_likes l where l.generation_id = g.id)::int, 'weekStart', to_char(c.week_start, 'YYYY-MM-DD')) from ttw.cat_of_week c join ttw.generations g on g.id = c.generation_id where g.gallery_status = 'approved' and c.week_start >= (now() at time zone 'Europe/Berlin')::date - 13 order by c.week_start desc limit 1), 'items', coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'img', p.img, 'likes', p.likes) order by p.rn) from pg p where p.rn > $2::int and p.rn <= $2::int + $3::int), '[]'::jsonb), 'next', case when (select count(*) from pg) > $2::int + $3::int then $2::int + $3::int else null end) as r",
+        "options": {
+          "queryReplacement": "={{ [ $json.sort, $json.offset, $json.limit ] }}"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Respond Gallery",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        1960
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.r) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Respond 500 (list)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        2100
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"server\"}",
+        "options": {
+          "responseCode": 500
+        }
+      }
+    },
+    {
+      "name": "Respond 404 (list)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        2200
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
+    },
+    {
+      "name": "Like Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        2700
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ttw-gallery-like",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Like Key OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        2700
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers?.[\"x-ttw-proxy-key\"] === \"__TTW_PROXY_KEY__\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Parse Like",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        2604
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const j = $input.first().json;\nconst b = (j.body && typeof j.body === 'object') ? j.body : {};\nconst s = (v) => (typeof v === 'string' ? v : '');\nconst id = s(b.id).trim();\nconst device = s(b.device).trim();\nconst h = j.headers || {};\nconst ip = s(Array.isArray(h['x-real-ip']) ? h['x-real-ip'][0] : h['x-real-ip']).trim().slice(0, 64) || 'unknown';\nconst valid = /^[A-Za-z0-9_-]{1,64}$/.test(id) && /^[A-Za-z0-9_-]{16,64}$/.test(device);\nreturn [{ json: { id, device, ip, valid } }];"
+      }
+    },
+    {
+      "name": "Like Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        2604
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Write Like",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        896,
+        2508
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with g as (select id from ttw.generations where id = $1::text and gallery_status = 'approved'), ins as (insert into ttw.gallery_likes (generation_id, voter_hash) select id, encode(sha256(convert_to($2::text || '|' || $3::text, 'UTF8')), 'hex') from g on conflict do nothing returning 1), ipc as (insert into ttw.gallery_like_ip (ip_hash, day, count) select encode(sha256(convert_to($3::text, 'UTF8')), 'hex'), current_date, 1 from ins on conflict (ip_hash, day) do update set count = ttw.gallery_like_ip.count + 1 where ttw.gallery_like_ip.count < 30 returning 1), chk as (select cast('TTW_LIKE_LIMIT' || i.n::text as int) as x from (select 1 as n from ins limit 1) i where not exists (select 1 from ipc)) select exists (select 1 from g) as ok, (select count(*) from ttw.gallery_likes where generation_id = $1::text)::int + (select count(*) from ins)::int as likes, not exists (select 1 from ins) as already, (select coalesce(sum(x), 0) from chk)::int as c",
+        "options": {
+          "queryReplacement": "={{ [ $json.id, $json.device, $json.ip ] }}"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "id": "bb4tAARYgdlTYnyv",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "name": "Like Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        2412
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok === true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Respond Like ok",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2316
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, likes: Number($json.likes), already: $json.already === true }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Respond 400 invalid (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2508
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"invalid\"}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "name": "Like Limit?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        2700
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.message ?? $json.error?.message ?? '').includes('TTW_LIKE_LIMIT1') }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "name": "Respond 429 limit",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2604
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"limit\"}",
+        "options": {
+          "responseCode": 429
+        }
+      }
+    },
+    {
+      "name": "Respond 500 (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        2796
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\":false,\"error\":\"server\"}",
+        "options": {
+          "responseCode": 500
+        }
+      }
+    },
+    {
+      "name": "Respond 404 (like)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        2800
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 404
+        }
+      }
     }
   ],
   "connections": {
@@ -1056,6 +1441,176 @@
         [
           {
             "node": "Respond 500 server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Webhook": {
+      "main": [
+        [
+          {
+            "node": "List Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (list)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse List": {
+      "main": [
+        [
+          {
+            "node": "Read Gallery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Gallery": {
+      "main": [
+        [
+          {
+            "node": "Respond Gallery",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 (list)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Webhook": {
+      "main": [
+        [
+          {
+            "node": "Like Key OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Key OK?": {
+      "main": [
+        [
+          {
+            "node": "Parse Like",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Like": {
+      "main": [
+        [
+          {
+            "node": "Like Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Valid?": {
+      "main": [
+        [
+          {
+            "node": "Write Like",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Like": {
+      "main": [
+        [
+          {
+            "node": "Like Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Like Limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Approved?": {
+      "main": [
+        [
+          {
+            "node": "Respond Like ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 invalid (like)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Like Limit?": {
+      "main": [
+        [
+          {
+            "node": "Respond 429 limit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500 (like)",
             "type": "main",
             "index": 0
           }
