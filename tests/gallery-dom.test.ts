@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest';
-import { renderCard, applyLike } from '../src/lib/gallery';
+import { renderCard, applyLike, setLoadError } from '../src/lib/gallery';
 
 const item = { id: 'abc', name: '<b>x</b>', img: '/media/tango/abc-post.jpg', likes: 3 };
 
@@ -47,5 +47,15 @@ describe('applyLike', () => {
     applyLike(card, { ok: false, error: 'limit' }, 3);
     expect(card.querySelector('button')!.getAttribute('aria-pressed')).toBe('false');
     expect(card.querySelector('.count')!.textContent).toBe('3');
+  });
+});
+
+describe('setLoadError', () => {
+  it('shows and clears the napping message', () => {
+    const el = document.createElement('p');
+    setLoadError(el, true);
+    expect(el.textContent).toBe('The gallery is napping. Try again in a minute.');
+    setLoadError(el, false);
+    expect(el.textContent).toBe('');
   });
 });

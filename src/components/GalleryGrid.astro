@@ -18,6 +18,7 @@ import { t } from '../i18n/t';
   </ul>
 
   <div class="more" data-more hidden>
+    <p class="more-error" data-more-error role="status"></p>
     <button type="button" class="btn" data-more-btn>{t('gallery.more')}</button>
   </div>
 
@@ -32,7 +33,7 @@ import { t } from '../i18n/t';
 </div>
 
 <script>
-  import { fetchGallery, likeItem, deviceId, likedStore, renderCard, applyLike, formatWeek } from '../lib/gallery';
+  import { fetchGallery, likeItem, deviceId, likedStore, renderCard, applyLike, formatWeek, setLoadError } from '../lib/gallery';
   import type { GalleryItem } from '../lib/gallery';
   import { track } from '../lib/track';
 
@@ -44,6 +45,7 @@ import { t } from '../i18n/t';
     const featuredSlot = q<HTMLUListElement>('[data-featured-slot]');
     const more = q<HTMLElement>('[data-more]');
     const moreBtn = q<HTMLButtonElement>('[data-more-btn]');
+    const moreError = q<HTMLElement>('[data-more-error]');
     const empty = q<HTMLElement>('[data-empty]');
     const errorBox = q<HTMLElement>('[data-error]');
     const sortBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-sort]')];
@@ -99,6 +101,7 @@ import { t } from '../i18n/t';
         next = 0;
       }
       moreBtn.disabled = true;
+      setLoadError(moreError, false);
       const page = await fetchGallery({ sort, offset: next ?? 0, limit: 24 });
       busy = false;
       moreBtn.disabled = false;
@@ -109,6 +112,8 @@ import { t } from '../i18n/t';
           grid.replaceChildren();
           featuredBox.hidden = true;
           setState('error');
+        } else {
+          setLoadError(moreError, true);
         }
         return;
       }
@@ -308,6 +313,12 @@ import { t } from '../i18n/t';
   }
   @keyframes gshimmer {
     to { background-position: -200% 0; }
+  }
+  .gallery .more-error {
+    margin: 0;
+  }
+  .gallery .more-error:empty {
+    display: none;
   }
   .gallery .more,
   .gallery .state {

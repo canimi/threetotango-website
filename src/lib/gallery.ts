@@ -213,3 +213,8 @@ export function applyLike(card: HTMLElement, result: LikeResult, prevLikes: numb
   count.textContent = String(prevLikes);
   if (note) note.textContent = t(NOTE_KEYS[result.error]);
 }
+
+/** Show or clear the "gallery is napping" message in a role="status" element (used when Show more fails). */
+export function setLoadError(el: HTMLElement, on: boolean): void {
+  el.textContent = on ? t('gallery.error') : '';
+}
