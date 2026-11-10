@@ -323,7 +323,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "select (select id from ttw.generations where $1 <> '' and idem_key = $1 and lower(email) = lower($2)) as existing_id, exists (select 1 from ttw.generations where lower(email) = lower($2) and (free_use_consumed or (status in ('queued', 'running') and created_at > now() - interval '5 minutes'))) as used",
+        "query": "select (select id from ttw.generations where $1 <> '' and idem_key = $1 and lower(email) = lower($2)) as existing_id, exists (select 1 from ttw.generations where lower(email) = lower($2) and ((free_use_consumed and not exists (select 1 from ttw.bonus_credits where lower(email) = lower($2) and used_at is null)) or (status in ('queued', 'running') and created_at > now() - interval '5 minutes'))) as used",
         "options": {
           "queryReplacement": "={{ [ $('Validate').first().json.idemKey, $('Check Token').first().json.email ] }}"
         }
@@ -610,7 +610,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const v = $('Validate').first().json;\nconst email = $('Check Token').first().json.email;\nconst params = [email, $('IP Limit').first().json.ip_hash, v.catName, v.personality, v.scene, v.idea, $('Config').first().json.reserveUsd, v.idemKey, String(v.gallery), String($execution.id)];\nreturn [\n  { json: { q: 'select pg_advisory_xact_lock(hashtext(lower($1))) as locked', params: [email] } },\n  { json: { q: \"with ex as (select id from ttw.generations where $8 <> '' and idem_key = $8 and lower(email) = lower($1)), blk as (select (not exists (select 1 from ex)) and (exists (select 1 from ttw.generations where lower(email) = lower($1) and free_use_consumed) or exists (select 1 from ttw.generations where lower(email) = lower($1) and status in ('queued', 'running') and created_at > now() - interval '5 minutes')) as b), ins as (insert into ttw.generations (id, email, ip_hash, cat_name, personality, scene, user_idea, status, reserved_usd, idem_key, gallery_opt_in, error, expires_at) select translate(encode(substring(r.b from 1 for 6) || substring(r.b from 11 for 3), 'base64'), '+/', '-_'), $1, $2, $3, $4, $5, nullif($6, ''), 'queued', $7::numeric, nullif($8, ''), $9::boolean, 'exec:' || $10, now() + interval '30 days' from (select uuid_send(gen_random_uuid()) as b) r, blk where not blk.b and not exists (select 1 from ex) on conflict (idem_key) do nothing returning id), rel as (update ttw.daily_budget set reserved_usd = greatest(reserved_usd - $7::numeric, 0) where day = current_date and not exists (select 1 from ins) returning 1) select coalesce((select id from ins), (select id from ex)) as id, exists (select 1 from ins) as created, exists (select 1 from ex) as existing, (select b from blk) as blocked, (select count(*) from rel)::int as released\", params } }\n];"
+        "jsCode": "const v = $('Validate').first().json;\nconst email = $('Check Token').first().json.email;\nconst params = [email, $('IP Limit').first().json.ip_hash, v.catName, v.personality, v.scene, v.idea, $('Config').first().json.reserveUsd, v.idemKey, String(v.gallery), String($execution.id)];\nreturn [\n  { json: { q: 'select pg_advisory_xact_lock(hashtext(lower($1))) as locked', params: [email] } },\n  { json: { q: \"with ex as (select id from ttw.generations where $8 <> '' and idem_key = $8 and lower(email) = lower($1)), cid as (select id from ttw.bonus_credits where lower(email) = lower($1) and used_at is null and not exists (select 1 from ex) and exists (select 1 from ttw.generations where lower(email) = lower($1) and free_use_consumed) order by granted_at, id limit 1 for update skip locked), blk as (select (not exists (select 1 from ex)) and ((exists (select 1 from ttw.generations where lower(email) = lower($1) and free_use_consumed) and not exists (select 1 from cid)) or exists (select 1 from ttw.generations where lower(email) = lower($1) and status in ('queued', 'running') and created_at > now() - interval '5 minutes')) as b), nid as (select translate(encode(substring(r.b from 1 for 6) || substring(r.b from 11 for 3), 'base64'), '+/', '-_') as id from (select uuid_send(gen_random_uuid()) as b) r), ins as (insert into ttw.generations (id, email, ip_hash, cat_name, personality, scene, user_idea, status, reserved_usd, idem_key, gallery_opt_in, error, expires_at, uses_bonus) select nid.id, $1, $2, $3, $4, $5, nullif($6, ''), 'queued', $7::numeric, nullif($8, ''), $9::boolean, 'exec:' || $10, now() + interval '30 days', exists (select 1 from cid) from nid, blk where not blk.b and not exists (select 1 from ex) on conflict (idem_key) do nothing returning id, uses_bonus), bon as (update ttw.bonus_credits c set used_by = ins.id, used_at = now() from ins where ins.uses_bonus and c.id = (select id from cid) returning c.id), rel as (update ttw.daily_budget set reserved_usd = greatest(reserved_usd - $7::numeric, 0) where day = current_date and not exists (select 1 from ins) returning 1) select coalesce((select id from ins), (select id from ex)) as id, exists (select 1 from ins) as created, exists (select 1 from ex) as existing, (select b from blk) as blocked, (select count(*) from rel)::int as released, exists (select 1 from bon) as uses_bonus\", params } }\n];"
       }
     },
     {
@@ -788,7 +788,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released",
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), rb as (update ttw.bonus_credits c set used_by = null, used_at = null from g where c.used_by = g.id returning 1), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released",
         "options": {
           "queryReplacement": "={{ [ $('Insert Generation').first().json.id, 'not_cat', '0' ] }}"
         }
@@ -814,7 +814,7 @@
         "options": {
           "queryReplacement": "={{ [ $('Insert Generation').first().json.id, 'server', $('Extract Image').isExecuted ? $('Config').first().json.costUsd : '0' ] }}"
         },
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released"
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = $2, reserved_usd = 0, cost_usd = $3::numeric from o where t.id = o.id returning t.id), rb as (update ttw.bonus_credits c set used_by = null, used_at = null from g where c.used_by = g.id returning 1), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $3::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed, (select count(*) from b)::int as released"
       },
       "credentials": {
         "postgres": {
@@ -1427,7 +1427,7 @@
         "options": {
           "queryReplacement": "={{ [ $('Insert Generation').first().json.id, $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-post.jpg', $('Config').first().json.publicMedia + $('Insert Generation').first().json.id + '-story.jpg', $('Config').first().json.costUsd ] }}"
         },
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status = 'running' for update), g as (update ttw.generations t set status = 'done', error = null, result_path_45 = $2, result_path_916 = $3, cost_usd = $4::numeric, free_use_consumed = true, reserved_usd = 0 from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $4::numeric, generations_count = bb.generations_count + 1 from o where bb.day = o.d returning 1) select (select count(*) from g)::int as done, (select count(*) from b)::int as budget_rows"
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status = 'running' for update), g as (update ttw.generations t set status = 'done', error = null, result_path_45 = $2, result_path_916 = $3, cost_usd = $4::numeric, free_use_consumed = not t.uses_bonus, reserved_usd = 0 from o where t.id = o.id returning t.id, t.gallery_opt_in), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $4::numeric, generations_count = bb.generations_count + 1 from o where bb.day = o.d returning 1) select (select count(*) from g)::int as done, (select count(*) from b)::int as budget_rows, coalesce((select gallery_opt_in from g limit 1), false) as gallery_opt_in"
       },
       "credentials": {
         "postgres": {
@@ -1460,7 +1460,7 @@
         "options": {
           "queryReplacement": "={{ [ String($json.execution && $json.execution.id || ''), ['Build Generation', 'Generate Image', 'Extract Image', 'Build Check', 'Output Check', 'Parse Check', 'Check OK?', 'To Binary', 'Make Post', 'Make Story', 'Upload Post', 'Keep Story', 'Upload Story', 'Finalize Done', 'Fail server'].includes(String($json.execution && $json.execution.lastNodeExecuted || '')) ? '0.045' : '0' ] }}"
         },
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where error = 'exec:' || $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0, cost_usd = $2::numeric from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $2::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed"
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where error = 'exec:' || $1 and status in ('queued', 'running') for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0, cost_usd = $2::numeric from o where t.id = o.id returning t.id), rb as (update ttw.bonus_credits c set used_by = null, used_at = null from g where c.used_by = g.id returning 1), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0), spent_usd = bb.spent_usd + $2::numeric from o where bb.day = o.d returning 1) select (select count(*) from g)::int as failed"
       },
       "credentials": {
         "postgres": {
@@ -1573,7 +1573,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') and created_at < now() - interval '5 minutes' for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0 from o where t.id = o.id returning t.id), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0) from o where bb.day = o.d and o.r > 0 returning 1) select (select json_build_object('status', case when exists (select 1 from g) then 'failed' else t.status end, 'error', case when exists (select 1 from g) then 'server' else t.error end, 'post', t.result_path_45, 'story', t.result_path_916) from ttw.generations t where t.id = $1 and t.expires_at > now()) as r, (select count(*) from b)::int as released",
+        "query": "with o as (select id, reserved_usd as r, created_at::date as d from ttw.generations where id = $1 and status in ('queued', 'running') and created_at < now() - interval '5 minutes' for update), g as (update ttw.generations t set status = 'failed', error = 'server', reserved_usd = 0 from o where t.id = o.id returning t.id), rb as (update ttw.bonus_credits c set used_by = null, used_at = null from g where c.used_by = g.id returning 1), b as (update ttw.daily_budget bb set reserved_usd = greatest(bb.reserved_usd - o.r, 0) from o where bb.day = o.d and o.r > 0 returning 1) select (select json_build_object('status', case when exists (select 1 from g) then 'failed' else t.status end, 'error', case when exists (select 1 from g) then 'server' else t.error end, 'post', t.result_path_45, 'story', t.result_path_916) from ttw.generations t where t.id = $1 and t.expires_at > now()) as r, (select count(*) from b)::int as released",
         "options": {
           "queryReplacement": "={{ [ $json.id ] }}"
         }
@@ -1892,6 +1892,81 @@
         "mode": "once",
         "options": {
           "waitForSubWorkflow": false
+        }
+      }
+    },
+    {
+      "name": "Gallery Opt-in?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        8800,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ttw-gallery-optin-done",
+              "leftValue": "={{ $json.done === 1 && $json.gallery_opt_in === true }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Request Gallery Mod",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        9000,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "XrvwelywOuZeFhSQ"
+        },
+        "workflowInputs": {
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true,
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "id",
+              "id": "id",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "id": "={{ $('Insert Generation').first().json.id }}"
+          }
         }
       }
     }
@@ -2629,7 +2704,13 @@
     },
     "Finalize Done": {
       "main": [
-        [],
+        [
+          {
+            "node": "Gallery Opt-in?",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Fail server",
@@ -2841,6 +2922,17 @@
         [
           {
             "node": "Respond 302 tango-me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gallery Opt-in?": {
+      "main": [
+        [
+          {
+            "node": "Request Gallery Mod",
             "type": "main",
             "index": 0
           }

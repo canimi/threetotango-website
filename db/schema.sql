@@ -163,9 +163,20 @@ create table if not exists ttw.bonus_credits (
   reason        text not null check (reason in ('cat_of_week')),
   source_id     text,                          -- winning generation id
   granted_at    timestamptz not null default now(),
-  used_by       text references ttw.generations(id) on delete set null
+  used_by       text references ttw.generations(id) on delete set null,
+  used_at       timestamptz                    -- set when claimed; NULL = unused (survives used_by -> NULL on delete)
 );
-create index if not exists bonus_credits_email_idx on ttw.bonus_credits (lower(email)) where used_by is null;
+alter table ttw.bonus_credits add column if not exists used_at timestamptz;
+-- "unused" = used_at is null (idempotent upgrade of the old used_by-based partial index)
+do $$
+begin
+  if exists (select 1 from pg_indexes where schemaname = 'ttw' and indexname = 'bonus_credits_email_idx'
+             and indexdef not like '%used_at IS NULL%') then
+    drop index ttw.bonus_credits_email_idx;
+  end if;
+end
+$$;
+create index if not exists bonus_credits_email_idx on ttw.bonus_credits (lower(email)) where used_at is null;
 
 -- cat_of_week: a removed winner must cascade away (idempotent upgrade of DBs created without cascade)
 alter table ttw.cat_of_week

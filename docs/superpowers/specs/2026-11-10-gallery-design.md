@@ -53,10 +53,12 @@ create table if not exists bonus_credits (
   reason        text not null check (reason in ('cat_of_week')),
   source_id     text,                          -- winning generation id
   granted_at    timestamptz not null default now(),
-  used_by       text references generations(id) on delete set null
+  used_by       text references generations(id) on delete set null,
+  used_at       timestamptz                    -- set on claim; NULL = unused
 );
-create index if not exists bonus_credits_email_idx on bonus_credits (lower(email)) where used_by is null;
+create index if not exists bonus_credits_email_idx on bonus_credits (lower(email)) where used_at is null;
 ```
+- A credit is **unused** when `used_at is null` (not `used_by`): when Cleanup deletes an expired bonus generation, `used_by` becomes NULL through the FK, but `used_at` stays set, so the credit does not open up again.
 
 ## 2. Flows (n8n)
 All new public endpoints go through the site's nginx (`/api/...` → n8n webhook with `X-TTW-Proxy-Key`), the same as today.
@@ -112,9 +114,9 @@ The session token must belong to the generation's email; the generation must be 
 Today: one free generation per email (`free_use_consumed`, with a unique partial index on `lower(email)`, which stays as is).
 
 New rule: an email may start a generation if it has **no consumed free use** OR it has **an unused bonus credit**.
-- **Pre Checks / Insert tx:** "used" = free already consumed AND no row in `bonus_credits` with `used_by is null` for that email. When the free use is consumed and a bonus exists, the insert transaction claims the oldest unused credit (`update ... set used_by = <new id> ... for update skip locked`) and sets `uses_bonus = true` on the new generation. All of this happens inside the existing per-email advisory lock.
+- **Pre Checks / Insert tx:** "used" = free already consumed AND no row in `bonus_credits` with `used_at is null` for that email. When the free use is consumed and a bonus exists, the insert transaction picks the oldest unused credit (`select ... for update skip locked`), inserts the generation with `uses_bonus = true`, and then claims the credit only for the id that was actually inserted (`set used_by = <new id>, used_at = now()`). All of this happens inside the existing per-email advisory lock.
 - **Finalize Done:** `free_use_consumed = true` only when `uses_bonus = false`; a bonus generation keeps `free_use_consumed = false`, so the unique index still holds.
-- **Every failure path** (Fail not_cat / Fail server / Fail By Execution / status auto-fail) also releases the credit: `update bonus_credits set used_by = null where used_by = <id>`.
+- **Every failure path** (Fail not_cat / Fail server / Fail By Execution / status auto-fail) also releases the credit: `update bonus_credits set used_by = null, used_at = null where used_by = <id>`.
 - The "pending in the last 5 minutes" block stays as it is.
 
 ## 3. Pages (Astro)
