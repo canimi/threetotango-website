@@ -42,6 +42,12 @@ describe('nginx.conf', () => {
   it('denies raw uploads', () => {
     expect(conf).toMatch(/location \^~ \/media\/uploads\/ \{\s*return 404;/);
   });
+  it('keeps redirects relative (no http:// behind the tunnel)', () => {
+    expect(conf).toContain('absolute_redirect off;');
+  });
+  it('serves canonical no-slash URLs without a redirect and 301s the slash variant', () => {
+    expect(conf).toMatch(/location \/ \{[^}]*rewrite \^\(\/\.\+\)\/\$ \$1 permanent;[^}]*try_files \$uri \$uri\/index\.html =404;/);
+  });
   it('has body limit and resolver', () => {
     expect(conf).toContain('client_max_body_size 12m;');
     expect(conf).toContain('resolver 127.0.0.11 valid=30s;');

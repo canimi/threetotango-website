@@ -6,15 +6,27 @@ import PlayerModal from '../components/PlayerModal.astro';
 import FloatingCta from '../components/FloatingCta.astro';
 import { t } from '../i18n/t';
 
+import { jsonLdScript } from '../lib/seo';
+
 interface Props {
   title: string;
   description: string;
   ogImage?: string;
+  /** Alt text for the share image (defaults to a description of the default card). */
+  ogImageAlt?: string;
+  /** Pixel size of ogImage, when known. */
+  ogImageSize?: [number, number];
+  ogType?: 'website' | 'video.other' | 'profile';
   path: string;
+  /** Structured data objects (schema.org), each rendered as one JSON-LD block. */
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { title, description, ogImage: ogImageProp, path } = Astro.props;
+const { title, description, ogImage: ogImageProp, ogImageAlt, ogImageSize, ogType = 'website', path, jsonLd = [] } = Astro.props;
+const isDefaultOg = !ogImageProp;
 const ogImage = ogImageProp || '/img/og-default.jpg';
+const ogSize = isDefaultOg ? ([1200, 630] as [number, number]) : ogImageSize;
+const ogAlt = ogImageAlt || (isDefaultOg ? t('seo.ogDefaultAlt') : title);
 const site = Astro.site ?? new URL('https://threetotango.canimi.app');
 const canonical = new URL(path, site).href;
 const ogUrl = new URL(ogImage, site).href;
@@ -45,13 +57,22 @@ const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
       type="font/woff2"
       crossorigin
     />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={t('brand.name')} />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogUrl} />
+    {ogSize && <meta property="og:image:width" content={String(ogSize[0])} />}
+    {ogSize && <meta property="og:image:height" content={String(ogSize[1])} />}
+    <meta property="og:image:alt" content={ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+    <meta name="twitter:image:alt" content={ogAlt} />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={jsonLdScript(data)} />)}
     {
       umamiId && (
         <script defer src="https://stats.canimi.app/script.js" data-website-id={umamiId} />

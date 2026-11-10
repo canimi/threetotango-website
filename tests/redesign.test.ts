@@ -14,7 +14,8 @@ function htmlFiles(dir: string): string[] {
     return statSync(p).isDirectory() ? htmlFiles(p) : p.endsWith('.html') ? [p] : [];
   });
 }
-const pages = htmlFiles('dist');
+// Google Search Console verification file is plain text, not a site page.
+const pages = htmlFiles('dist').filter((f) => !/[\\/]google[0-9a-f]+\.html$/.test(f));
 const home = () => html('index.html');
 
 describe('site-wide chrome', () => {

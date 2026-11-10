@@ -10,12 +10,18 @@ import SubscribeForm from '../components/SubscribeForm.astro';
 import Marquee from '../components/Marquee.astro';
 import { getEpisodes } from '../lib/site-episodes';
 import { t } from '../i18n/t';
+import { organizationLd, seriesLd, websiteLd } from '../lib/seo';
 
 const episodes = await getEpisodes();
 const recent = episodes.slice(0, 12);
 ---
 
-<Base title={`${t('brand.name')}: ${t('brand.promise')}`} description={t('brand.promise')} path="/">
+<Base
+  title={t('seo.homeTitle')}
+  description={t('seo.homeDesc')}
+  path="/"
+  jsonLd={[websiteLd(), organizationLd(), seriesLd()]}
+>
   <Hero {episodes} />
 
   <section class="container block" id="episodes" aria-labelledby="episodes-title">

@@ -3,11 +3,17 @@ import Base from '../../layouts/Base.astro';
 import EpisodeGrid from '../../components/EpisodeGrid.astro';
 import { getEpisodes } from '../../lib/site-episodes';
 import { t } from '../../i18n/t';
+import { breadcrumbLd } from '../../lib/seo';
 
 const episodes = await getEpisodes();
 ---
 
-<Base title={`${t('episodes.pageTitle')} | ${t('brand.name')}`} description={t('episodes.pageDesc')} path="/episodes">
+<Base
+  title={t('seo.episodesTitle')}
+  description={t('seo.episodesDesc')}
+  path="/episodes"
+  jsonLd={[breadcrumbLd([{ name: t('seo.home'), path: '/' }, { name: t('episodes.pageTitle'), path: '/episodes' }])]}
+>
   <div class="container page">
     <h1>{t('episodes.all')}</h1>
     <p class="lede intro">{t('episodes.pageDesc')}</p>

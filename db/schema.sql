@@ -115,6 +115,9 @@ reset search_path;
 -- Migration for DBs created before 'characters' became nullable (idempotent):
 alter table ttw.episodes alter column characters drop not null;
 alter table ttw.episodes add column if not exists short_title text;
+-- SEO (2026-11-10): clean web meta description + short premise, written by Gemini at import from the caption; NULL = retry
+alter table ttw.episodes add column if not exists seo_description text;
+alter table ttw.episodes add column if not exists summary text;
 
 -- ============================================================
 -- v2a gallery (spec: docs/superpowers/specs/2026-11-10-gallery-design.md §1)

@@ -1,27 +1,57 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EpisodeCard from '../../components/EpisodeCard.astro';
+import EpisodeGrid from '../../components/EpisodeGrid.astro';
 import { characters } from '../../data/characters';
 import { getEpisodes } from '../../lib/site-episodes';
+import type { CharacterId, Episode } from '../../lib/episodes';
+import { breadcrumbLd, episodeDescription, episodeSummary, episodeTitle, videoLd } from '../../lib/seo';
 import { t } from '../../i18n/t';
 
 export async function getStaticPaths() {
   const list = await getEpisodes();
   return list.map((episode, i) => ({
     params: { slug: episode.slug },
-    props: { episode, newer: list[i - 1] ?? null, older: list[i + 1] ?? null },
+    props: { episode, newer: list[i - 1] ?? null, older: list[i + 1] ?? null, all: list },
   }));
 }
 
-const { episode: e, newer, older } = Astro.props;
-const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
+const { episode: e, newer, older, all } = Astro.props as {
+  episode: Episode;
+  newer: Episode | null;
+  older: Episode | null;
+  all: Episode[];
+};
+const cast = e.characters.filter((c) => Object.hasOwn(characters, c)) as CharacterId[];
+const summary = episodeSummary(e);
+const description = episodeDescription(e);
+
+// Related episodes: same cat first (the first cat in the cast, Nora last), topped up with the newest others.
+const main = cast.find((c) => c !== 'nora') ?? cast[0];
+const neighbours = new Set([e.slug, newer?.slug, older?.slug]);
+const sameCat = main ? all.filter((x) => !neighbours.has(x.slug) && x.characters.includes(main)) : [];
+const related = [...sameCat, ...all.filter((x) => !neighbours.has(x.slug) && !sameCat.includes(x))].slice(0, 4);
+const relatedTitle = main && sameCat.length ? `${t('seo.moreWith')} ${characters[main].name}` : t('seo.moreEpisodes');
+
+const video = videoLd(e);
+const jsonLd = [
+  breadcrumbLd([
+    { name: t('seo.home'), path: '/' },
+    { name: t('episodes.pageTitle'), path: '/episodes' },
+    { name: e.title, path: `/episodes/${e.slug}` },
+  ]),
+  ...(video ? [video] : []),
+];
 ---
 
 <Base
-  title={`${e.title} | ${t('brand.name')}`}
-  description={e.description}
+  title={episodeTitle(e.title)}
+  description={description}
   path={`/episodes/${e.slug}`}
   ogImage={e.thumbnailUrl || undefined}
+  ogImageAlt={`${t('episodes.thumbAlt')} ${e.title}`}
+  ogType={video ? 'video.other' : 'website'}
+  {jsonLd}
 >
   <div class="container page">
     <p class="back"><a href="/episodes">{t('episodes.all')}</a></p>
@@ -29,17 +59,21 @@ const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
       <div class="player"><EpisodeCard episode={e} size="mini" eager /></div>
       <div class="info">
         <h1>{e.title}</h1>
-        <p class="lede">{e.description}</p>
+        {summary && <p class="lede">{summary}</p>}
         {cast.length > 0 && (
           <>
-            <p class="cast-label">{t('episodes.starring')}</p>
+            <h2 class="cast-label">{t('seo.meetCast')}</h2>
             <ul class="cast">
               {cast.map((c) => (
                 <li>
                   <a href={`/cats/${c}`} style={`--accent:${characters[c].color}`}>
                     <img src={characters[c].face} width="40" height="40" alt="" loading="lazy" />
-                    {characters[c].name}
+                    <span class="who">
+                      <span class="name">{characters[c].name}</span>{' '}
+                      <span class="nick">{characters[c].nickname}</span>
+                    </span>
                   </a>
+                  <p class="one">{characters[c].oneLiner}</p>
                 </li>
               ))}
             </ul>
@@ -49,9 +83,15 @@ const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
       </div>
     </div>
     <nav class="pn" aria-label={t('episodes.all')}>
-      {older ? <a class="prev" href={`/episodes/${older.slug}`}><span>{t('episodes.prev')}</span>{older.title}</a> : <span />}
-      {newer ? <a class="next" href={`/episodes/${newer.slug}`}><span>{t('episodes.next')}</span>{newer.title}</a> : <span />}
+      {older ? <a class="prev" href={`/episodes/${older.slug}`}><span>{t('episodes.prev')}</span>{' '}{older.title}</a> : <span />}
+      {newer ? <a class="next" href={`/episodes/${newer.slug}`}><span>{t('episodes.next')}</span>{' '}{newer.title}</a> : <span />}
     </nav>
+    {related.length > 0 && (
+      <section class="related">
+        <h2>{relatedTitle}</h2>
+        <EpisodeGrid episodes={related} filters={false} />
+      </section>
+    )}
   </div>
 </Base>
 
@@ -90,12 +130,12 @@ const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
   }
   .cast-label {
     margin: 0 0 var(--space-1);
+    font: 400 1rem var(--font-body);
     color: var(--c-paper-2);
   }
   .cast {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
+    display: grid;
+    gap: var(--space-2);
     margin: 0 0 var(--space-4);
     padding: 0;
     list-style: none;
@@ -115,6 +155,21 @@ const cast = e.characters.filter((c) => Object.hasOwn(characters, c));
     block-size: 2.25rem;
     border-radius: 50%;
     box-shadow: 0 0 0 2px var(--accent);
+  }
+  .cast .nick {
+    font-weight: 400;
+    color: var(--c-paper-2);
+  }
+  .cast .one {
+    margin: 0.35rem 0 0 0.25rem;
+    font-size: 0.95rem;
+    color: var(--c-paper-2);
+  }
+  .related {
+    margin-block-start: var(--space-5);
+  }
+  .related h2 {
+    margin-block-end: var(--space-3);
   }
   .pn {
     display: grid;

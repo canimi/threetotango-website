@@ -5,6 +5,7 @@ import { characters, characterIds } from '../../data/characters';
 import { filterByCharacter, type CharacterId } from '../../lib/episodes';
 import { getEpisodes } from '../../lib/site-episodes';
 import { t } from '../../i18n/t';
+import { breadcrumbLd, clip } from '../../lib/seo';
 
 export function getStaticPaths() {
   return characterIds.map((slug) => ({ params: { slug } }));
@@ -14,13 +15,26 @@ const id = Astro.params.slug as CharacterId;
 const c = characters[id];
 const list = filterByCharacter(await getEpisodes(), id);
 const others = characterIds.filter((x) => x !== id);
+const nick = c.nickname.replace(/^The /, '');
+const label = id === 'nora' ? `${c.name}, the ${nick}` : `${c.name}, the ${nick} Cat`;
+const longTitle = `${label} – Animated Cat Comedy | ${t('brand.name')}`;
+const pageTitle = longTitle.length <= 62 ? longTitle : `${label} | ${t('brand.name')}`;
+const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t('seo.catSuffix')}`, 160);
 ---
 
 <Base
-  title={`${c.name}, ${c.nickname} | ${t('brand.name')}`}
-  description={c.oneLiner}
+  title={pageTitle}
+  description={pageDesc}
   path={`/cats/${id}`}
   ogImage={c.portrait}
+  ogImageAlt={`${t('cats.portraitAlt')} ${c.name}`}
+  jsonLd={[
+    breadcrumbLd([
+      { name: t('seo.home'), path: '/' },
+      { name: t('cats.pageTitle'), path: '/cats' },
+      { name: c.name, path: `/cats/${id}` },
+    ]),
+  ]}
 >
   <div class="container page" style={`--accent:${c.color}`}>
     <p class="back"><a href="/cats">{t('cats.back')}</a></p>

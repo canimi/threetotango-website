@@ -3,11 +3,17 @@ import Base from '../../layouts/Base.astro';
 import CastPicker from '../../components/CastPicker.astro';
 import { getEpisodes } from '../../lib/site-episodes';
 import { t } from '../../i18n/t';
+import { breadcrumbLd } from '../../lib/seo';
 
 const episodes = await getEpisodes();
 ---
 
-<Base title={`${t('cats.pageTitle')} | ${t('brand.name')}`} description={t('cats.pageDesc')} path="/cats">
+<Base
+  title={t('seo.catsTitle')}
+  description={t('seo.catsDesc')}
+  path="/cats"
+  jsonLd={[breadcrumbLd([{ name: t('seo.home'), path: '/' }, { name: t('cats.pageTitle'), path: '/cats' }])]}
+>
   <div class="container page">
     <h1>{t('cats.pageTitle')}</h1>
     <p class="lede intro">{t('cats.intro')}</p>
