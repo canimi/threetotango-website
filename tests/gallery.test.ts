@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchGallery, likeItem, deviceId, likedStore, formatWeek } from '../src/lib/gallery';
+import { fetchGallery, likeItem, deviceId, likedStore, formatWeek, optinFailureAction } from '../src/lib/gallery';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
 const memStore = (): Storage => {
@@ -77,5 +77,13 @@ describe('formatWeek', () => {
   it('formats', () => {
     expect(formatWeek('2026-11-16')).toBe('Week of 16 Nov');
     expect(formatWeek('2026-01-05')).toBe('Week of 5 Jan');
+  });
+});
+
+describe('optinFailureAction', () => {
+  it('maps invalid to waiting, bad_token to bad_token, anything else to retry', () => {
+    expect(optinFailureAction('invalid')).toBe('waiting');
+    expect(optinFailureAction('bad_token')).toBe('bad_token');
+    expect(optinFailureAction('server')).toBe('retry');
   });
 });

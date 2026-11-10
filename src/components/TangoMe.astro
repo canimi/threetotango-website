@@ -135,6 +135,7 @@ const i18n = JSON.stringify({
 
 <script>
   import { api } from '../lib/api';
+  import { optinFailureAction } from '../lib/gallery';
   import { isValidEmail, normalizeCode, isValidCode } from '../lib/validate';
   import {
     validateUpload,
@@ -483,7 +484,13 @@ const i18n = JSON.stringify({
       const gnote = q('[data-gallery-note]');
       gnote.textContent = R.gallerySent;
       gnote.hidden = false;
-    } else if (res.error === 'bad_token') {
+    } else if (optinFailureAction(res.error) === 'waiting') {
+      btn.hidden = true;
+      note('');
+      const gnote = q('[data-gallery-note]');
+      gnote.textContent = R.galleryWaiting;
+      gnote.hidden = false;
+    } else if (optinFailureAction(res.error) === 'bad_token') {
       btn.disabled = false;
       dropToken();
       if (wizard.hidden) note('', E.bad_token);

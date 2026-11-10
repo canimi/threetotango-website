@@ -245,3 +245,14 @@ export function buildCard(
   });
   return card;
 }
+
+/**
+ * What the result screen does with a failed opt-in. On the result screen the generation is done and
+ * the token matches, so 'invalid' means the cat is no longer in state "none": it is already queued
+ * (e.g. the box was ticked before a page reload), so show the waiting note, not a retry error.
+ */
+export function optinFailureAction(error: string): 'waiting' | 'bad_token' | 'retry' {
+  if (error === 'invalid') return 'waiting';
+  if (error === 'bad_token') return 'bad_token';
+  return 'retry';
+}

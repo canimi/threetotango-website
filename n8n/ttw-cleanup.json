@@ -188,7 +188,7 @@
       "executeOnce": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted",
+        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1), d as (delete from ttw.gallery_like_ip where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted, (select count(*) from d)::int as gallery_like_ip_deleted",
         "options": {}
       },
       "credentials": {

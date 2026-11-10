@@ -21,8 +21,14 @@ describe('nginx.conf', () => {
   });
   it('caches gallery list 30s', () => {
     expect(conf).toMatch(
-      /location = \/api\/gallery \{[^}]*add_header Cache-Control "public, max-age=30"[^}]*include \/etc\/nginx\/snippets\/ttw-security\.conf;/,
+      /location = \/api\/gallery \{[^}]*add_header Cache-Control "public, max-age=30";[^}]*include \/etc\/nginx\/snippets\/ttw-security\.conf;/,
     );
+  });
+  it('does not cache gallery list errors (no always flag)', () => {
+    expect(conf).not.toMatch(/Cache-Control "public, max-age=30" always/);
+  });
+  it('gallery mod page hides n8n Referrer-Policy', () => {
+    expect(conf).toMatch(/= \/gallery\/mod \{[^}]*proxy_hide_header Referrer-Policy;/);
   });
   it('limits JSON bodies', () => {
     for (const loc of ['= /api/gallery/like', '= /api/gallery/optin']) {
