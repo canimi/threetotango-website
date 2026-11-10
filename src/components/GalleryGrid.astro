@@ -1,5 +1,6 @@
 ---
 import { t } from '../i18n/t';
+import '../styles/gallery-cards.css';
 ---
 
 <div class="gallery" data-gallery>
@@ -33,9 +34,8 @@ import { t } from '../i18n/t';
 </div>
 
 <script>
-  import { fetchGallery, likeItem, deviceId, likedStore, renderCard, applyLike, formatWeek, setLoadError } from '../lib/gallery';
+  import { fetchGallery, deviceId, likedStore, buildCard, formatWeek, setLoadError } from '../lib/gallery';
   import type { GalleryItem } from '../lib/gallery';
-  import { track } from '../lib/track';
 
   const root = document.querySelector<HTMLElement>('[data-gallery]');
   if (root) {
@@ -57,26 +57,7 @@ import { t } from '../i18n/t';
     let busy = false;
     let epoch = 0;
 
-    const build = (item: GalleryItem) => {
-      const card = renderCard(item, liked.has(item.id));
-      const btn = card.querySelector<HTMLButtonElement>('button.heart')!;
-      btn.addEventListener('click', async () => {
-        if (btn.getAttribute('aria-pressed') === 'true' || btn.disabled) return;
-        const count = card.querySelector<HTMLElement>('.count')!;
-        const prev = Number(count.textContent) || 0;
-        btn.setAttribute('aria-pressed', 'true');
-        count.textContent = String(prev + 1);
-        btn.disabled = true;
-        const result = await likeItem(item.id, device);
-        btn.disabled = false;
-        applyLike(card, result, prev);
-        if (result.ok) {
-          liked.add(item.id);
-          if (!result.already) track('gallery-like');
-        }
-      });
-      return card;
-    };
+    const build = (item: GalleryItem) => buildCard(item, liked, device);
 
     const setState = (s: 'ok' | 'empty' | 'error') => {
       empty.hidden = s !== 'empty';
@@ -201,119 +182,6 @@ import { t } from '../i18n/t';
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
-  .gallery .gcard {
-    position: relative;
-    display: grid;
-    gap: 0.4rem;
-    padding: 0.55rem 0.55rem 0.5rem;
-    border-radius: 4px;
-    background: var(--c-paper);
-    color: var(--c-ink);
-    box-shadow: 0 22px 40px -22px rgb(var(--c-shadow) / 95%), 0 2px 0 rgb(0 0 0 / 8%);
-    transform: rotate(var(--tilt, 0deg));
-    transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1);
-  }
-  .gallery .gcard:hover,
-  .gallery .gcard:focus-within {
-    transform: rotate(0deg) translateY(-4px);
-  }
-  .gallery .polaroid {
-    display: grid;
-    gap: 0.55rem;
-    color: inherit;
-    text-decoration: none;
-  }
-  .gallery .polaroid:focus-visible {
-    outline: 3px solid var(--c-mustard-dark);
-    outline-offset: 2px;
-  }
-  .gallery .polaroid img {
-    display: block;
-    inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 4 / 5;
-    object-fit: cover;
-    border-radius: 2px;
-    background: var(--c-wall-2);
-  }
-  .gallery .tape {
-    position: absolute;
-    z-index: 1;
-    inset-block-start: -0.7rem;
-    inset-inline-start: 50%;
-    inline-size: 4.2rem;
-    block-size: 1.4rem;
-    background: rgb(255 207 110 / 70%);
-    transform: translateX(-50%) rotate(calc(var(--tilt, 0deg) * -1.6));
-    box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
-  }
-  .gallery .cap {
-    font: 600 1rem / 1.2 var(--font-display);
-    text-align: center;
-    overflow-wrap: anywhere;
-  }
-  .gallery .week {
-    justify-self: center;
-    padding: 0.15rem 0.7rem;
-    border-radius: var(--radius-pill);
-    background: var(--c-mustard);
-    color: var(--c-on-mustard);
-    font: 600 0.85rem var(--font-display);
-  }
-  .gallery .likes {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.2rem 0.4rem;
-  }
-  .gallery .heart {
-    display: grid;
-    place-items: center;
-    inline-size: 44px;
-    block-size: 44px;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--c-rug);
-    cursor: pointer;
-  }
-  .gallery .heart svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-  .gallery .heart[aria-pressed='true'] svg {
-    fill: currentColor;
-  }
-  .gallery .count {
-    font: 600 1rem var(--font-display);
-    min-inline-size: 1.5ch;
-  }
-  .gallery .note {
-    flex-basis: 100%;
-    text-align: center;
-    color: var(--c-ink-2);
-    font-size: var(--step--1);
-  }
-  .gallery .note:empty {
-    display: none;
-  }
-  .gallery .skeleton {
-    aspect-ratio: 4 / 5.9;
-    transform: none;
-    background: linear-gradient(100deg, var(--c-wall-2) 30%, var(--c-wall-3) 50%, var(--c-wall-2) 70%) 0 0 / 200% 100%;
-    box-shadow: none;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .gallery .skeleton {
-      animation: gshimmer 1.4s linear infinite;
-    }
-  }
-  @keyframes gshimmer {
-    to { background-position: -200% 0; }
-  }
   .gallery .more-error {
     margin: 0;
   }
@@ -330,10 +198,5 @@ import { t } from '../i18n/t';
   }
   .gallery [hidden] {
     display: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .gallery .gcard {
-      transition: none;
-    }
   }
 </style>

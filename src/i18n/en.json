@@ -363,7 +363,12 @@
       "listed": "You're on the list",
       "listError": "Couldn't add you to the list. Please try again.",
       "quizCta": "Which of our cats are you? Take the quiz",
-      "another": "Try another photo"
+      "another": "Try another photo",
+      "galleryAdd": "Add to the gallery",
+      "galleryAdding": "Sending",
+      "gallerySent": "Sent. Luka will review your cat.",
+      "galleryWaiting": "Your cat is waiting for Luka's approval to join the gallery.",
+      "galleryError": "Couldn't send your cat to the gallery. Please try again."
     },
     "checkAgain": "Check again",
     "differentEmail": "Use a different email",
@@ -406,6 +411,9 @@
     "likesCount": "likes",
     "ctaTitle": "Put your cat in the gallery",
     "ctaBody": "Make your Tango Me episode still, tick the gallery box, and wait for Luka to approve.",
-    "ctaButton": "Try Tango Me free"
+    "ctaButton": "Try Tango Me free",
+    "weekTitle": "Cat of the Week",
+    "weekNewTitle": "New in the gallery",
+    "weekCta": "See the gallery"
   }
 }

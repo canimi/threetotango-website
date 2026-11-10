@@ -57,6 +57,7 @@ async function postForm(path: string, body: FormData): Promise<Raw> {
   }
 }
 
+const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const TANGO_START_ERRORS = ['not_cat', 'used', 'budget', 'rate_limited', 'invalid', 'bad_token', 'server'] as const;
 const STATUSES = ['queued', 'running', 'done', 'failed'] as const;
 const SUBSCRIBE_ERRORS = ['invalid_email', 'rate_limited', 'server'] as const;
@@ -109,5 +110,12 @@ export const api = {
     const raw = await postJson('/api/waitlist', { token, kind, generationId });
     if (raw.status === 200 && raw.body?.ok === true) return { ok: true };
     return failure(raw, ['bad_token', 'server'] as const, { 401: 'bad_token' }, 'server');
+  },
+
+  async galleryOptin(token: string, id: string): Promise<{ ok: true } | Fail<'bad_token' | 'invalid' | 'server'>> {
+    if (!ID_RE.test(id)) return { ok: false, error: 'invalid' };
+    const raw = await postJson('/api/gallery/optin', { token, id });
+    if (raw.status === 200 && raw.body?.ok === true) return { ok: true };
+    return failure(raw, ['bad_token', 'invalid', 'server'] as const, { 400: 'invalid', 401: 'bad_token' }, 'server');
   },
 };

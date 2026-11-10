@@ -1,0 +1,74 @@
+---
+import { t } from '../i18n/t';
+import '../styles/gallery-cards.css';
+---
+
+<section class="container gallery cow" data-cow hidden aria-labelledby="cow-title">
+  <div class="head">
+    <h2 id="cow-title" data-cow-title>{t('gallery.weekTitle')}</h2>
+  </div>
+  <ul class="row" data-cow-list role="list"></ul>
+  <p class="all"><a class="btn" href="/gallery">{t('gallery.weekCta')}</a></p>
+</section>
+
+<script>
+  import { fetchGallery, deviceId, likedStore, buildCard, formatWeek } from '../lib/gallery';
+  import { t } from '../i18n/t';
+
+  const root = document.querySelector<HTMLElement>('[data-cow]');
+  if (root) {
+    const list = root.querySelector<HTMLUListElement>('[data-cow-list]')!;
+    const title = root.querySelector<HTMLElement>('[data-cow-title]')!;
+    void fetchGallery({ sort: 'new', offset: 0, limit: 3 }).then((page) => {
+      if (!page) return;
+      const liked = likedStore();
+      const device = deviceId();
+      if (page.featured) {
+        const card = buildCard(page.featured, liked, device);
+        const week = document.createElement('span');
+        week.className = 'week';
+        week.textContent = formatWeek(page.featured.weekStart);
+        card.querySelector('.cap')?.after(week);
+        card.classList.add('is-featured');
+        list.classList.add('one');
+        list.replaceChildren(card);
+      } else if (page.items.length > 0) {
+        title.textContent = t('gallery.weekNewTitle');
+        list.replaceChildren(...page.items.slice(0, 3).map((i) => buildCard(i, liked, device)));
+      } else {
+        return;
+      }
+      root.hidden = false;
+    });
+  }
+</script>
+
+<style is:global>
+  .cow {
+    padding-block: var(--space-4) var(--space-2);
+  }
+  .cow .head {
+    margin-block-end: var(--space-2);
+    text-align: center;
+  }
+  .cow .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 14rem));
+    justify-content: center;
+    gap: clamp(1rem, 2.4vw, 1.8rem);
+    min-block-size: 22rem;
+    margin: 0;
+    padding: var(--space-2) 0;
+    list-style: none;
+  }
+  .cow .row.one {
+    grid-template-columns: minmax(0, 18rem);
+  }
+  .cow .all {
+    margin: 0;
+    text-align: center;
+  }
+  .cow[hidden] {
+    display: none;
+  }
+</style>

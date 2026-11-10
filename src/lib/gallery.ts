@@ -1,4 +1,5 @@
 import { t } from '../i18n/t';
+import { track } from './track';
 
 export interface GalleryItem {
   id: string;
@@ -217,4 +218,30 @@ export function applyLike(card: HTMLElement, result: LikeResult, prevLikes: numb
 /** Show or clear the "gallery is napping" message in a role="status" element (used when Show more fails). */
 export function setLoadError(el: HTMLElement, on: boolean): void {
   el.textContent = on ? t('gallery.error') : '';
+}
+
+/** renderCard plus the optimistic heart behaviour; shared by the gallery page and the home section. */
+export function buildCard(
+  item: GalleryItem,
+  liked: { has(id: string): boolean; add(id: string): void },
+  device: string,
+): HTMLElement {
+  const card = renderCard(item, liked.has(item.id));
+  const btn = card.querySelector<HTMLButtonElement>('button.heart')!;
+  btn.addEventListener('click', async () => {
+    if (btn.getAttribute('aria-pressed') === 'true' || btn.disabled) return;
+    const count = card.querySelector<HTMLElement>('.count')!;
+    const prev = Number(count.textContent) || 0;
+    btn.setAttribute('aria-pressed', 'true');
+    count.textContent = String(prev + 1);
+    btn.disabled = true;
+    const result = await likeItem(item.id, device);
+    btn.disabled = false;
+    applyLike(card, result, prev);
+    if (result.ok) {
+      liked.add(item.id);
+      if (!result.already) track('gallery-like');
+    }
+  });
+  return card;
 }
