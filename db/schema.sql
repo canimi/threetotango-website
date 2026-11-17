@@ -185,3 +185,65 @@ create index if not exists bonus_credits_email_idx on ttw.bonus_credits (lower(e
 alter table ttw.cat_of_week
   drop constraint if exists cat_of_week_generation_id_fkey,
   add constraint cat_of_week_generation_id_fkey foreign key (generation_id) references ttw.generations(id) on delete cascade;
+
+-- ============================================================
+-- Chat with the cats (2026-11-17). Workflow "TTW · Chat". Idempotent.
+-- Sessions and messages live 3 days (TTW · Cleanup), IP counters 2 days, daily totals 90 days.
+-- Kill switch: update ttw.chat_settings set enabled = false;  daily cap: daily_cap_usd.
+-- ============================================================
+alter table ttw.generations add column if not exists cat_look text;
+
+create table if not exists ttw.chat_settings (
+  id            int primary key default 1 check (id = 1),
+  enabled       boolean not null default true,
+  daily_cap_usd numeric(8,4) not null default 1.50,
+  updated_at    timestamptz not null default now()
+);
+insert into ttw.chat_settings (id) values (1) on conflict (id) do nothing;
+
+create table if not exists ttw.chat_sessions (
+  id            text primary key,
+  cat           text not null check (cat in ('luka','budy','caddy')),
+  ip_hash       text not null,
+  guest_gen_id  text references ttw.generations(id) on delete set null,
+  guest_name    text,
+  guest_info    text,
+  msg_count     int not null default 0,
+  strikes       int not null default 0,
+  closed        boolean not null default false,
+  is_test       boolean not null default false,
+  created_at    timestamptz not null default now(),
+  last_at       timestamptz not null default now(),
+  expires_at    timestamptz not null default (now() + interval '3 days')
+);
+create index if not exists chat_sessions_expires_idx on ttw.chat_sessions (expires_at);
+
+create table if not exists ttw.chat_messages (
+  id          bigserial primary key,
+  session_id  text not null references ttw.chat_sessions(id) on delete cascade,
+  role        text not null check (role in ('user','cat','system')),
+  text        text not null,
+  flag        text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists chat_messages_session_idx on ttw.chat_messages (session_id, id desc);
+
+create table if not exists ttw.chat_ip_daily (
+  ip_hash  text not null,
+  day      date not null,
+  msgs     int not null default 0,
+  sessions int not null default 0,
+  strikes  int not null default 0,
+  primary key (ip_hash, day)
+);
+
+create table if not exists ttw.chat_budget (
+  day            date primary key,
+  spent_usd      numeric(10,6) not null default 0,
+  msgs           int not null default 0,
+  input_tokens   bigint not null default 0,
+  output_tokens  bigint not null default 0,
+  cache_read     bigint not null default 0,
+  cache_write    bigint not null default 0,
+  flagged        int not null default 0
+);

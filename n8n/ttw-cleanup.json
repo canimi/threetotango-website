@@ -188,7 +188,7 @@
       "executeOnce": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1), d as (delete from ttw.gallery_like_ip where day < current_date - 2 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted, (select count(*) from d)::int as gallery_like_ip_deleted",
+        "query": "with a as (delete from ttw.email_codes where expires_at < now() - interval '1 day' returning 1), b as (delete from ttw.sessions where expires_at < now() returning 1), c as (delete from ttw.ip_attempts where day < current_date - 2 returning 1), d as (delete from ttw.gallery_like_ip where day < current_date - 2 returning 1), e as (delete from ttw.chat_sessions where expires_at < now() returning 1), f as (delete from ttw.chat_ip_daily where day < current_date - 2 returning 1), g as (delete from ttw.chat_budget where day < current_date - 90 returning 1) select (select count(*) from a)::int as email_codes_deleted, (select count(*) from b)::int as sessions_deleted, (select count(*) from c)::int as ip_attempts_deleted, (select count(*) from d)::int as gallery_like_ip_deleted, (select count(*) from e)::int as chat_sessions_deleted, (select count(*) from f)::int as chat_ip_deleted, (select count(*) from g)::int as chat_budget_deleted",
         "options": {}
       },
       "credentials": {
