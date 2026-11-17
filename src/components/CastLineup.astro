@@ -21,64 +21,80 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
   aria-label={t('hero.lineupLabel')}
   data-guest-i18n={JSON.stringify({ defaultName: t('hero.guest.defaultName'), hint: t('hero.guest.hint') })}
 >
-  <div class="row" data-lineup-row>
-    {
-      cats.map((c) => {
-        const ch = characters[c.id];
-        return (
-          <a
-            class="cat"
-            href={`/cats/${c.id}`}
-            data-cast-open={c.id}
-            style={`--accent:${ch.color};--k:${scale[c.id] ?? 0.9}`}
-            aria-label={t('hero.meet').replace('{name}', ch.name)}
-          >
-            <span class="bubble" aria-hidden="true" data-guest-line={t(`hero.guest.bubbles.${c.id}`)}>{t(`hero.bubbles.${c.id}`)}</span>
-            <span class="figure">
-              {cutouts && c.cutout ? (
-                <img src={c.cutout} width={c.width ?? 800} height={c.height ?? 900} alt="" loading="eager" fetchpriority="high" />
-              ) : (
-                <img src={c.face} width="400" height="400" alt="" loading="eager" fetchpriority="high" />
-              )}
-            </span>
-            <span class="name" aria-hidden="true">{ch.name}</span>
-          </a>
-        );
-      })
-    }
-    <a class="cat slot" href="/tango-me" data-drop aria-label={t('hero.yourCatLabel')}>
-      <span class="figure">
+  <div class="cards">
+    <section class="card card-chat" aria-labelledby="hero-chat-title">
+      <p class="kicker"><span class="new">{t('hero.chat.new')}</span>{t('hero.chat.kicker')}</p>
+      <h2 class="card-title" id="hero-chat-title">{t('hero.chat.title')}</h2>
+      <div class="row cats-row" data-lineup-row>
         {
-          cutouts ? (
-            <svg class="sil sil-sit" viewBox="0 0 100 120" aria-hidden="true">
-              <path d="M30 116 C25 104 25 90 30 80 C27 73 26 65 28 58 C23 53 21 45 23 38 L22 20 L34 28 C39 26 45 26 50 28 L61 19 L61 38 C62 46 60 52 56 57 C71 62 83 77 86 95 C88 107 84 116 76 116 Z" />
-              <path class="tail" d="M77 116 C91 117 99 108 96 96" />
-            </svg>
-          ) : (
-            <svg class="sil" viewBox="0 0 120 160" aria-hidden="true">
-              <path d="M30 154 C21 121 27 93 42 79 C34 70 31 58 34 46 L29 16 L49 33 C56 30 64 30 71 33 L91 16 L86 46 C89 58 86 70 78 79 C93 93 99 121 90 154 Z M90 150 C108 149 116 130 104 113" />
-            </svg>
-          )
+          cats.map((c) => {
+            const ch = characters[c.id];
+            return (
+              <a
+                class="cat"
+                href={`/chat?cat=${c.id}`}
+                data-cat={c.id}
+                style={`--accent:${ch.color};--k:${scale[c.id] ?? 0.9}`}
+                aria-label={t('hero.chat.with').replace('{name}', ch.name)}
+              >
+                <span class="bubble" aria-hidden="true" data-guest-line={t(`hero.guest.bubbles.${c.id}`)}>{t(`hero.bubbles.${c.id}`)}</span>
+                <span class="figure">
+                  {cutouts && c.cutout ? (
+                    <img src={c.cutout} width={c.width ?? 800} height={c.height ?? 900} alt="" loading="eager" fetchpriority="high" />
+                  ) : (
+                    <img src={c.face} width="400" height="400" alt="" loading="eager" fetchpriority="high" />
+                  )}
+                </span>
+                <span class="name" aria-hidden="true">{ch.name}</span>
+              </a>
+            );
+          })
         }
-        <span class="drop-msg" aria-hidden="true">{t('hero.dropNow')}</span>
-        <span class="guest" data-guest hidden>
-          <span class="guest-badge" aria-hidden="true">{t('hero.guest.badge')}</span>
-          <span class="guest-photo"><img data-guest-img alt={t('hero.guest.photoAlt')} /></span>
-        </span>
-      </span>
-      <span class="name" data-guest-name>{t('hero.yourCat')}</span>
-      <span class="hint" aria-hidden="true" data-guest-hint>{t('hero.yourCatHint')}</span>
-    </a>
-    <input type="file" accept="image/*,.heic" data-drop-input hidden tabindex="-1" aria-hidden="true" />
+      </div>
+      <p class="card-foot">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t('hero.chat.sub')}
+      </p>
+    </section>
+
+    <section class="card card-tango" aria-labelledby="hero-tango-title">
+      <p class="kicker">{t('hero.tangoCard.kicker')}</p>
+      <h2 class="card-title" id="hero-tango-title">{t('hero.tangoCard.title')}</h2>
+      <div class="row slot-row">
+        <a class="cat slot" href="/tango-me" data-drop aria-label={t('hero.yourCatLabel')}>
+          <span class="figure">
+            {
+              cutouts ? (
+                <svg class="sil sil-sit" viewBox="0 0 100 120" aria-hidden="true">
+                  <path d="M30 116 C25 104 25 90 30 80 C27 73 26 65 28 58 C23 53 21 45 23 38 L22 20 L34 28 C39 26 45 26 50 28 L61 19 L61 38 C62 46 60 52 56 57 C71 62 83 77 86 95 C88 107 84 116 76 116 Z" />
+                  <path class="tail" d="M77 116 C91 117 99 108 96 96" />
+                </svg>
+              ) : (
+                <svg class="sil" viewBox="0 0 120 160" aria-hidden="true">
+                  <path d="M30 154 C21 121 27 93 42 79 C34 70 31 58 34 46 L29 16 L49 33 C56 30 64 30 71 33 L91 16 L86 46 C89 58 86 70 78 79 C93 93 99 121 90 154 Z M90 150 C108 149 116 130 104 113" />
+                </svg>
+              )
+            }
+            <span class="drop-msg" aria-hidden="true">{t('hero.dropNow')}</span>
+            <span class="guest" data-guest hidden>
+              <span class="guest-badge" aria-hidden="true">{t('hero.guest.badge')}</span>
+              <span class="guest-photo"><img data-guest-img alt={t('hero.guest.photoAlt')} /></span>
+            </span>
+          </span>
+          <span class="name" data-guest-name>{t('hero.yourCat')}</span>
+          <span class="hint" aria-hidden="true" data-guest-hint>{t('hero.yourCatHint')}</span>
+        </a>
+      </div>
+      <div class="guest-bar" data-guest-bar hidden>
+        <label class="guest-field">
+          <span>{t('hero.guest.nameLabel')}</span>
+          <input type="text" maxlength="30" autocomplete="off" placeholder={t('hero.guest.namePlaceholder')} data-guest-input />
+        </label>
+        <button type="button" class="guest-change" data-guest-change>{t('hero.guest.change')}</button>
+      </div>
+      <a class="btn card-cta" href="/tango-me" data-magnetic data-pitch-cta>{t('cta.tangoFreeLong')}</a>
+    </section>
   </div>
-  <div class="floor" aria-hidden="true"></div>
-  <div class="guest-bar" data-guest-bar hidden>
-    <label class="guest-field">
-      <span>{t('hero.guest.nameLabel')}</span>
-      <input type="text" maxlength="30" autocomplete="off" placeholder={t('hero.guest.namePlaceholder')} data-guest-input />
-    </label>
-    <button type="button" class="guest-change" data-guest-change>{t('hero.guest.change')}</button>
-  </div>
+  <input type="file" accept="image/*,.heic" data-drop-input hidden tabindex="-1" aria-hidden="true" />
 </div>
 
 <script>
@@ -86,20 +102,11 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
   import { track } from '../lib/track';
 
   const root = document.querySelector<HTMLElement>('[data-lineup]');
+  // Picking a cat opens its chat: count it.
+  root?.querySelectorAll<HTMLAnchorElement>('[data-cat]').forEach((a) =>
+    a.addEventListener('click', () => track('chat-cta', { cat: a.dataset.cat ?? '', from: 'hero' })),
+  );
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Cat → select it in the cast picker on this page (falls back to the profile link).
-  root?.querySelectorAll<HTMLAnchorElement>('[data-cast-open]').forEach((a) => {
-    a.addEventListener('click', (ev) => {
-      const tab = document.getElementById(`cast-tab-${a.dataset.castOpen}`);
-      const section = document.getElementById('household');
-      if (!tab || !section || ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
-      ev.preventDefault();
-      tab.click();
-      section.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-      tab.focus({ preventScroll: true });
-    });
-  });
 
   // Cats turn toward the cursor (fine pointers, motion allowed). Each cat has its own temper:
   // Budy reacts fast and big, Luka a little, Caddy barely and late.
@@ -109,9 +116,9 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
       luka: { amp: 0.6, ease: 0.09 },
       caddy: { amp: 0.25, ease: 0.03 },
     };
-    const cats = Array.from(root.querySelectorAll<HTMLElement>('[data-cast-open]')).map((el) => ({
+    const cats = Array.from(root.querySelectorAll<HTMLElement>('[data-cat]')).map((el) => ({
       img: el.querySelector<HTMLElement>('.figure img'),
-      t: temper[el.dataset.castOpen ?? ''] ?? { amp: 0.5, ease: 0.08 },
+      t: temper[el.dataset.cat ?? ''] ?? { amp: 0.5, ease: 0.08 },
       ry: 0,
       rx: 0,
       ty: 0,
@@ -245,27 +252,113 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
 </script>
 
 <style>
-  /* Sized from the lineup's own width (container query units), so it fills whatever column it gets. */
+  /* Two hero cards: chat with a cat (the three cats) and Tango Me (the empty spot). */
   .lineup {
     position: relative;
     container-type: inline-size;
+    /* One figure height for both cards so all four sit on the same floor line. */
+    --F: clamp(7rem, 20cqi, 12.5rem);
   }
+  .cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: clamp(0.9rem, 2cqi, 1.5rem);
+    align-items: stretch;
+  }
+  .card {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    align-content: start;
+    padding: 1rem clamp(1rem, 2.2cqi, 1.5rem) 1.15rem;
+    border-radius: var(--radius-card);
+    background: rgb(31 66 54 / 78%);
+    box-shadow:
+      inset 0 0 0 1.5px rgb(255 207 110 / 16%),
+      0 30px 60px -30px rgb(var(--c-shadow) / 90%);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .card-chat {
+    transform: rotate(-0.6deg);
+  }
+  .card-tango {
+    transform: rotate(0.6deg);
+    background: rgb(40 83 67 / 70%);
+  }
+  .kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    color: var(--c-lamp);
+    font: 700 0.78rem / 1.2 var(--font-display);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .new {
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    background: var(--c-rug);
+    color: var(--c-paper);
+    transform: rotate(-3deg);
+  }
+  .card-title {
+    margin: 0.2rem 0 0.4rem;
+    color: var(--c-paper);
+    font: 600 clamp(1.2rem, 0.95rem + 0.7vw, 1.6rem) / 1.15 var(--font-display);
+    text-wrap: balance;
+  }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0.55rem 0 0;
+    color: var(--c-paper-2);
+    font-size: 0.98rem;
+  }
+  /* Little "typing" dots: the cats are ready to talk. */
+  .dots {
+    display: inline-flex;
+    gap: 3px;
+    padding: 0.4rem 0.55rem;
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    background: var(--c-paper);
+  }
+  .dots i {
+    display: block;
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background: var(--c-ink-2);
+  }
+  .card-cta {
+    justify-self: stretch;
+    margin-block-start: 0.75rem;
+    padding-inline: 1rem;
+    text-align: center;
+    text-wrap: balance;
+  }
+
   .row {
-    --gap: clamp(0.75rem, 2.2cqi, 2.25rem);
-    --figure: clamp(6.5rem, (100cqi - 3 * var(--gap)) / 4.15, 16rem);
     position: relative;
     z-index: 1;
-    display: flex;
-    align-items: flex-start;
-    gap: var(--gap);
+    display: grid;
+    align-items: end;
+  }
+  .cats-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .slot-row {
+    justify-items: center;
   }
   .cat {
     position: relative;
     display: grid;
     justify-items: center;
     align-content: start;
-    gap: 0.6rem;
-    flex: 0 0 auto;
+    gap: 0.45rem;
     min-inline-size: 44px;
     color: var(--c-paper);
     text-decoration: none;
@@ -275,18 +368,22 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     position: relative;
     display: grid;
     place-items: end center;
-    inline-size: var(--figure);
+    inline-size: 100%;
+    block-size: var(--F);
     transform-origin: 50% 100%;
     transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
   }
+  .slot .figure {
+    inline-size: calc(var(--F) * 0.95);
+  }
   .name {
-    font: 600 clamp(1.05rem, 0.9rem + 0.4vw, 1.35rem) / 1.1 var(--font-display);
+    font: 600 clamp(1rem, 0.9rem + 0.35vw, 1.25rem) / 1.1 var(--font-display);
     text-align: center;
     text-shadow: 0 2px 12px rgb(var(--c-shadow) / 80%);
   }
   .cat:hover .figure,
   .cat:focus-visible .figure {
-    transform: rotate(-4deg) scale(1.04);
+    transform: rotate(-4deg) scale(1.05);
   }
   .cat:focus-visible .name {
     outline: 3px solid var(--c-lamp);
@@ -296,7 +393,8 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
 
   /* ---- Fallback: round face portholes ---- */
   .is-portrait .figure {
-    aspect-ratio: 1;
+    inline-size: calc(var(--F) * 0.8);
+    block-size: calc(var(--F) * 0.8);
     border-radius: 50%;
     overflow: hidden;
     background: var(--c-wall-2);
@@ -310,56 +408,17 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     block-size: 100%;
     object-fit: cover;
   }
-  .is-portrait .cat:focus-visible .figure {
-    box-shadow:
-      0 0 0 4px var(--c-wall),
-      0 0 0 7px var(--c-lamp),
-      0 28px 40px -18px rgb(var(--c-shadow) / 95%);
-  }
   .is-portrait .slot .figure {
-    border-radius: 50%;
     border: 3px dashed var(--c-mustard);
     background: rgb(227 162 26 / 8%);
+    box-shadow: none;
     place-items: center;
-  }
-  .is-portrait .slot:hover .figure,
-  .is-portrait .slot:focus-visible .figure,
-  .is-portrait .slot.is-over .figure {
-    background: rgb(255 207 110 / 18%);
-    border-color: var(--c-lamp);
-  }
-  .is-portrait .slot:focus-visible .figure {
-    box-shadow: 0 0 0 4px var(--c-wall), 0 0 0 7px var(--c-lamp);
   }
   .is-portrait .sil {
     inline-size: 58%;
   }
-  .floor {
-    position: absolute;
-    z-index: 0;
-    inset-inline: -4%;
-    inset-block-end: 2.2rem;
-    block-size: 3.5rem;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(var(--c-shadow) / 75%), transparent);
-    pointer-events: none;
-  }
 
-  /* ---- Cutouts: four even columns, one floor line ---- */
-  /* (vars hold cqi tokens; they resolve where used, against .lineup) */
-  .is-cutout {
-    --col: calc(100cqi / 4);
-    --F: min(calc(var(--col) * 1.24), 56svh);
-  }
-  .is-cutout .row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
-  }
-  .is-cutout .figure {
-    inline-size: 100%;
-    block-size: var(--F);
-  }
+  /* ---- Cutouts: cats stand on the card floor ---- */
   .is-cutout .figure img {
     position: relative;
     z-index: 1;
@@ -369,28 +428,19 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     will-change: transform;
     inline-size: auto;
     block-size: calc(var(--F) * var(--k));
-    max-inline-size: 112%; /* at most ~6% into each neighbour */
+    max-inline-size: 118%;
     object-fit: contain;
     object-position: 50% 100%;
   }
-  /* Soft contact shadow where each cat meets the floor */
   .is-cutout .figure::after {
     content: '';
     position: absolute;
     z-index: 0;
-    inset-inline: 10%;
-    inset-block-end: -0.55rem;
-    block-size: 1.4rem;
+    inset-inline: 12%;
+    inset-block-end: -0.5rem;
+    block-size: 1.2rem;
     border-radius: 50%;
     background: radial-gradient(closest-side, rgb(var(--c-shadow) / 85%), rgb(var(--c-shadow) / 0%));
-  }
-  .is-cutout .floor {
-    inset-inline: 0;
-    inset-block-end: auto;
-    inset-block-start: calc(var(--F) - 0.25rem);
-    block-size: 1px;
-    border-radius: 0;
-    background: linear-gradient(90deg, transparent, rgb(255 207 110 / 22%) 15%, rgb(255 207 110 / 22%) 85%, transparent);
   }
   .is-cutout .sil-sit {
     position: relative;
@@ -403,7 +453,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     opacity: 0.6;
   }
 
-  /* The empty spot's silhouette (both modes) */
+  /* The empty spot's silhouette */
   .sil {
     fill: rgb(227 162 26 / 12%);
     stroke: var(--c-mustard);
@@ -423,26 +473,23 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     fill: rgb(255 207 110 / 26%);
     stroke: var(--c-lamp);
   }
-  .is-cutout .slot:focus-visible .sil {
+  .slot:focus-visible .sil {
     stroke-width: 3.5;
   }
   .slot .name {
     color: var(--c-lamp);
   }
   .hint {
-    position: absolute;
-    inset-block-start: calc(100% + 0.2rem);
-    inset-inline: -1rem;
-    text-wrap: balance;
     color: var(--c-paper-2);
     font-size: 0.85rem;
     line-height: 1.3;
     text-align: center;
+    text-wrap: balance;
   }
   .drop-msg {
     position: absolute;
     z-index: 2;
-    inset-inline: 8%;
+    inset-inline: 0;
     inset-block-end: 35%;
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-pill);
@@ -460,14 +507,14 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     transform: scale(1.06);
   }
 
-  /* ---- Guest: the visitor's own cat joins the lineup ---- */
+  /* ---- Guest: the visitor's own cat takes the empty spot ---- */
   .guest {
     position: absolute;
     inset: 0;
     z-index: 2;
     display: grid;
     place-items: end center;
-    padding-block-end: 6%;
+    padding-block-end: 4%;
   }
   .guest[hidden] {
     display: none;
@@ -476,7 +523,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     opacity: 0;
   }
   .guest-photo {
-    inline-size: min(84%, 13rem);
+    inline-size: min(92%, 11rem);
     aspect-ratio: 1;
     border-radius: 50%;
     overflow: hidden;
@@ -496,8 +543,9 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
   }
   .guest-badge {
     position: absolute;
-    inset-block-start: 4%;
+    inset-block-start: 2%;
     inset-inline-start: 50%;
+    z-index: 1;
     padding: 0.25rem 0.65rem;
     border-radius: 6px;
     background: var(--c-rug);
@@ -512,9 +560,9 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem 0.9rem;
-    margin-block-start: 2.4rem;
+    justify-content: center;
+    gap: 0.4rem 0.8rem;
+    margin-block-start: 0.6rem;
   }
   .guest-bar[hidden] {
     display: none;
@@ -522,13 +570,13 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
   .guest-field {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
     color: var(--c-paper-2);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
   }
   .guest-field input {
-    inline-size: 11rem;
-    padding: 0.5rem 0.9rem;
+    inline-size: 9rem;
+    padding: 0.45rem 0.85rem;
     border: 2px solid var(--c-mustard);
     border-radius: var(--radius-pill);
     background: rgb(23 50 42 / 85%);
@@ -540,11 +588,11 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     border: 0;
     background: none;
     color: var(--c-lamp);
-    font: 600 0.95rem var(--font-body);
+    font: 600 0.92rem var(--font-body);
     text-decoration: underline;
     cursor: pointer;
   }
-  .has-guest .bubble {
+  .has-guest .card-chat .bubble {
     opacity: 1;
     transform: rotate(-2deg);
   }
@@ -555,6 +603,11 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     .has-guest .cat:nth-child(1) .bubble { transition-delay: 0.25s; }
     .has-guest .cat:nth-child(2) .bubble { transition-delay: 0.55s; }
     .has-guest .cat:nth-child(3) .bubble { transition-delay: 0.85s; }
+    .dots i {
+      animation: dot 1.2s ease-in-out infinite;
+    }
+    .dots i:nth-child(2) { animation-delay: 0.15s; }
+    .dots i:nth-child(3) { animation-delay: 0.3s; }
   }
   @keyframes guest-pop {
     from {
@@ -562,18 +615,22 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
       opacity: 0;
     }
   }
+  @keyframes dot {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.55; }
+    30% { transform: translateY(-3px); opacity: 1; }
+  }
 
   /* Speech bubble: paper, little tail, pops on hover/focus. */
   .bubble {
     position: absolute;
     z-index: 3;
     inset-block-start: -0.4rem;
-    inset-inline-start: 58%;
-    padding: 0.35rem 0.8rem;
+    inset-inline-start: 50%;
+    padding: 0.3rem 0.7rem;
     border-radius: 1.1rem 1.1rem 1.1rem 0.25rem;
     background: var(--c-paper);
     color: var(--c-ink);
-    font: 600 0.98rem / 1.2 var(--font-display);
+    font: 600 0.92rem / 1.2 var(--font-display);
     white-space: nowrap;
     box-shadow: 0 10px 22px -10px rgb(var(--c-shadow) / 90%);
     opacity: 0;
@@ -583,8 +640,7 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     pointer-events: none;
   }
   .is-cutout .bubble {
-    inset-block-start: calc(var(--F) * (1 - var(--k)) - 1.2rem);
-    inset-inline-start: 52%;
+    inset-block-start: calc(var(--F) * (1 - var(--k)) - 1.4rem);
   }
   .cat:hover .bubble,
   .cat:focus-visible .bubble {
@@ -603,61 +659,44 @@ const scale: Record<string, number> = { luka: 0.86, budy: 0.97, caddy: 0.9 };
     }
   }
 
-  @media (max-width: 63.99rem) {
-    .hint {
-      display: none;
-    }
-  }
-
-  /* Phones: one swipeable row, the empty spot first. */
+  /* Tablets and phones: cards stack; the Tango card lays out side by side. */
   @media (max-width: 47.99rem) {
     .lineup {
-      margin-inline: -16px;
+      --F: clamp(6rem, 27vw, 8.5rem);
     }
-    .row,
-    .is-cutout .row {
-      --figure: clamp(6rem, 27vw, 7.5rem);
-      display: flex;
-      gap: 0.9rem;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scroll-snap-type: x mandatory;
-      scroll-padding-inline: 16px;
-      padding: 1.6rem 16px 0.25rem;
-      scrollbar-width: none;
+    .cards {
+      grid-template-columns: minmax(0, 1fr);
     }
-    .is-cutout {
-      --col: clamp(8.5rem, 36vw, 10.5rem);
-      --F: calc(var(--col) * 1.12);
+    .card-chat,
+    .card-tango {
+      transform: none;
     }
-    .is-cutout .row {
-      gap: 0;
+    .card-tango {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto;
+      column-gap: 1rem;
+      align-items: center;
     }
-    .is-cutout .cat {
-      inline-size: var(--col);
+    .card-tango .kicker,
+    .card-tango .card-title,
+    .card-tango .card-cta {
+      grid-column: 2;
     }
-    .row::-webkit-scrollbar {
-      display: none;
+    .card-tango .slot-row {
+      grid-column: 1;
+      grid-row: 1 / span 3;
     }
-    .cat {
-      scroll-snap-align: start;
+    .card-tango .guest-bar {
+      grid-column: 1 / -1;
     }
-    .slot {
-      order: -1;
+    .card-tango .card-cta {
+      margin-block-start: 0.4rem;
+    }
+    .slot .figure {
+      --F: 6.5rem;
     }
     .hint,
     .bubble {
-      display: none;
-    }
-    .guest-bar {
-      justify-content: center;
-      margin-block-start: 0.75rem;
-      padding-inline: 16px;
-    }
-    .floor {
-      inset-block-end: 1.4rem;
-    }
-    .is-cutout .floor {
       display: none;
     }
   }

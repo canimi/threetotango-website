@@ -1,0 +1,759 @@
+---
+import { t } from '../i18n/t';
+import { characters } from '../data/characters';
+import { CHAT_CATS } from '../lib/api';
+
+const cats = CHAT_CATS.map((id) => ({ id, ...characters[id] }));
+const i18n = {
+  placeholder: t('chat.placeholder'),
+  typing: t('chat.typing'),
+  bringNone: t('chat.bringNone'),
+  bringMake: t('chat.bringMake'),
+  guestHere: t('chat.guestHere'),
+  remaining: t('chat.remaining'),
+  ctaTango: t('chat.ctaTango'),
+  ctaTangoBtn: t('chat.ctaTangoBtn'),
+  ctaSubscribe: t('chat.ctaSubscribe'),
+  ctaSubscribeBtn: t('chat.ctaSubscribeBtn'),
+  offline: t('chat.offline'),
+  tooLong: t('chat.tooLong'),
+  you: t('chat.you'),
+};
+const catInfo = Object.fromEntries(cats.map((c) => [c.id, { name: c.name, nick: c.nickname, face: c.face }]));
+---
+
+<div class="chat" data-chat data-i18n={JSON.stringify(i18n)} data-cats={JSON.stringify(catInfo)}>
+  <aside class="picker">
+    <p class="pick-q" id="chat-pick-q">{t('chat.pick')}</p>
+    <div class="pick-row" role="group" aria-labelledby="chat-pick-q">
+      {
+        cats.map((c) => (
+          <button type="button" class="pick" data-pick={c.id} aria-pressed="false" style={`--accent:${c.color}`}>
+            <span class="pick-face">
+              <img src={c.face} width="400" height="400" alt="" loading="eager" />
+            </span>
+            <span class="pick-name">{c.name}</span>
+            <span class="pick-nick">{c.nickname}</span>
+          </button>
+        ))
+      }
+    </div>
+    <div class="bring" data-bring hidden>
+      <p class="bring-hint">{t('chat.bringHint')}</p>
+      <button type="button" class="btn btn-ghost bring-btn" data-bring-btn>
+        <span aria-hidden="true">🐾</span>
+        {t('chat.bring')}
+      </button>
+    </div>
+  </aside>
+
+  <section class="panel paper" data-panel aria-label={t('chat.pageTitle')}>
+    <header class="panel-head">
+      <span class="head-face"><img data-head-face src={cats[1].face} width="400" height="400" alt="" /></span>
+      <span class="head-text">
+        <strong data-head-name>{t('chat.pick')}</strong>
+        <span data-head-nick></span>
+      </span>
+      <span class="guest-chip" data-guest-chip hidden>
+        <img data-guest-chip-img alt="" width="40" height="40" />
+        <span data-guest-chip-name></span>
+      </span>
+      <button type="button" class="new-chat" data-new hidden>{t('chat.newChat')}</button>
+    </header>
+
+    <ol class="log" data-log aria-live="polite" aria-label={t('chat.logLabel')}></ol>
+    <p class="typing" data-typing hidden>
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span data-typing-text></span>
+    </p>
+    <div class="cta-slot" data-cta-slot></div>
+
+    <form class="composer" data-form>
+      <label class="sr-only" for="chat-input" data-input-label>{t('chat.placeholder').replace('{name}', 'the cat')}</label>
+      <textarea id="chat-input" data-input rows="1" maxlength="300" autocomplete="off" disabled></textarea>
+      <button type="submit" class="btn send" data-send disabled>
+        <span class="sr-only">{t('chat.send')}</span>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.3 10l12.6 2-12.6 2z" /></svg>
+      </button>
+    </form>
+    <p class="meta">
+      <span class="remaining" data-remaining hidden></span>
+      <span class="disclosure">{t('chat.disclosure')}</span>
+    </p>
+  </section>
+</div>
+
+<script>
+  import { api, CHAT_CATS, CHAT_MAX_CHARS, type ChatCat, type ChatFail } from '../lib/api';
+  import { loadToken } from '../lib/tango-flow';
+  import { track } from '../lib/track';
+
+  type Msg = { role: 'user' | 'cat' | 'note'; text: string; help?: boolean };
+  type State = {
+    session: string;
+    log: Msg[];
+    guest: { name: string; image: string | null } | null;
+    closed: boolean;
+    remaining: number | null;
+    ctaShown: boolean;
+  };
+
+  const root = document.querySelector<HTMLElement>('[data-chat]');
+  if (root) {
+    const i18n = JSON.parse(root.dataset.i18n ?? '{}') as Record<string, string>;
+    const info = JSON.parse(root.dataset.cats ?? '{}') as Record<ChatCat, { name: string; nick: string; face: string }>;
+    const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const log = $<HTMLOListElement>('[data-log]');
+    const form = $<HTMLFormElement>('[data-form]');
+    const input = $<HTMLTextAreaElement>('[data-input]');
+    const send = $<HTMLButtonElement>('[data-send]');
+    const typing = $<HTMLElement>('[data-typing]');
+    const typingText = $<HTMLElement>('[data-typing-text]');
+    const ctaSlot = $<HTMLElement>('[data-cta-slot]');
+    const remainingEl = $<HTMLElement>('[data-remaining]');
+    const newBtn = $<HTMLButtonElement>('[data-new]');
+    const headFace = $<HTMLImageElement>('[data-head-face]');
+    const headName = $<HTMLElement>('[data-head-name]');
+    const headNick = $<HTMLElement>('[data-head-nick]');
+    const chip = $<HTMLElement>('[data-guest-chip]');
+    const chipImg = $<HTMLImageElement>('[data-guest-chip-img]');
+    const chipName = $<HTMLElement>('[data-guest-chip-name]');
+    const bring = $<HTMLElement>('[data-bring]');
+    const bringBtn = $<HTMLButtonElement>('[data-bring-btn]');
+    const label = $<HTMLElement>('[data-input-label]');
+    const picks = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pick]'));
+
+    const KEY = (c: ChatCat) => `ttw.chat.${c}`;
+    const load = (c: ChatCat): State | null => {
+      try {
+        const v = JSON.parse(sessionStorage.getItem(KEY(c)) ?? 'null');
+        return v && typeof v.session === 'string' && Array.isArray(v.log) ? (v as State) : null;
+      } catch {
+        return null;
+      }
+    };
+    const save = (c: ChatCat, s: State) => {
+      try {
+        sessionStorage.setItem(KEY(c), JSON.stringify({ ...s, log: s.log.slice(-40) }));
+      } catch {
+        /* storage blocked: the chat still works for this page view */
+      }
+    };
+    const drop = (c: ChatCat) => {
+      try {
+        sessionStorage.removeItem(KEY(c));
+      } catch {
+        /* ignore */
+      }
+    };
+
+    let cat: ChatCat | null = null;
+    let state: State | null = null;
+    let busy = false;
+    const token = loadToken();
+    if (token) bring.hidden = false;
+
+    const fill = (s: string, vars: Record<string, string | number>) =>
+      Object.entries(vars).reduce((acc, [k, v]) => acc.split(`{${k}}`).join(String(v)), s);
+
+    const bubble = (m: Msg) => {
+      const li = document.createElement('li');
+      li.className = `msg msg-${m.role}${m.help ? ' msg-help' : ''}`;
+      if (m.role === 'cat' && cat) {
+        li.dataset.cat = cat;
+        const face = document.createElement('img');
+        face.className = 'msg-face';
+        face.src = info[cat].face;
+        face.alt = '';
+        face.width = 36;
+        face.height = 36;
+        li.append(face);
+      }
+      const p = document.createElement('p');
+      p.textContent = m.text;
+      const who = document.createElement('span');
+      who.className = 'sr-only';
+      who.textContent = (m.role === 'user' ? i18n.you : m.role === 'cat' && cat ? info[cat].name : '') + ': ';
+      if (m.role !== 'note') p.prepend(who);
+      li.append(p);
+      return li;
+    };
+    const render = () => {
+      log.replaceChildren(...(state?.log ?? []).map(bubble));
+      log.scrollTop = log.scrollHeight;
+      if (state?.guest) {
+        chip.hidden = false;
+        chipName.textContent = state.guest.name;
+        if (state.guest.image) {
+          chipImg.src = state.guest.image;
+          chipImg.hidden = false;
+        } else chipImg.hidden = true;
+      } else chip.hidden = true;
+      const r = state?.remaining;
+      remainingEl.hidden = !(typeof r === 'number' && r <= 5 && !state?.closed);
+      if (typeof r === 'number') remainingEl.textContent = fill(i18n.remaining, { n: r });
+      const open = !!state && !state.closed;
+      input.disabled = !open;
+      send.disabled = !open || busy;
+      newBtn.hidden = !state;
+    };
+    const push = (m: Msg) => {
+      if (!state || !cat) return;
+      state.log.push(m);
+      save(cat, state);
+      log.append(bubble(m));
+      log.scrollTop = log.scrollHeight;
+    };
+    const showTyping = (on: boolean) => {
+      typing.hidden = !on;
+      if (on && cat) typingText.textContent = fill(i18n.typing, { name: info[cat].name });
+      if (on) log.scrollTop = log.scrollHeight;
+    };
+    const showCta = (kind: 'tango' | 'subscribe') => {
+      if (!state || !cat || state.ctaShown) return;
+      state.ctaShown = true;
+      save(cat, state);
+      const box = document.createElement('div');
+      box.className = 'cta';
+      const p = document.createElement('p');
+      p.textContent = kind === 'tango' ? fill(i18n.ctaTango, { name: info[cat].name }) : i18n.ctaSubscribe;
+      const a = document.createElement('a');
+      a.className = 'btn';
+      a.href = kind === 'tango' ? '/tango-me' : '/gift';
+      a.textContent = kind === 'tango' ? i18n.ctaTangoBtn : i18n.ctaSubscribeBtn;
+      a.addEventListener('click', () => track('chat-cta', { to: kind, cat: cat ?? '' }));
+      box.append(p, a);
+      ctaSlot.replaceChildren(box);
+    };
+    const fail = (f: ChatFail) => {
+      if (f.message) push({ role: 'cat', text: f.message });
+      else push({ role: 'note', text: i18n.offline });
+      if (state && ['closed', 'session_limit', 'sleeping', 'rate_limited'].includes(f.error)) {
+        state.closed = true;
+        if (cat) save(cat, state);
+        track('chat-limit', { reason: f.error });
+      }
+      if (f.cta === 'tango') showCta('tango');
+      render();
+    };
+
+    const start = async (c: ChatCat, opts: { bring?: boolean } = {}) => {
+      busy = true;
+      ctaSlot.replaceChildren();
+      state = null;
+      render();
+      showTyping(true);
+      const r = await api.chatStart(c, { token, bring: opts.bring });
+      showTyping(false);
+      busy = false;
+      if (cat !== c) return;
+      if (!r.ok) {
+        state = { session: '', log: [], guest: null, closed: true, remaining: null, ctaShown: false };
+        fail(r);
+        return;
+      }
+      state = { session: r.session, log: [], guest: r.guest, closed: false, remaining: r.maxMessages, ctaShown: false };
+      if (r.guest) state.log.push({ role: 'note', text: fill(i18n.guestHere, { name: r.guest.name }) });
+      state.log.push({ role: 'cat', text: r.greeting });
+      if (r.guestMissing) state.log.push({ role: 'note', text: i18n.bringNone });
+      save(c, state);
+      render();
+      track('chat-start', { cat: c, guest: !!r.guest });
+      if (r.guestMissing) {
+        const box = document.createElement('div');
+        box.className = 'cta';
+        const a = document.createElement('a');
+        a.className = 'btn';
+        a.href = '/tango-me';
+        a.textContent = i18n.bringMake;
+        box.append(a);
+        ctaSlot.replaceChildren(box);
+      }
+      input.focus({ preventScroll: true });
+    };
+
+    const choose = (c: ChatCat, opts: { fresh?: boolean; bring?: boolean } = {}) => {
+      cat = c;
+      picks.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === c)));
+      root.dataset.cat = c;
+      headFace.src = info[c].face;
+      headName.textContent = info[c].name;
+      headNick.textContent = info[c].nick;
+      input.placeholder = fill(i18n.placeholder, { name: info[c].name });
+      label.textContent = input.placeholder;
+      const url = new URL(window.location.href);
+      url.searchParams.set('cat', c);
+      history.replaceState(null, '', url);
+      ctaSlot.replaceChildren();
+      if (opts.fresh) drop(c);
+      const saved = opts.fresh ? null : load(c);
+      if (saved) {
+        state = saved;
+        render();
+        input.focus({ preventScroll: true });
+      } else void start(c, { bring: opts.bring });
+    };
+
+    const sendText = async (text: string, retried = false) => {
+      if (!state || !cat || busy) return;
+      const c = cat;
+      busy = true;
+      render();
+      showTyping(true);
+      const r = await api.chatSend(state.session, text);
+      if (cat !== c) return;
+      if (!r.ok && r.error === 'expired' && !retried) {
+        // The server forgot this chat (it expired): start a fresh one quietly and resend once.
+        const s = await api.chatStart(c, { token, bring: !!state.guest });
+        if (s.ok && cat === c && state) {
+          state.session = s.session;
+          state.closed = false;
+          state.remaining = s.maxMessages;
+          save(c, state);
+          busy = false;
+          return sendText(text, true);
+        }
+      }
+      showTyping(false);
+      busy = false;
+      if (!r.ok) {
+        fail(r);
+        return;
+      }
+      push({ role: 'cat', text: r.reply, help: r.help });
+      if (typeof r.remaining === 'number') state.remaining = r.remaining;
+      if (r.closed) state.closed = true;
+      save(c, state);
+      if (r.cta) showCta(r.cta);
+      track('chat-message', { cat: c });
+      render();
+      input.focus({ preventScroll: true });
+    };
+
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const text = input.value.replace(/\s+/g, ' ').trim();
+      if (!text || !state || state.closed || busy) return;
+      if ([...text].length > CHAT_MAX_CHARS) {
+        push({ role: 'note', text: i18n.tooLong });
+        return;
+      }
+      input.value = '';
+      input.style.blockSize = '';
+      push({ role: 'user', text });
+      void sendText(text);
+    });
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
+        ev.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    input.addEventListener('input', () => {
+      input.style.blockSize = 'auto';
+      input.style.blockSize = `${Math.min(input.scrollHeight, 140)}px`;
+    });
+    picks.forEach((b) =>
+      b.addEventListener('click', () => {
+        const c = b.dataset.pick as ChatCat;
+        if (c !== cat) choose(c);
+      }),
+    );
+    newBtn.addEventListener('click', () => cat && choose(cat, { fresh: true }));
+    bringBtn.addEventListener('click', () => {
+      track('chat-bring');
+      choose(cat ?? 'budy', { fresh: true, bring: true });
+    });
+
+    const want = new URL(window.location.href).searchParams.get('cat');
+    if (want && (CHAT_CATS as readonly string[]).includes(want)) choose(want as ChatCat);
+    else render();
+  }
+</script>
+
+<style>
+  .chat {
+    display: grid;
+    gap: var(--space-3);
+    align-items: start;
+  }
+  @media (min-width: 60rem) {
+    .chat {
+      grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+      gap: var(--space-4);
+    }
+    .picker {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + 1rem);
+    }
+  }
+  .pick-q {
+    margin: 0 0 0.75rem;
+    color: var(--c-lamp);
+    font: 600 1.1rem var(--font-display);
+  }
+  .pick-row {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (max-width: 59.99rem) {
+    .pick-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .pick {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 0.9rem;
+    align-items: center;
+    padding: 0.6rem 0.9rem 0.6rem 0.6rem;
+    border: 0;
+    border-radius: var(--radius-card);
+    background: rgb(31 66 54 / 80%);
+    color: var(--c-paper);
+    text-align: start;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1.5px rgb(255 207 110 / 14%);
+    transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1), background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .pick:hover {
+    transform: rotate(-1.5deg) scale(1.02);
+  }
+  .pick[aria-pressed='true'] {
+    background: var(--c-wall-3);
+    box-shadow: inset 0 0 0 2.5px var(--accent), 0 18px 34px -18px rgb(var(--c-shadow) / 90%);
+  }
+  .pick:focus-visible {
+    outline: 3px solid var(--c-lamp);
+    outline-offset: 3px;
+  }
+  .pick-face {
+    grid-row: 1 / span 2;
+    inline-size: 4.25rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--c-wall-2);
+    box-shadow: 0 0 0 3px var(--c-wall), 0 0 0 5px var(--accent);
+  }
+  .pick-face img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  .pick-name {
+    font: 600 1.25rem / 1.1 var(--font-display);
+  }
+  .pick-nick {
+    color: var(--c-paper-2);
+    font-size: 0.92rem;
+  }
+  @media (max-width: 59.99rem) {
+    .pick {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      row-gap: 0.35rem;
+      padding: 0.75rem 0.4rem;
+      text-align: center;
+    }
+    .pick-face {
+      grid-row: auto;
+      inline-size: min(5rem, 100%);
+    }
+    .pick-nick {
+      display: none;
+    }
+  }
+  .bring {
+    margin-block-start: var(--space-2);
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-card);
+    border: 2px dashed rgb(227 162 26 / 55%);
+  }
+  .bring[hidden] {
+    display: none;
+  }
+  .bring-hint {
+    margin: 0 0 0.6rem;
+    color: var(--c-paper-2);
+    font-size: 0.95rem;
+  }
+  .bring-btn {
+    inline-size: 100%;
+    color: var(--c-lamp);
+  }
+
+  /* ---- The chat panel (paper) ---- */
+  .panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+    min-block-size: min(34rem, 70svh);
+    padding: 0;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    border-block-end: 1px solid rgb(59 42 26 / 12%);
+    background: var(--c-cream);
+  }
+  .head-face {
+    flex: none;
+    inline-size: 2.75rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--c-paper-2);
+  }
+  .head-face img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  .head-text {
+    display: grid;
+    line-height: 1.15;
+    margin-inline-end: auto;
+  }
+  .head-text strong {
+    font: 600 1.2rem var(--font-display);
+  }
+  .head-text span {
+    color: var(--c-ink-2);
+    font-size: 0.88rem;
+  }
+  .guest-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.7rem 0.2rem 0.2rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-paper-2);
+    font: 600 0.9rem var(--font-display);
+  }
+  .guest-chip[hidden] {
+    display: none;
+  }
+  .guest-chip img {
+    inline-size: 1.9rem;
+    block-size: 1.9rem;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px var(--c-mustard);
+  }
+  .new-chat {
+    padding: 0.45rem 0.85rem;
+    border: 2px solid rgb(59 42 26 / 25%);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--c-ink);
+    font: 600 0.9rem var(--font-display);
+    cursor: pointer;
+  }
+  .new-chat:hover {
+    background: rgb(59 42 26 / 8%);
+  }
+  .log {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 1.1rem;
+    list-style: none;
+    overflow-y: auto;
+    max-block-size: clamp(14rem, calc(100svh - 24rem), 30rem);
+    scroll-behavior: smooth;
+  }
+  .log :global(.msg) {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    max-inline-size: 85%;
+  }
+  .log :global(.msg p) {
+    margin: 0;
+    padding: 0.6rem 0.95rem;
+    font-size: 1.02rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .log :global(.msg-face) {
+    flex: none;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .log :global(.msg-cat p) {
+    border-radius: 1.2rem 1.2rem 1.2rem 0.3rem;
+    background: #e4e9f0;
+  }
+  .log :global(.msg-cat[data-cat='budy'] p) {
+    background: #f8dcc6;
+  }
+  .log :global(.msg-cat[data-cat='caddy'] p) {
+    background: #fbf6ee;
+    box-shadow: inset 0 0 0 1px rgb(59 42 26 / 12%);
+  }
+  .log :global(.msg-help p) {
+    background: var(--c-cream);
+    box-shadow: inset 0 0 0 2px var(--c-rug);
+  }
+  .log :global(.msg-user) {
+    align-self: flex-end;
+  }
+  .log :global(.msg-user p) {
+    border-radius: 1.2rem 1.2rem 0.3rem 1.2rem;
+    background: var(--c-mustard);
+    color: var(--c-on-mustard);
+  }
+  .log :global(.msg-note) {
+    align-self: center;
+    max-inline-size: 95%;
+  }
+  .log :global(.msg-note p) {
+    padding: 0.25rem 0.75rem;
+    color: var(--c-ink-2);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .log :global(.msg) {
+      animation: pop 0.28s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+    }
+  }
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0 1.1rem 0.6rem;
+    color: var(--c-ink-2);
+    font-size: 0.9rem;
+  }
+  .typing[hidden] {
+    display: none;
+  }
+  .dots {
+    display: inline-flex;
+    gap: 3px;
+    padding: 0.45rem 0.6rem;
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    background: #e4e9f0;
+  }
+  .dots i {
+    display: block;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background: var(--c-ink-2);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .dots i {
+      animation: dot 1.1s ease-in-out infinite;
+    }
+    .dots i:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    .dots i:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+  @keyframes dot {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    30% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
+  .cta-slot:empty {
+    display: none;
+  }
+  .cta-slot :global(.cta) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 1rem;
+    margin: 0 1.1rem 0.8rem;
+    padding: 0.8rem 1rem;
+    border-radius: 18px;
+    background: var(--c-wall);
+    color: var(--c-paper);
+    transform: rotate(-0.6deg);
+  }
+  .cta-slot :global(.cta p) {
+    margin: 0;
+    flex: 1 1 14rem;
+    font-weight: 600;
+  }
+  .composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.6rem;
+    padding: 0.8rem 1.1rem 0.4rem;
+    border-block-start: 1px solid rgb(59 42 26 / 12%);
+  }
+  textarea {
+    flex: 1;
+    min-block-size: 3rem;
+    max-block-size: 140px;
+    padding: 0.75rem 1rem;
+    border: 2px solid rgb(59 42 26 / 22%);
+    border-radius: 1.4rem;
+    background: var(--c-cream);
+    color: var(--c-ink);
+    font: 1rem / 1.4 var(--font-body);
+    resize: none;
+  }
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--c-mustard);
+  }
+  textarea:disabled {
+    opacity: 0.55;
+  }
+  .send {
+    flex: none;
+    inline-size: 3rem;
+    min-block-size: 3rem;
+    padding: 0;
+  }
+  .send:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0.2rem 1.1rem 0.9rem;
+    color: var(--c-ink-2);
+    font-size: 0.8rem;
+  }
+  .remaining {
+    font-weight: 700;
+    color: var(--c-rug);
+  }
+  .remaining[hidden] {
+    display: none;
+  }
+</style>

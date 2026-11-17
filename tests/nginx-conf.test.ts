@@ -15,6 +15,8 @@ describe('nginx.conf', () => {
     ['= /api/gallery/like', '/webhook/ttw-gallery-like'],
     ['= /api/gallery/optin', '/webhook/ttw-gallery-optin'],
     ['= /gallery/mod', '/webhook/ttw-gallery-mod$is_args$args'],
+    ['= /api/chat/start', '/webhook/ttw-chat-start'],
+    ['= /api/chat/send', '/webhook/ttw-chat-send'],
   ])('maps %s to %s', (loc, target) => {
     expect(conf).toContain(loc);
     expect(conf).toContain(`$n8n${target}`);
@@ -33,6 +35,14 @@ describe('nginx.conf', () => {
   it('limits JSON bodies', () => {
     for (const loc of ['= /api/gallery/like', '= /api/gallery/optin']) {
       expect(conf).toMatch(new RegExp(`location ${loc.replace(/[/]/g, '\\/')} \\{[^}]*client_max_body_size 2k;`));
+    }
+  });
+  it('rate limits and size-limits the chat endpoints', () => {
+    expect(conf).toMatch(/limit_req_zone \$ttw_real_ip zone=ttwchat:10m rate=12r\/m;/);
+    for (const [loc, size] of [['start', '2k'], ['send', '4k']]) {
+      expect(conf).toMatch(
+        new RegExp(`location = \\/api\\/chat\\/${loc} \\{[^}]*client_max_body_size ${size};[^}]*limit_req zone=ttwchat burst=6 nodelay;[^}]*limit_req_status 429;`),
+      );
     }
   });
   it('validates ids and 404s the rest of /api/', () => {
@@ -93,7 +103,7 @@ describe('proxy key (R13)', () => {
     expect(p).toContain('proxy_set_header X-TTW-Proxy-Key "${TTW_PROXY_KEY}";');
   });
   it('every proxy location includes the rendered proxy snippet', () => {
-    expect(conf.match(/include \/etc\/nginx\/conf\.d\/ttw-proxy\.inc;/g)?.length).toBe(10);
+    expect(conf.match(/include \/etc\/nginx\/conf\.d\/ttw-proxy\.inc;/g)?.length).toBe(12);
   });
   it('media root cannot be deleted', () => {
     const m = readFileSync('deploy/media-internal.conf.template', 'utf8');

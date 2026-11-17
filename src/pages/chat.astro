@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import ChatApp from '../components/ChatApp.astro';
+import { t } from '../i18n/t';
+import { breadcrumbLd } from '../lib/seo';
+---
+
+<Base
+  title={t('seo.chatTitle')}
+  description={t('seo.chatDesc')}
+  path="/chat"
+  jsonLd={[
+    breadcrumbLd([
+      { name: t('seo.home'), path: '/' },
+      { name: t('chat.pageTitle'), path: '/chat' },
+    ]),
+  ]}
+>
+  <section class="container page">
+    <h1>{t('chat.pageTitle')}</h1>
+    <p class="lede">{t('chat.lede')}</p>
+    <ChatApp />
+  </section>
+</Base>
+
+<style>
+  h1 {
+    margin-block-end: 0.25rem;
+  }
+  .lede {
+    margin-block: 0 var(--space-3);
+  }
+</style>

@@ -63,7 +63,81 @@ const STATUSES = ['queued', 'running', 'done', 'failed'] as const;
 const SUBSCRIBE_ERRORS = ['invalid_email', 'rate_limited', 'server'] as const;
 const VERIFY_ERRORS = ['wrong_code', 'expired', 'locked', 'server'] as const;
 
+export type ChatCat = 'luka' | 'budy' | 'caddy';
+export const CHAT_CATS: readonly ChatCat[] = ['luka', 'budy', 'caddy'];
+export const CHAT_MAX_CHARS = 300;
+export type ChatError = 'sleeping' | 'rate_limited' | 'expired' | 'closed' | 'session_limit' | 'busy' | 'invalid' | 'server';
+const CHAT_ERRORS = ['sleeping', 'rate_limited', 'expired', 'closed', 'session_limit', 'busy', 'invalid', 'server'] as const;
+const SESSION_RE = /^[A-Za-z0-9_-]{16}$/;
+/** A chat failure carries the cat's own (in-character) message when the server sent one. */
+export type ChatFail = { ok: false; error: ChatError; message?: string; cta?: string };
+export type ChatStartOk = {
+  ok: true;
+  session: string;
+  cat: ChatCat;
+  greeting: string;
+  guest: { name: string; image: string | null } | null;
+  guestMissing: boolean;
+  maxMessages: number;
+};
+export type ChatSendOk = {
+  ok: true;
+  reply: string;
+  remaining?: number;
+  cta?: 'tango' | 'subscribe' | null;
+  flagged?: boolean;
+  help?: boolean;
+  closed?: boolean;
+};
+
+function chatFailure(raw: Raw): ChatFail {
+  const f = failure(raw, CHAT_ERRORS, { 400: 'invalid', 404: 'expired', 429: 'rate_limited', 503: 'busy' }, 'server');
+  const message = typeof raw.body?.message === 'string' ? raw.body.message : undefined;
+  const cta = typeof raw.body?.cta === 'string' ? raw.body.cta : undefined;
+  return { ...f, ...(message ? { message } : {}), ...(cta ? { cta } : {}) };
+}
+
 export const api = {
+  async chatStart(cat: ChatCat, opts: { token?: string | null; bring?: boolean } = {}): Promise<ChatStartOk | ChatFail> {
+    if (!CHAT_CATS.includes(cat)) return { ok: false, error: 'invalid' };
+    const raw = await postJson('/api/chat/start', { cat, token: opts.token ?? '', bring: opts.bring === true });
+    const b = raw.body;
+    if (raw.status === 200 && b?.ok === true && typeof b.session === 'string' && SESSION_RE.test(b.session) && typeof b.greeting === 'string') {
+      const g = b.guest as { name?: unknown; image?: unknown } | null | undefined;
+      const guest =
+        g && typeof g.name === 'string' ? { name: g.name.slice(0, 30), image: typeof g.image === 'string' ? g.image : null } : null;
+      return {
+        ok: true,
+        session: b.session,
+        cat,
+        greeting: b.greeting,
+        guest,
+        guestMissing: b.guestMissing === true,
+        maxMessages: typeof b.maxMessages === 'number' ? b.maxMessages : 20,
+      };
+    }
+    return chatFailure(raw);
+  },
+
+  async chatSend(session: string, text: string): Promise<ChatSendOk | ChatFail> {
+    const clean = text.replace(/\s+/g, ' ').trim();
+    if (!SESSION_RE.test(session) || !clean || [...clean].length > CHAT_MAX_CHARS) return { ok: false, error: 'invalid' };
+    const raw = await postJson('/api/chat/send', { session, text: clean });
+    const b = raw.body;
+    if (raw.status === 200 && b?.ok === true && typeof b.reply === 'string') {
+      return {
+        ok: true,
+        reply: b.reply,
+        remaining: typeof b.remaining === 'number' ? b.remaining : undefined,
+        cta: b.cta === 'tango' || b.cta === 'subscribe' ? b.cta : null,
+        flagged: b.flagged === true,
+        help: b.help === true,
+        closed: b.closed === true,
+      };
+    }
+    return chatFailure(raw);
+  },
+
   async subscribe(email: string, source: Source): Promise<{ ok: true } | Fail<SubscribeError>> {
     const raw = await postJson('/api/subscribe', { email, source });
     if (raw.status === 200 && raw.body?.ok === true) return { ok: true };

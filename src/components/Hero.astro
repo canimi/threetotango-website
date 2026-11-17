@@ -65,11 +65,10 @@ const EAGER = 12;
   <div class="container grid">
     <div class="copy">
       <h1 class="sr-only">{t('hero.h1')}</h1>
-      <CastLineup />
       <div class="pitch" data-pitch data-guest-line={t('hero.guest.line')} data-guest-cta={t('hero.guest.cta')}>
         <p class="line" aria-live="polite" data-pitch-line>{t('hero.line')}</p>
-        <a class="btn btn-lg" href="/tango-me" data-magnetic data-pitch-cta>{t('cta.tangoFreeLong')}</a>
       </div>
+      <CastLineup />
     </div>
 
     {
@@ -168,11 +167,11 @@ const EAGER = 12;
   const pitch = document.querySelector<HTMLElement>('[data-pitch]');
   if (pitch) {
     const line = pitch.querySelector<HTMLElement>('[data-pitch-line]')!;
-    const cta = pitch.querySelector<HTMLElement>('[data-pitch-cta]')!;
+    const cta = document.querySelector<HTMLElement>('[data-pitch-cta]');
     document.addEventListener('ttw:guest', (ev) => {
       const name = String((ev as CustomEvent<{ name: string }>).detail?.name ?? '').slice(0, 30);
       line.textContent = (pitch.dataset.guestLine ?? '').replace('{name}', name);
-      cta.textContent = (pitch.dataset.guestCta ?? '').replace('{name}', name);
+      if (cta) cta.textContent = (pitch.dataset.guestCta ?? '').replace('{name}', name);
       pitch.classList.add('is-personal');
     });
   }
@@ -195,9 +194,8 @@ const EAGER = 12;
     position: relative;
     display: grid;
     align-items: center;
-    min-block-size: clamp(36rem, 100svh, 64rem);
     margin-block-start: calc(var(--header-h) * -1);
-    padding-block: calc(var(--header-h) + var(--space-4)) var(--space-5);
+    padding-block: calc(var(--header-h) + var(--space-3)) var(--space-4);
     overflow: clip;
     isolation: isolate;
     background: var(--c-wall);
@@ -272,8 +270,7 @@ const EAGER = 12;
   .pitch {
     display: grid;
     justify-items: start;
-    gap: var(--space-3);
-    margin-block-start: var(--space-4);
+    margin-block-end: var(--space-3);
   }
   .is-personal .line {
     color: var(--c-lamp);
@@ -298,7 +295,7 @@ const EAGER = 12;
     position: relative;
     margin: 0;
     justify-self: center;
-    inline-size: clamp(15rem, 4rem + 15vw, 25rem);
+    inline-size: clamp(13rem, 3rem + 12vw, 20rem);
   }
   .frame {
     position: relative;
@@ -382,7 +379,7 @@ const EAGER = 12;
       animation: rise 0.55s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
     .pitch {
-      animation: rise 0.55s 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation: rise 0.55s 0.05s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
     .frame-wrap {
       animation: drop 0.6s 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) both;
@@ -449,10 +446,7 @@ const EAGER = 12;
     .pitch {
       justify-items: center;
       text-align: center;
-    }
-    .pitch {
-      margin-block-start: var(--space-2);
-      gap: var(--space-2);
+      margin-block-end: var(--space-2);
     }
     .line {
       font-size: 1.2rem;

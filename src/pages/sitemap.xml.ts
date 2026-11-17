@@ -11,6 +11,7 @@ export const GET: APIRoute = async ({ site }) => {
   const entries: { path: string; lastmod?: string }[] = [
     { path: '/', lastmod: episodes[0]?.publishedAt },
     { path: '/tango-me' },
+    { path: '/chat' },
     { path: '/cats' },
     ...characterIds.map((id) => ({ path: `/cats/${id}` })),
     { path: '/episodes', lastmod: episodes[0]?.publishedAt },

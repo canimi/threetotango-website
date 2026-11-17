@@ -36,15 +36,17 @@ describe('v3 hero', () => {
     expect(body).not.toContain('Nora lives');
   });
 
-  it('renders the cast lineup: three cats that open the cast picker, plus the "+ Your cat" drop zone', () => {
+  it('renders the two hero cards: three cats that open their chat, plus the "+ Your cat" drop zone', () => {
     const h = home();
     expect(h).toContain('data-lineup');
+    expect(h).toContain('Chat with the cats');
     for (const id of ['luka', 'budy', 'caddy']) {
-      expect(h).toMatch(new RegExp(`<a class="cat"[^>]*href="/cats/${id}"[^>]*data-cast-open="${id}"`));
+      expect(h).toMatch(new RegExp(`<a class="cat"[^>]*href="/chat\\?cat=${id}"[^>]*data-cat="${id}"`));
       expect(h).toContain(`id="cast-tab-${id}"`);
     }
     expect(h).toMatch(/<a class="cat slot"[^>]*href="\/tango-me"[^>]*data-drop/);
     expect(h).toMatch(/<input type="file" accept="image\/\*,\.heic"[^>]*data-drop-input/);
+    expect(h).toMatch(/<a class="btn card-cta"[^>]*href="\/tango-me"[^>]*data-pitch-cta/);
     expect(h).toContain('+ Your cat');
     expect(h).toContain('A wordless 3D cat comedy. The household has room for one more.');
     for (const b of ['🤨 a trap?', 'MEOW? Food?', '…zzz']) expect(h).toContain(b);

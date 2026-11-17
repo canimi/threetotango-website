@@ -8,7 +8,9 @@
     "tangoFreeLong": "Put your cat in the show — free",
     "tangoCompact": "Try Tango Me",
     "floating": "🐾 Put your cat in the show",
-    "floatingDismiss": "Hide this button"
+    "floatingDismiss": "Hide this button",
+    "chat": "Chat with the cats",
+    "chatCompact": "Chat"
   },
   "nav": {
     "main": "Main navigation",
@@ -18,7 +20,8 @@
     "home": "Three To Tango home",
     "menu": "Menu",
     "social": "Follow the show",
-    "gallery": "Gallery"
+    "gallery": "Gallery",
+    "chat": "Chat"
   },
   "footer": {
     "instagram": "Instagram",
@@ -84,6 +87,17 @@
         "budy": "Do they share snacks?",
         "caddy": "…fine."
       }
+    },
+    "chat": {
+      "new": "New",
+      "kicker": "Talk to the cast",
+      "title": "Chat with the cats",
+      "with": "Chat with {name}",
+      "sub": "Pick a cat and say hi"
+    },
+    "tangoCard": {
+      "kicker": "Tango Me",
+      "title": "Your cat, in our house"
     }
   },
   "household": {
@@ -170,7 +184,8 @@
     "episodesWith": "Episodes with",
     "noEpisodes": "No episodes yet.",
     "back": "All cats",
-    "portraitAlt": "Portrait of"
+    "portraitAlt": "Portrait of",
+    "chatWith": "Chat with {name}"
   },
   "links": {
     "title": "Links",
@@ -428,6 +443,33 @@
     "home": "Home",
     "moreWith": "More with",
     "moreEpisodes": "More episodes",
-    "meetCast": "Who is in this episode"
+    "meetCast": "Who is in this episode",
+    "chatTitle": "Chat with the Cats: Luka, Budy & Caddy | Three To Tango",
+    "chatDesc": "Write to Luka, Budy or Caddy from the 3D cat comedy Three To Tango. Short, funny replies in their own voice. Bring your own cat along."
+  },
+  "chat": {
+    "pageTitle": "Chat with the cats",
+    "lede": "Pick Luka, Budy or Caddy and write to them. In the episodes nobody talks. Here, they do.",
+    "pick": "Who do you want to talk to?",
+    "pickLabel": "Choose a cat",
+    "placeholder": "Write to {name}…",
+    "send": "Send",
+    "typing": "{name} is typing",
+    "bring": "Bring my cat",
+    "bringHint": "Made a picture on Tango Me? Bring your cat into the chat.",
+    "bringNone": "We could not find your Tango Me cat. Make one first, then bring it here.",
+    "bringMake": "Put your cat in the show",
+    "guestHere": "{name} joined the chat",
+    "newChat": "New chat",
+    "remaining": "{n} messages left in this chat",
+    "disclosure": "The cats’ replies are written by an AI. Please don’t share personal information.",
+    "ctaTango": "Want {name} to meet your cat? Put your cat in the show — it’s free.",
+    "ctaTangoBtn": "Put your cat in the show",
+    "ctaSubscribe": "Get new episodes and a free gift by email.",
+    "ctaSubscribeBtn": "Get the free gift",
+    "offline": "Hmm, the connection dropped. Try again.",
+    "tooLong": "That is a bit long for a cat. Keep it under 300 characters.",
+    "logLabel": "Chat messages",
+    "you": "You"
   }
 }
