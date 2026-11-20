@@ -118,6 +118,8 @@ alter table ttw.episodes add column if not exists short_title text;
 -- SEO (2026-11-10): clean web meta description + short premise, written by Gemini at import from the caption; NULL = retry
 alter table ttw.episodes add column if not exists seo_description text;
 alter table ttw.episodes add column if not exists summary text;
+-- Deleted on Instagram (2026-11-20): Episode import "Sync Removed" sets this; NULL = live. Episodes webhook hides rows with removed_at.
+alter table ttw.episodes add column if not exists removed_at timestamptz;
 
 -- ============================================================
 -- v2a gallery (spec: docs/superpowers/specs/2026-11-10-gallery-design.md §1)
@@ -192,6 +194,8 @@ alter table ttw.cat_of_week
 -- Kill switch: update ttw.chat_settings set enabled = false;  daily cap: daily_cap_usd.
 -- ============================================================
 alter table ttw.generations add column if not exists cat_look text;
+-- Tango Me failure reason (2026-11-17): JSON {node, msg, ...}; no photo or personal data.
+alter table ttw.generations add column if not exists error_detail text;
 
 create table if not exists ttw.chat_settings (
   id            int primary key default 1 check (id = 1),
