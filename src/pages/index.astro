@@ -8,6 +8,7 @@ import CastPicker from '../components/CastPicker.astro';
 import QuizTeaser from '../components/QuizTeaser.astro';
 import SubscribeForm from '../components/SubscribeForm.astro';
 import Marquee from '../components/Marquee.astro';
+import TangoSteps from '../components/TangoSteps.astro';
 import { getEpisodes } from '../lib/site-episodes';
 import { t } from '../i18n/t';
 import { organizationLd, seriesLd, websiteLd } from '../lib/seo';
@@ -33,7 +34,7 @@ const recent = episodes.slice(0, 12);
     <p class="all"><a href="/episodes">{t('episodes.seeAll')}</a></p>
   </section>
 
-  <Marquee set="a" tone="mustard" tilt={-1.5} />
+  <Marquee set="a" tone="mustard" tilt={0} />
   <TangoShowcase />
   <CatOfWeek />
 
@@ -45,7 +46,9 @@ const recent = episodes.slice(0, 12);
     <CastPicker {episodes} />
   </section>
 
-  <Marquee set="b" tone="rug" tilt={1.2} />
+  <div class="container"><TangoSteps compact /></div>
+
+  <Marquee set="b" tone="rug" tilt={0} />
   <QuizTeaser />
 
   <section class="container newsletter" aria-labelledby="news-title">

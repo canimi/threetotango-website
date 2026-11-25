@@ -29,6 +29,28 @@
   src: url('/fonts/nunito-latin-600-normal.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'Fraunces';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/fraunces-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+  src: url('/fonts/fraunces-latin-600-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url('/fonts/fraunces-latin-400-italic.woff2') format('woff2');
+}
+
 *,
 *::before,
 *::after {
@@ -48,7 +70,8 @@ body {
   min-block-size: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--c-wall);
+  /* Nora's forest-green wood panelling, drawn in CSS (no image download). */
+  background: var(--c-wall) var(--panelling) 0 0 / 280px 420px repeat;
   color: var(--c-paper);
   font-family: var(--font-body);
   font-size: var(--step-0);
@@ -69,6 +92,22 @@ h3 {
   letter-spacing: -0.005em;
   margin-block: 0 var(--space-2);
   text-wrap: balance;
+}
+/* Two voices: Fraunces for the big sentences, Fredoka stays for logo, buttons, labels and names. */
+h1,
+h2 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.012em;
+}
+h1 em,
+h2 em,
+.serif em {
+  font-style: italic;
+  color: var(--c-lamp);
+}
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
 }
 h1 {
   font-size: clamp(2.4rem, 1.6rem + 3vw, 4rem);
@@ -338,20 +377,25 @@ video {
   }
 }
 
-/* ---- Scrapbook touches: hand-drawn mustard scribble under section titles ---- */
+/* ---- House touches: a brass rule with a small diamond under section titles ---- */
 .head h2,
 .scenes-head h3 {
   position: relative;
   inline-size: fit-content;
 }
+.head h2 {
+  padding-block-end: 0.42em;
+}
 .head h2::after {
   content: '';
   position: absolute;
-  inset-inline: -0.2em -0.4em;
-  inset-block-end: -0.38em;
-  block-size: 0.45em;
-  background: no-repeat center / 100% 100%
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 24' preserveAspectRatio='none'%3E%3Cpath d='M4 15 C60 6 120 20 180 10 S270 8 296 13' fill='none' stroke='%23E3A21A' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M30 20 C100 13 170 22 260 16' fill='none' stroke='%23E3A21A' stroke-width='2.5' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E");
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 9px;
+  background:
+    linear-gradient(var(--c-brass), var(--c-brass)) left 50% / calc(50% - 9px) 1.5px no-repeat,
+    linear-gradient(var(--c-brass), var(--c-brass)) right 50% / calc(50% - 9px) 1.5px no-repeat,
+    linear-gradient(45deg, transparent 31%, var(--c-brass) 31% 69%, transparent 69%) center / 9px 9px no-repeat;
   pointer-events: none;
 }
 #household .head h2,
@@ -364,4 +408,107 @@ video {
 html,
 body {
   overflow-x: clip;
+}
+
+/* ---- Materials of Nora's house: panelling, brass, gilt frames ---- */
+:root {
+  --panelling: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='420'%3E%3Crect x='14' y='14' width='252' height='392' rx='3' fill='%231b3a30' fill-opacity='.45' stroke='%232c5a49' stroke-opacity='.42' stroke-width='1.5'/%3E%3Crect x='26' y='26' width='228' height='368' rx='2' fill='none' stroke='%230f241e' stroke-opacity='.42' stroke-width='1.5'/%3E%3Cpath d='M27 393 L253 393 L253 27' fill='none' stroke='%23285343' stroke-opacity='.45' stroke-width='1'/%3E%3C/svg%3E");
+}
+/* Thin brass line, like the rails and picture-rods in the house */
+.brass-rule {
+  block-size: 1.5px;
+  border: 0;
+  background: var(--c-brass);
+  opacity: 0.6;
+}
+/* Small engraved brass name plate */
+.plate {
+  display: inline-block;
+  padding: 0.28em 0.8em 0.24em;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #e2c483, var(--c-brass) 55%, #a8843f);
+  color: var(--c-on-mustard);
+  font: 600 0.78rem / 1.1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgb(110 82 32 / 55%), 0 3px 8px -4px rgb(var(--c-shadow) / 80%);
+}
+/* Kicker: small caps label in brass above a big serif sentence */
+.kicker {
+  margin: 0 0 0.6rem;
+  color: var(--c-brass);
+  font: 600 0.82rem / 1.2 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+/* Gilt picture frame: wrap any image / video. Rectangle by default, .oval for portraits. */
+.gilt {
+  position: relative;
+  display: block;
+  padding: var(--gilt-w, 12px);
+  border-radius: 6px;
+  background: var(--gilt);
+  box-shadow:
+    inset 0 0 0 1px rgb(110 82 32 / 80%),
+    inset 0 0 0 4px rgb(240 216 146 / 35%),
+    0 26px 50px -22px rgb(var(--c-shadow) / 95%);
+}
+.gilt > :is(img, video, picture, .gilt-inner) {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 3px var(--c-brass-lo), inset 0 0 18px rgb(0 0 0 / 35%);
+  background: var(--c-wall-2);
+}
+.gilt.oval,
+.gilt.oval > :is(img, video, picture, .gilt-inner) {
+  border-radius: 50%;
+}
+/* Warm wall-sconce glow behind a heading or frame */
+.sconce-glow {
+  position: relative;
+  isolation: isolate;
+}
+.sconce-glow::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40% -20%;
+  background: radial-gradient(closest-side, rgb(255 207 110 / 16%), transparent);
+  pointer-events: none;
+}
+
+/* ---- Time of day: the house light follows the visitor's clock (set on <html data-light>) ---- */
+.house-light {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+html[data-light] .house-light {
+  opacity: 1;
+}
+html[data-light='morning'] .house-light {
+  background: linear-gradient(160deg, rgb(221 232 217 / 7%), transparent 55%);
+}
+html[data-light='afternoon'] .house-light {
+  background: radial-gradient(70% 60% at 85% 0%, rgb(255 207 110 / 9%), transparent 70%);
+}
+html[data-light='evening'] .house-light {
+  background: linear-gradient(180deg, rgb(39 54 92 / 14%), transparent 60%);
+}
+html[data-light='night'] .house-light {
+  background: radial-gradient(60% 50% at 50% 0%, transparent, rgb(4 10 18 / 22%) 100%);
+}
+html[data-light='dawn'] .house-light {
+  background: linear-gradient(180deg, rgb(157 178 201 / 9%), transparent 60%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .house-light {
+    transition: none;
+  }
 }

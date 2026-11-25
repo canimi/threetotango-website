@@ -17,6 +17,21 @@ const pages = [
 ---
 
 <footer class="site-footer">
+  <div class="floor" aria-hidden="true">
+    <img
+      src="/img/house/footer-floor-1200.webp"
+      srcset="/img/house/footer-floor-1200.webp 1200w, /img/house/footer-floor-2400.webp 2400w"
+      sizes="100vw"
+      width="2400"
+      height="1030"
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+    <span class="bowl b1 plate">{t('footer.bowls.luka')}</span>
+    <span class="bowl b2 plate">{t('footer.bowls.budy')}</span>
+    <span class="bowl b3 plate">{t('footer.bowls.caddy')}</span>
+  </div>
   <div class="container inner">
     <div class="brand">
       <p class="mark">Three <span>To</span> Tango</p>
@@ -37,10 +52,56 @@ const pages = [
 </footer>
 
 <style>
+  /* The footer is the floor of Nora's house: skirting, the rug's edge, three bowls, Caddy asleep. */
   .site-footer {
-    padding-block: var(--space-5) var(--space-4);
-    background: var(--c-wall-2);
+    padding-block: 0 var(--space-4);
+    background:
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 0%) 0 180px, rgb(0 0 0 / 22%) 180px 182px),
+      linear-gradient(180deg, #3b2a1a, #2a1d12);
     color: var(--c-paper-2);
+  }
+  .floor {
+    --h: clamp(150px, 18vw, 270px);
+    position: relative;
+    block-size: var(--h);
+    margin-block-end: var(--space-4);
+    overflow: hidden;
+    box-shadow: 0 -1px 0 rgb(201 164 92 / 35%);
+  }
+  .floor img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: 50% 80%;
+  }
+  .floor::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    block-size: 30%;
+    background: linear-gradient(to bottom, transparent, #3b2a1a);
+  }
+  .bowl {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: calc(0.8 * var(--h) - 3.4vw + 22px);
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+  }
+  .b1 {
+    left: 32%;
+  }
+  .b2 {
+    left: 42.5%;
+  }
+  .b3 {
+    left: 55%;
+  }
+  @media (max-width: 40rem) {
+    .bowl {
+      display: none;
+    }
   }
   .inner {
     display: grid;

@@ -14,6 +14,10 @@ export interface Character {
   face: string;
   /** 3:4 seated/bust crop (cropped from the ref sheet), 600x800. */
   full: string;
+  /** 3:4 painted portrait in the house (720x960), also the poster of the loop. */
+  painting?: string;
+  /** Base path of the 8 s living-portrait loop (WAN 3.0); `.webm` and `.mp4` are served. */
+  loop?: string;
 }
 
 export const characters: Record<CharacterId, Character> = {
@@ -27,6 +31,8 @@ export const characters: Record<CharacterId, Character> = {
     portrait: '/img/refs/luka.webp',
     face: '/img/cast/luka-face.webp?v=2',
     full: '/img/cast/luka-full.webp?v=2',
+    painting: '/img/house/portrait-luka.webp',
+    loop: '/img/house/portrait-luka',
     portraitPos: '92% 30%',
     portraitZoom: 1.8,
   },
@@ -40,6 +46,8 @@ export const characters: Record<CharacterId, Character> = {
     portrait: '/img/refs/budy.webp',
     face: '/img/cast/budy-face.webp?v=2',
     full: '/img/cast/budy-full.webp?v=2',
+    painting: '/img/house/portrait-budy.webp',
+    loop: '/img/house/portrait-budy',
     portraitPos: '82% 95%',
     portraitZoom: 1.8,
   },
@@ -53,6 +61,8 @@ export const characters: Record<CharacterId, Character> = {
     portrait: '/img/refs/caddy.webp',
     face: '/img/cast/caddy-face.webp?v=2',
     full: '/img/cast/caddy-full.webp?v=2',
+    painting: '/img/house/portrait-caddy.webp',
+    loop: '/img/house/portrait-caddy',
     portraitPos: '88% 95%',
     portraitZoom: 1.8,
   },

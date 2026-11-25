@@ -1,6 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EpisodeGrid from '../../components/EpisodeGrid.astro';
+import LivingPortrait from '../../components/LivingPortrait.astro';
+import CatFinish from '../../components/CatFinish.astro';
 import { characters, characterIds } from '../../data/characters';
 import { filterByCharacter, type CharacterId } from '../../lib/episodes';
 import { getEpisodes } from '../../lib/site-episodes';
@@ -39,7 +41,7 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
   <div class="container page" style={`--accent:${c.color}`}>
     <p class="back"><a href="/cats">{t('cats.back')}</a></p>
     <div class="top">
-      <div class="window"><img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} style={`view-transition-name:cast-${id}`} /></div>
+      <div class="window"><LivingPortrait id={id} shape="arch" size="100%" eager transitionName={`cast-${id}`} /></div>
       <div>
         <h1>{c.name}</h1>
         <p class="nick">{c.nickname}</p>
@@ -54,7 +56,7 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
             <ul>{c.hates.map((x) => <li>{x}</li>)}</ul>
           </div>
         </div>
-        <div class="actions">
+        <div class:list={['actions', { 'paw-test': id === 'luka' }]}>
           <a class="btn btn-lg" href="/tango-me">{t('cta.tangoFreeLong')}</a>
           {id !== 'nora' && (
             <a class="btn btn-lg btn-ghost chat-btn" href={`/chat?cat=${id}`}>
@@ -74,6 +76,7 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
         </ul>
       </div>
     </div>
+    <CatFinish id={id} />
     <h2 class="eps-title">{t('cats.episodesWith')} {c.name}</h2>
     {list.length ? <EpisodeGrid episodes={list} filters={false} /> : <p>{t('cats.noEpisodes')}</p>}
   </div>
@@ -81,9 +84,36 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
 
 <style>
   .actions {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+  /* Luka tests the button with one paw, once, then pulls back. Probably a trap. */
+  .paw-test::before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    inset-block-start: -1.6rem;
+    inset-inline-start: 1.2rem;
+    inline-size: 2.2rem;
+    block-size: 2.2rem;
+    background: no-repeat center / contain
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a9bb0'%3E%3Cellipse cx='6' cy='9' rx='2' ry='2.6'/%3E%3Cellipse cx='10' cy='5.5' rx='2' ry='2.6'/%3E%3Cellipse cx='14' cy='5.5' rx='2' ry='2.6'/%3E%3Cellipse cx='18' cy='9' rx='2' ry='2.6'/%3E%3Cpath d='M12 10c-3.5 0-6.5 4-6.5 6.6C5.5 19 7.6 20 12 20s6.5-1 6.5-3.4C18.5 14 15.5 10 12 10z'/%3E%3C/svg%3E");
+    opacity: 0;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .paw-test::before {
+      animation: paw-test 1.6s 1.2s ease-in-out both;
+    }
+  }
+  @keyframes paw-test {
+    0% { opacity: 0; transform: translateY(-14px) rotate(180deg); }
+    30% { opacity: 1; transform: translateY(6px) rotate(180deg); }
+    45% { transform: translateY(0) rotate(180deg); }
+    60% { transform: translateY(6px) rotate(180deg); }
+    100% { opacity: 0; transform: translateY(-18px) rotate(180deg); }
   }
   .chat-btn {
     color: var(--c-lamp);
@@ -107,11 +137,6 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
   }
   .window {
     inline-size: min(100%, 24rem);
-    aspect-ratio: 3 / 4;
-    border-radius: 999px 999px 26px 26px;
-    overflow: hidden;
-    background: var(--c-caddy);
-    box-shadow: 0 0 0 8px var(--c-wall), 0 0 0 11px var(--accent), 0 40px 70px -30px rgb(var(--c-shadow) / 90%);
   }
   @media (max-width: 52rem) {
     .window {
@@ -145,9 +170,11 @@ const pageDesc = clip(`${c.oneLiner} Meet ${label.replace(', the', ' the')} ${t(
     margin-block-end: var(--space-4);
   }
   .lists h2 {
-    font-size: 1.15rem;
-    color: var(--c-paper-2);
-    margin-block-end: 0.25rem;
+    color: var(--c-brass);
+    font: 600 0.8rem / 1.2 var(--font-display);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-block-end: 0.4rem;
   }
   .lists ul {
     margin: 0;

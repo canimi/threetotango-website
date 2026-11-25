@@ -1,0 +1,116 @@
+---
+/**
+ * A living portrait: the cat's 8-second WAN 3.0 loop (yawn, glance, tail) inside a gilt frame.
+ * The mp4 only downloads when the frame comes near the screen; with reduced motion the still
+ * painting stays. Nora has no loop: her frame shows the still.
+ */
+import { characters } from '../data/characters';
+import type { CharacterId } from '../lib/episodes';
+import { t } from '../i18n/t';
+
+interface Props {
+  id: CharacterId;
+  shape?: 'arch' | 'oval' | 'rect';
+  /** CSS inline-size of the frame */
+  size?: string;
+  eager?: boolean;
+  transitionName?: string;
+}
+const { id, shape = 'arch', size = 'min(100%, 22rem)', eager = false, transitionName } = Astro.props;
+const c = characters[id];
+const loop = c.loop ?? null;
+const still = c.painting ?? c.full;
+const alt = `${t('cats.portraitAlt')} ${c.name}`;
+---
+
+<figure class:list={['living', `shape-${shape}`]} style={`--size:${size}`} data-living={loop ? id : undefined}>
+  <div class="gilt">
+    {
+      loop ? (
+        <video
+          muted
+          loop
+          playsinline
+          preload="none"
+          poster={still}
+          width="720"
+          height="960"
+          aria-label={alt}
+          style={transitionName ? `view-transition-name:${transitionName}` : undefined}
+        >
+          <source data-src={`${loop}.mp4`} type="video/mp4" />
+        </video>
+      ) : (
+        <img
+          src={still}
+          width="720"
+          height="960"
+          alt={alt}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+          style={transitionName ? `view-transition-name:${transitionName}` : undefined}
+        />
+      )
+    }
+  </div>
+  <figcaption><span class="plate">{c.name}</span></figcaption>
+</figure>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const attach = (v: HTMLVideoElement) => {
+    v.querySelectorAll<HTMLSourceElement>('source[data-src]').forEach((s) => {
+      s.src = s.dataset.src ?? '';
+      s.removeAttribute('data-src');
+    });
+    v.load();
+  };
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('[data-living] video'));
+  if (videos.length && !reduce.matches && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const v = e.target as HTMLVideoElement;
+          if (e.isIntersecting) {
+            if (v.querySelector('source[data-src]')) attach(v);
+            void v.play().catch(() => {});
+          } else {
+            v.pause();
+          }
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+    const watch = () => videos.forEach((v) => io.observe(v));
+    // Decoration: start after the page itself has loaded.
+    if (document.readyState === 'complete') watch();
+    else window.addEventListener('load', watch, { once: true });
+  }
+</script>
+
+<style>
+  .living {
+    margin: 0;
+    inline-size: var(--size);
+    margin-inline: auto;
+    display: grid;
+    justify-items: center;
+    gap: 0.9rem;
+  }
+  .living .gilt {
+    --gilt-w: clamp(10px, 1.6vw, 16px);
+    inline-size: 100%;
+    aspect-ratio: 3 / 4;
+  }
+  .shape-arch .gilt,
+  .shape-arch .gilt > :is(img, video) {
+    border-radius: 999px 999px 8px 8px;
+  }
+  .shape-oval .gilt,
+  .shape-oval .gilt > :is(img, video) {
+    border-radius: 50%;
+  }
+  figcaption {
+    margin: 0;
+  }
+</style>

@@ -47,10 +47,10 @@ const style = (s: WalkSprite) => {
       const cat = cats[i % cats.length];
       i++;
       const w = cat.offsetWidth;
-      // Travel speed in px/s; one gait cycle covers ~half a rendered frame width of ground,
-      // so feet keep pace with the ground instead of skating.
+      // Travel speed in px/s; one full stride of the WAN 3.0 walk cycle covers ~0.8 of a rendered
+      // frame width of ground, so feet keep pace with the ground instead of skating.
       const speed = (window.innerWidth + w) / CROSS_S;
-      cat.style.setProperty('--gait', ((w * 0.5) / speed).toFixed(3) + 's');
+      cat.style.setProperty('--gait', ((w * 0.8) / speed).toFixed(3) + 's');
       cat.classList.remove('go');
       void cat.offsetWidth; // restart the crossing animation on this one element
       cat.classList.add('go');
@@ -107,7 +107,7 @@ const style = (s: WalkSprite) => {
     background: var(--sheet) 0 0 / var(--strip) var(--h) no-repeat;
   }
   .walker.go {
-    opacity: 0.9;
+    opacity: 1;
     animation: cross 20s linear forwards;
   }
   .walker.go i {

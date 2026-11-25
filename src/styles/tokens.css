@@ -20,6 +20,17 @@
   --c-budy: #e07b39;
   --c-caddy: #f3ede4;
   --c-shadow: 6 20 15;
+  /* Materials from Nora's house (TTT_03 house style) */
+  --c-brass: #c9a45c;
+  --c-brass-hi: #f0d892;
+  --c-brass-lo: #6e5220;
+  --c-panel-line: #2c5a49;
+  --c-panel-shade: #0f241e;
+  --c-oak: #6b4a2b;
+  --c-navy: #24344d;
+  --c-sage: #9db08f;
+  --c-lettuce: #86b84a;
+  --gilt: linear-gradient(135deg, #8e6b2a 0%, #e6c777 24%, #b88a3a 50%, #f0d892 74%, #9a7430 100%);
 
   --radius-thumb: 18px;
   --radius-card: 28px;
@@ -27,6 +38,8 @@
 
   --font-display: 'Fredoka', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
+  /* The classy voice: big sentences, episode names, intertitles */
+  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
 
   --step--1: 0.875rem;
   --step-0: 1.0625rem;

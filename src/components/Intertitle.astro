@@ -1,0 +1,88 @@
+---
+/** A silent-film intertitle card: the series has no words, so its titles look like a silent film's. */
+import { t } from '../i18n/t';
+
+interface Props {
+  line: string;
+  sub?: string;
+  foot?: string;
+  presents?: boolean;
+  as?: 'h1' | 'p';
+}
+const { line, sub, foot, presents = true, as = 'p' } = Astro.props;
+const Tag = as;
+---
+
+<div class="intertitle" role="group">
+  <span class="c c1" aria-hidden="true"></span><span class="c c2" aria-hidden="true"></span>
+  <span class="c c3" aria-hidden="true"></span><span class="c c4" aria-hidden="true"></span>
+  {presents && <p class="presents">{t('intertitle.presents')}</p>}
+  <Tag class="line">{line}</Tag>
+  {sub && (
+    <p class="sub">
+      <span class="dia" aria-hidden="true"></span>
+      {sub}
+    </p>
+  )}
+  {foot && <p class="foot">{foot}</p>}
+</div>
+
+<style>
+  .intertitle {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: clamp(1.6rem, 4vw, 2.6rem) clamp(1.2rem, 5vw, 3rem);
+    border-radius: 4px;
+    background: #0b1a15;
+    color: var(--c-paper);
+    text-align: center;
+    box-shadow:
+      inset 0 0 0 10px #0b1a15,
+      inset 0 0 0 12px var(--c-brass),
+      inset 0 0 0 22px #0b1a15,
+      inset 0 0 0 23px rgb(201 164 92 / 60%),
+      0 30px 60px -30px rgb(var(--c-shadow) / 95%);
+  }
+  .c {
+    position: absolute;
+    inline-size: 10px;
+    block-size: 10px;
+    background: var(--c-brass);
+    transform: rotate(45deg);
+  }
+  .c1 { inset-block-start: 26px; inset-inline-start: 26px; }
+  .c2 { inset-block-start: 26px; inset-inline-end: 26px; }
+  .c3 { inset-block-end: 26px; inset-inline-start: 26px; }
+  .c4 { inset-block-end: 26px; inset-inline-end: 26px; }
+  .presents,
+  .foot {
+    margin: 0;
+    color: var(--c-brass);
+    font: 600 0.72rem / 1.3 var(--font-display);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .line {
+    margin: 0.4rem 0;
+    max-inline-size: 22ch;
+    font: italic 600 clamp(1.7rem, 1.1rem + 2.6vw, 3rem) / 1.1 var(--font-serif);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .sub {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    color: var(--c-lamp);
+    font: 600 clamp(1rem, 0.9rem + 0.4vw, 1.2rem) / 1.3 var(--font-serif);
+  }
+  .dia {
+    inline-size: 7px;
+    block-size: 7px;
+    background: var(--c-lamp);
+    transform: rotate(45deg);
+  }
+</style>

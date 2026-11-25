@@ -44,13 +44,29 @@ const items = t(`marquee.${set}`).split('|');
     transform: rotate(var(--tilt));
     box-shadow: 0 14px 30px -18px rgb(var(--c-shadow) / 90%);
   }
+  /* Nora's mustard cable-knit sweater */
   .m-mustard {
-    background: var(--c-mustard);
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0%) 0 7px, rgb(184 128 15 / 26%) 7px 8.5px, rgb(255 255 255 / 0%) 8.5px 16px),
+      repeating-linear-gradient(0deg, rgb(255 236 180 / 10%) 0 3px, transparent 3px 6px),
+      var(--c-mustard);
     color: var(--c-ink);
   }
+  /* A strip of the Persian rug: navy borders, cream stitch lines, a row of diamonds */
   .m-rug {
-    background: var(--c-rug);
+    padding-block: 1.15rem;
+    background:
+      linear-gradient(var(--c-navy), var(--c-navy)) top / 100% 7px no-repeat,
+      linear-gradient(var(--c-navy), var(--c-navy)) bottom / 100% 7px no-repeat,
+      linear-gradient(rgb(244 233 216 / 70%), rgb(244 233 216 / 70%)) 0 10px / 100% 1.5px no-repeat,
+      linear-gradient(rgb(244 233 216 / 70%), rgb(244 233 216 / 70%)) 0 calc(100% - 10px) / 100% 1.5px no-repeat,
+      conic-gradient(from 45deg at 50% 50%, rgb(244 233 216 / 9%) 25%, transparent 0 50%, rgb(244 233 216 / 9%) 0 75%, transparent 0) 0 0 / 34px 34px,
+      var(--c-rug);
     color: var(--c-paper);
+  }
+  .m-rug .paw {
+    opacity: 0.8;
+    fill: var(--c-mustard);
   }
   .track {
     display: flex;

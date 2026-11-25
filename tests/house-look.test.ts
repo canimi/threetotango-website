@@ -1,0 +1,59 @@
+import { describe, expect, it } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { lightFor } from '../src/scripts/house-light';
+import { walkSprites } from '../src/lib/cast-assets';
+
+const page = (p: string) => readFileSync(join('dist', p), 'utf8');
+
+describe('house look (TTW_09): materials, living portraits, signatures', () => {
+  it('maps the visitor clock to the five light states of the world bible', () => {
+    expect([4, 5, 6, 7, 11, 12, 16, 17, 20, 21, 23].map(lightFor)).toEqual([
+      'night', 'dawn', 'dawn', 'morning', 'morning', 'afternoon', 'afternoon', 'evening', 'evening', 'night', 'night',
+    ]);
+  });
+
+  it('self-hosts Fraunces and preloads the hero weight', () => {
+    for (const f of ['600-normal', '600-italic', '400-italic']) expect(existsSync(`public/fonts/fraunces-latin-${f}.woff2`)).toBe(true);
+    expect(page('index.html')).toContain('rel="preload" href="/fonts/fraunces-latin-600-normal.woff2"');
+  });
+
+  it('ships the WAN 3.0 walk cycles (16 frames, @2x matching) and the living-portrait loops', () => {
+    const sprites = walkSprites();
+    expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'caddy', 'luka']);
+    for (const s of sprites) {
+      expect(s.frames).toBe(16);
+      expect(s.src).toMatch(/\.webp$/);
+      expect(s.src2x).toBeDefined();
+    }
+    for (const id of ['luka', 'budy', 'caddy']) {
+      expect(existsSync(`public/img/house/portrait-${id}.mp4`)).toBe(true);
+      expect(existsSync(`public/img/house/portrait-${id}.webp`)).toBe(true);
+    }
+  });
+
+  it('living portraits never preload video and only attach the source by script', () => {
+    const h = page('cats/luka/index.html');
+    expect(h).toMatch(/<video[^>]*preload="none"[^>]*poster="\/img\/house\/portrait-luka\.webp"/);
+    expect(h).toContain('data-src="/img/house/portrait-luka.mp4"');
+    expect(h).not.toMatch(/<source src="\/img\/house\/portrait-luka\.mp4"/);
+  });
+
+  it('gives every character page its own finish', () => {
+    expect(page('cats/luka/index.html')).toContain('Luka has opened an investigation.');
+    expect(page('cats/budy/index.html')).toContain('Budy is typing (he never stops)');
+    expect(page('cats/caddy/index.html')).toContain('data-caddy-still');
+    expect(page('cats/nora/index.html')).toContain('/img/house/nora-desk-1600.webp');
+  });
+
+  it('opens episode pages and the 404 with a silent-film intertitle', () => {
+    expect(page('404.html')).toContain('class="intertitle"');
+    expect(page('404.html')).toContain('/img/house/luka-404-1600.webp');
+    expect(page('404.html')).toMatch(/<h1 class="line"[^>]*>404\. Luka pushed this page off the table\.<\/h1>/);
+  });
+
+  it('puts the tango steps on the home page and the floor under every footer', () => {
+    expect(page('index.html')).toContain('How to tango (with three cats)');
+    expect(page('gallery/index.html')).toContain('/img/house/footer-floor-1200.webp');
+  });
+});

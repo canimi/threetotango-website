@@ -66,11 +66,13 @@ describe('built routes', () => {
       expect(page()).not.toContain('/img/cats/');
       expect(page()).not.toContain('hero-poster');
     });
-    it('uses the cast crops as cat portraits', () => {
-      for (const id of ['luka', 'budy', 'caddy', 'nora']) {
-        expect(page()).toContain(`/img/cast/${id}-face.webp`);
-        expect(page()).toContain(`/img/cast/${id}-full.webp`);
+    it('uses the cast crops as faces and the living portraits (still + loop) for the cats', () => {
+      for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/img/cast/${id}-face.webp`);
+      for (const id of ['luka', 'budy', 'caddy']) {
+        expect(page()).toContain(`/img/house/portrait-${id}.webp`);
+        expect(page()).toContain(`data-src="/img/house/portrait-${id}.mp4"`);
       }
+      expect(page()).toContain('/img/cast/nora-full.webp');
     });
     it('does not embed an iframe before tap', () => {
       expect(page()).not.toContain('<iframe');

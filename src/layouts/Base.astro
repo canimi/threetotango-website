@@ -52,6 +52,13 @@ const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
     />
     <link
       rel="preload"
+      href="/fonts/fraunces-latin-600-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
       href="/fonts/nunito-latin-400-normal.woff2"
       as="font"
       type="font/woff2"
@@ -88,7 +95,9 @@ const umamiId = import.meta.env.PUBLIC_UMAMI_ID;
     <Footer />
     <PlayerModal />
     {path !== '/tango-me' && <FloatingCta />}
+    <div class="house-light" aria-hidden="true"></div>
     <script>
+      import '../scripts/house-light';
       import '../scripts/scroll-top';
       import '../scripts/pointer-fx';
       import '../scripts/track-clicks';

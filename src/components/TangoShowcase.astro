@@ -76,7 +76,7 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
 }
 
 <style>
-  /* ---- Scene showcase: scrapbook polaroids, each one deep-links into Tango Me ---- */
+  /* ---- Scene showcase: framed scenes, each one deep-links into Tango Me ---- */
   .scenes-wrap {
     margin-block-start: var(--space-5);
   }
@@ -108,13 +108,16 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
     position: relative;
     display: grid;
     gap: 0.55rem;
-    padding: 0.55rem 0.55rem 0.8rem;
-    border-radius: 4px;
-    background: var(--c-paper);
-    color: var(--c-ink);
+    /* Each scene hangs in a small gilt frame: pick the room your cat moves into. */
+    padding: 0.6rem 0.6rem 0.75rem;
+    border-radius: 6px;
+    background: var(--gilt);
+    color: var(--c-on-mustard);
     text-decoration: none;
-    box-shadow: 0 22px 40px -22px rgb(var(--c-shadow) / 95%), 0 2px 0 rgb(0 0 0 / 8%);
-    transform: rotate(var(--tilt));
+    box-shadow:
+      inset 0 0 0 1px rgb(110 82 32 / 80%),
+      inset 0 0 0 4px rgb(240 216 146 / 35%),
+      0 22px 40px -22px rgb(var(--c-shadow) / 95%);
     transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1), box-shadow 0.3s ease;
   }
   .polaroid img {
@@ -125,8 +128,10 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
     object-fit: cover;
     border-radius: 2px;
     background: var(--c-wall-2);
+    box-shadow: 0 0 0 3px var(--c-brass-lo);
   }
   .tape {
+    display: none;
     position: absolute;
     z-index: 1;
     inset-block-start: -0.7rem;
@@ -157,7 +162,7 @@ const scenes = ['sofa-gang', 'fridge-heist', 'lettuce-crime', 'box-fort', 'windo
   }
   .polaroid:hover,
   .polaroid:focus-visible {
-    transform: rotate(0deg) translateY(-6px) scale(1.03);
+    transform: translateY(-6px) scale(1.03);
     box-shadow: 0 30px 50px -22px rgb(var(--c-shadow) / 95%), 0 0 0 3px var(--c-lamp);
     outline: none;
   }

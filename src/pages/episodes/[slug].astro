@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import EpisodeCard from '../../components/EpisodeCard.astro';
 import EpisodeGrid from '../../components/EpisodeGrid.astro';
+import Intertitle from '../../components/Intertitle.astro';
 import { characters } from '../../data/characters';
 import { getEpisodes } from '../../lib/site-episodes';
 import type { CharacterId, Episode } from '../../lib/episodes';
@@ -33,6 +34,7 @@ const sameCat = main ? all.filter((x) => !neighbours.has(x.slug) && x.characters
 const related = [...sameCat, ...all.filter((x) => !neighbours.has(x.slug) && !sameCat.includes(x))].slice(0, 4);
 const relatedTitle = main && sameCat.length ? `${t('seo.moreWith')} ${characters[main].name}` : t('seo.moreEpisodes');
 
+const number = all.length - all.findIndex((x) => x.slug === e.slug);
 const video = videoLd(e);
 const jsonLd = [
   breadcrumbLd([
@@ -55,6 +57,9 @@ const jsonLd = [
 >
   <div class="container page">
     <p class="back"><a href="/episodes">{t('episodes.all')}</a></p>
+    <div class="opening">
+      <Intertitle line={t('intertitle.meanwhile')} foot={t('intertitle.episode').replace('{n}', String(number))} />
+    </div>
     <div class="layout">
       <div class="player"><EpisodeCard episode={e} size="mini" eager /></div>
       <div class="info">
@@ -96,6 +101,10 @@ const jsonLd = [
 </Base>
 
 <style>
+  .opening {
+    max-inline-size: 46rem;
+    margin: 0 auto var(--space-4);
+  }
   .back {
     margin: 0 0 var(--space-3);
     font-weight: 600;

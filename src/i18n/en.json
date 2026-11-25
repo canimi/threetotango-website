@@ -32,7 +32,12 @@
     "copyright": "Three To Tango",
     "bts": "How one person and a lot of AI tools make a cat sitcom.",
     "btsLink": "Behind the scenes",
-    "follow": "Follow the household"
+    "follow": "Follow the household",
+    "bowls": {
+      "luka": "Luka",
+      "budy": "Budy",
+      "caddy": "Caddy"
+    }
   },
   "meta": {
     "skip": "Skip to content"
@@ -60,7 +65,7 @@
     "frameLabel": "Play the latest episode",
     "nowShowing": "Now showing",
     "h1": "Three To Tango: Nora lives her best life. Her three cats have other plans.",
-    "line": "A wordless 3D cat comedy. The household has room for one more.",
+    "line": "The household has room for one more.",
     "lineupLabel": "The cast",
     "meet": "Meet {name}",
     "bubbles": {
@@ -98,7 +103,10 @@
     "tangoCard": {
       "kicker": "Tango Me",
       "title": "Your cat, in our house"
-    }
+    },
+    "kicker": "A wordless 3D cat comedy",
+    "brandPrefix": "Three To Tango: ",
+    "slogan": "Nora lives her best life. Her three cats have {em}other plans.{/em}"
   },
   "household": {
     "title": "The household",
@@ -173,7 +181,13 @@
     "h2": "What stays human",
     "p2": "The characters, the humour, the timing and the decision to leave Caddy alone on her rug. Those are on purpose.",
     "h3": "Why we say so",
-    "p3": "You should know how it is made. We will keep saying it, on every product and every page."
+    "p3": "You should know how it is made. We will keep saying it, on every product and every page.",
+    "stripTitle": "From pencil to episode",
+    "steps": [
+      "1 · The gag, in pencil",
+      "2 · The frame, in 3D",
+      "3 · The episode"
+    ]
   },
   "cats": {
     "pageTitle": "The cats",
@@ -211,7 +225,8 @@
     "desc": "This page does not exist.",
     "h1": "404. Luka pushed this page off the table.",
     "body": "She made eye contact while doing it. The page is gone. Let's go home.",
-    "cta": "Back to the household"
+    "cta": "Back to the household",
+    "kicker": "Exhibit B"
   },
   "finalCta": {
     "title": "Your turn to join the household",
@@ -471,5 +486,83 @@
     "tooLong": "That is a bit long for a cat. Keep it under 300 characters.",
     "logLabel": "Chat messages",
     "you": "You"
+  },
+  "finish": {
+    "luka": {
+      "kicker": "Case file Nº 001",
+      "title": "Luka has opened an investigation.",
+      "stamp": "Trap?",
+      "confidential": "Confidential · household use only",
+      "rows": [
+        [
+          "Subject",
+          "Nora (the human)"
+        ],
+        [
+          "Charge",
+          "Attempted petting. Again."
+        ],
+        [
+          "Evidence",
+          "One (1) outstretched hand."
+        ],
+        [
+          "Motive",
+          "Unclear. Probably a trap."
+        ]
+      ],
+      "exhibit": "Exhibit A",
+      "verdict": "Verdict"
+    },
+    "budy": {
+      "kicker": "He has notes",
+      "title": "Budy would like a word. Several.",
+      "bubbles": [
+        "Mrrow?",
+        "MRROW.",
+        "mrrrrrrrrow??",
+        "…is that lettuce",
+        "LETTUCE.",
+        "hello? HELLO? helloooo",
+        "mrrp. mrrp. MRRP."
+      ],
+      "typing": "Budy is typing (he never stops)",
+      "weakness": "Weakness: anything green",
+      "green": [
+        "Lettuce",
+        "Peas",
+        "Courgette"
+      ]
+    },
+    "caddy": {
+      "kicker": "Do not disturb",
+      "title": "Caddy is not available right now.",
+      "hanger": "ZZZ",
+      "since": "Since 2011",
+      "still": "Nothing on this part of the page moves. That is the feature.",
+      "hint": "Do not click her fifteen times."
+    },
+    "nora": {
+      "kicker": "Home office",
+      "title": "Nora is trying to work.",
+      "notes": [
+        "Work block 9–11",
+        "Do NOT open the fridge",
+        "Who ate the lettuce?"
+      ],
+      "caption": "Luka is supervising. Nobody asked her to."
+    }
+  },
+  "intertitle": {
+    "presents": "Three To Tango presents",
+    "meanwhile": "Meanwhile, in Nora's house…",
+    "episode": "Episode {n} · No words were used",
+    "noWords": "No words were used"
+  },
+  "tangoSteps": {
+    "title": "How to tango (with three cats)",
+    "luka": "Luka: slow, slow, suspicious",
+    "budy": "Budy: quick, quick, loud",
+    "caddy": "Caddy: does not dance"
   }
 }

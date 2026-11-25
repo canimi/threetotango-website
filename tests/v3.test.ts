@@ -26,16 +26,15 @@ function tempPublic(files: Record<string, string>): string {
 const walkJson = JSON.stringify({ frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 });
 
 describe('v3 hero', () => {
-  it('has no visible "Nora lives" headline, only a visually-hidden h1 with the brand line', () => {
+  it('shows the series slogan as the visible h1, with the brand prefix kept for screen readers', () => {
     const h = home();
     const h1s = [...h.matchAll(/<h1\b([^>]*)>([\s\S]*?)<\/h1>/g)];
     expect(h1s).toHaveLength(1);
-    expect(h1s[0][1]).toMatch(/class="[^"]*\bsr-only\b/);
-    expect(h1s[0][2]).toContain('Nora lives her best life. Her three cats have other plans.');
-    const body = h.slice(h.indexOf('<body')).replace(h1s[0][0], '');
-    expect(body).not.toContain('Nora lives');
+    expect(h1s[0][1]).not.toMatch(/\bsr-only\b/);
+    const text = h1s[0][2].replace(/<[^>]+>/g, '');
+    expect(text).toContain('Three To Tango: Nora lives her best life. Her three cats have other plans.');
+    expect(h1s[0][2]).toMatch(/<em[^>]*>other plans\.<\/em>/);
   });
-
   it('renders the two hero cards: three cats that open their chat, plus the "+ Your cat" drop zone', () => {
     const h = home();
     expect(h).toContain('data-lineup');
@@ -48,7 +47,8 @@ describe('v3 hero', () => {
     expect(h).toMatch(/<input type="file" accept="image\/\*,\.heic"[^>]*data-drop-input/);
     expect(h).toMatch(/<a class="btn card-cta"[^>]*href="\/tango-me"[^>]*data-pitch-cta/);
     expect(h).toContain('+ Your cat');
-    expect(h).toContain('A wordless 3D cat comedy. The household has room for one more.');
+    expect(h).toContain('A wordless 3D cat comedy');
+    expect(h).toContain('The household has room for one more.');
     for (const b of ['🤨 a trap?', 'MEOW? Food?', '…zzz']) expect(h).toContain(b);
   });
 
@@ -283,8 +283,7 @@ describe('pointer effects', () => {
     expect(src).toContain('.animate(');
     expect(builtCss()).toMatch(/\.ripple-ring\{[^}]*pointer-events:none/);
     expect(home()).toMatch(/<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/);
-    expect(home()).toContain('id="wall-ripple"');
-    expect(home()).toMatch(/feDisplacementMap[^>]*scale="0"/);
+    expect(home()).not.toContain('data-wall');
     expect(home()).toMatch(/data-magnetic/);
     expect(home()).toMatch(/data-tilt/);
   });

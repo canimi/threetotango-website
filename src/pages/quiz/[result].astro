@@ -3,6 +3,8 @@ import Base from '../../layouts/Base.astro';
 import { characters } from '../../data/characters';
 import { quizCats, type QuizCat } from '../../data/quiz';
 import { t } from '../../i18n/t';
+import LivingPortrait from '../../components/LivingPortrait.astro';
+import CatFinish from '../../components/CatFinish.astro';
 
 export function getStaticPaths() {
   return quizCats.map((result) => ({ params: { result } }));
@@ -28,9 +30,10 @@ const personality = { luka: 'genius', budy: 'chatterbox', caddy: 'unbothered' }[
     <h1>{verdict}</h1>
     <p class="nick">{c.nickname}</p>
     <div class="portrait">
-      <img src={c.full} width="600" height="800" alt={`${t('cats.portraitAlt')} ${c.name}`} />
+      <LivingPortrait id={id} shape="arch" size="100%" eager />
     </div>
     <ul class="lines">{lines.map((l) => <li>{l}</li>)}</ul>
+    <div class="finish-wrap"><CatFinish id={id} compact /></div>
 
     <a class="btn btn-lg cta" href={`/tango-me?personality=${personality}`}>{t('quiz.bridge').replace('{name}', c.name)}</a>
     <p class="bridge-sub">{t('quiz.bridgeSub')}</p>
@@ -70,6 +73,9 @@ const personality = { luka: 'genius', budy: 'chatterbox', caddy: 'unbothered' }[
 </script>
 
 <style>
+  .finish-wrap {
+    text-align: start;
+  }
   .bridge-sub {
     margin: 0.6rem 0 0;
     color: var(--c-paper-2);
@@ -96,17 +102,6 @@ const personality = { luka: 'genius', budy: 'chatterbox', caddy: 'unbothered' }[
   .portrait {
     margin-inline: auto;
     inline-size: min(70%, 18rem);
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    border-radius: 999px 999px 26px 26px;
-    background: var(--c-caddy);
-    box-shadow: 0 0 0 8px var(--c-wall), 0 0 0 11px var(--accent), 0 40px 70px -30px rgb(var(--c-shadow) / 90%);
-  }
-  .portrait img {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
   }
   .lines {
     list-style: none;

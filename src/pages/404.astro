@@ -1,20 +1,48 @@
 ---
 import Base from '../layouts/Base.astro';
+import Intertitle from '../components/Intertitle.astro';
 import { t } from '../i18n/t';
 ---
 
 <Base title={`${t('notFound.title')} | ${t('brand.name')}`} description={t('notFound.desc')} path="/404">
   <div class="container wrap">
-    <h1>{t('notFound.h1')}</h1>
-    <p>{t('notFound.body')}</p>
-    <p><a class="btn btn-lg" href="/">{t('notFound.cta')}</a></p>
+    <figure class="evidence gilt">
+      <img
+        src="/img/house/luka-404-1600.webp"
+        srcset="/img/house/luka-404-900.webp 900w, /img/house/luka-404-1600.webp 1600w"
+        sizes="(min-width: 64rem) 58rem, 92vw"
+        width="1600"
+        height="900"
+        alt="Luka on the edge of a table, tapping a mug off it while looking straight at you"
+        fetchpriority="high"
+      />
+      <figcaption><span class="plate">{t('notFound.kicker')}</span></figcaption>
+    </figure>
+    <Intertitle as="h1" line={t('notFound.h1')} sub={t('notFound.body')} />
+    <p class="cta"><a class="btn btn-lg" href="/">{t('notFound.cta')}</a></p>
   </div>
 </Base>
 
 <style>
   .wrap {
+    display: grid;
+    gap: var(--space-4);
     padding-block: var(--space-4) var(--space-5);
-    max-inline-size: 42rem;
+    max-inline-size: 58rem;
+  }
+  .evidence {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 16 / 9;
+  }
+  .evidence figcaption {
+    position: absolute;
+    inset-block-end: -0.9rem;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+  }
+  .cta {
+    margin: 0;
     text-align: center;
   }
 </style>

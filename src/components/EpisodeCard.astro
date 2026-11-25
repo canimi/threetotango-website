@@ -57,31 +57,26 @@ const fresh = isNew(e.publishedAt);
     position: relative;
     min-inline-size: 0;
   }
-  /* Scrapbook: a strip of mustard tape holds each rail card to the wall. */
-  .ep-rail::before {
-    content: '';
-    position: absolute;
-    z-index: 3;
-    inset-block-start: -0.55rem;
-    inset-inline-start: 50%;
-    inline-size: 3.6rem;
-    block-size: 1.15rem;
-    background: rgb(255 207 110 / 72%);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
-    transform: translateX(-50%) rotate(-4deg);
-    pointer-events: none;
-  }
-  .ep-rail:nth-child(even)::before {
-    transform: translateX(-50%) rotate(3.5deg);
-  }
+  /* Each cover hangs like a small painting: thin gilt edge, square-ish corners. */
   .thumb {
     position: relative;
     display: block;
     aspect-ratio: 9 / 16;
-    border-radius: var(--radius-thumb);
+    border-radius: 8px;
     overflow: hidden;
     background: var(--c-wall-2);
     isolation: isolate;
+    box-shadow:
+      0 0 0 2px var(--c-brass-lo),
+      0 0 0 5px var(--c-brass),
+      0 0 0 6px var(--c-brass-lo),
+      0 24px 40px -22px rgb(var(--c-shadow) / 95%);
+  }
+  .ep-mini .thumb {
+    box-shadow:
+      0 0 0 1px var(--c-brass-lo),
+      0 0 0 3px var(--c-brass),
+      0 12px 20px -14px rgb(var(--c-shadow) / 95%);
   }
   /* Pointer tilt (vars written by pointer-fx on fine pointers only). */
   .thumb {
