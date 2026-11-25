@@ -18,13 +18,13 @@ describe('house look (TTW_09): materials, living portraits, signatures', () => {
     expect(page('index.html')).toContain('rel="preload" href="/fonts/fraunces-latin-600-normal.woff2"');
   });
 
-  it('ships the full-stride WAN 3.0 walk cycles for Luka and Budy only (Caddy does not walk), plus the living-portrait loops', () => {
+  it('ships full-stride WAN 3.0 walk cycles for all three cats, plus the living-portrait loops', () => {
     const sprites = walkSprites();
-    expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'luka']);
-    expect(Object.fromEntries(sprites.map((s) => [s.id, s.frames]))).toEqual({ luka: 29, budy: 30 });
+    expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'caddy', 'luka']);
+    expect(Object.fromEntries(sprites.map((s) => [s.id, s.frames]))).toEqual({ luka: 29, budy: 30, caddy: 20 });
     for (const s of sprites) {
       // content-hash cache buster: a regenerated sheet must never meet a cached old one
-      expect(s.src).toMatch(/^\/img\/cast\/walk-(luka|budy)\.webp\?v=[0-9a-f]{8}$/);
+      expect(s.src).toMatch(/^\/img\/cast\/walk-(luka|budy|caddy)\.webp\?v=[0-9a-f]{8}$/);
       expect(s.src2x).toMatch(/@2x\.webp\?v=[0-9a-f]{8}$/);
     }
     for (const id of ['luka', 'budy', 'caddy']) {

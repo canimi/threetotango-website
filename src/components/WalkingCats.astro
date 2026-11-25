@@ -34,10 +34,10 @@ const style = (s: WalkSprite) => {
 
 <script>
   const CROSS_S = 14; // seconds to cross the full viewport
-  const SPAWN_MS = 7500; // a cat every 7.5 s, alternating; each cat rests 1.5 s after its 14 s crossing
+  const SPAWN_MS = 7500; // a cat every 7.5 s, Luka → Budy → Caddy in turn; never two of the same at once
   const FIRST_MS = 2000;
   // Ground covered by one sprite cycle, in rendered frame widths (Luka's sheet holds a full stride).
-  const STRIDE: Record<string, number> = { luka: 1.5, budy: 1.3 };
+  const STRIDE: Record<string, number> = { luka: 1.5, budy: 1.3, caddy: 1.1 };
   const box = document.querySelector<HTMLElement>('[data-walkers]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (box && !reduce.matches) {
