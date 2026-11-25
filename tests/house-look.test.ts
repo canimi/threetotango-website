@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lightFor } from '../src/scripts/house-light';
 import { walkSprites } from '../src/lib/cast-assets';
 
 const page = (p: string) => readFileSync(join('dist', p), 'utf8');
 
 describe('house look (TTW_09): materials, living portraits, signatures', () => {
-  it('maps the visitor clock to the five light states of the world bible', () => {
-    expect([4, 5, 6, 7, 11, 12, 16, 17, 20, 21, 23].map(lightFor)).toEqual([
-      'night', 'dawn', 'dawn', 'morning', 'morning', 'afternoon', 'afternoon', 'evening', 'evening', 'night', 'night',
-    ]);
+  it('has no time-of-day light overlay (owner removed it: the site must never get darker at night)', () => {
+    const h = page('index.html');
+    expect(h).not.toContain('house-light');
+    expect(h).not.toContain('data-light');
   });
 
   it('self-hosts Fraunces and preloads the hero weight', () => {

@@ -476,35 +476,3 @@ body {
   pointer-events: none;
 }
 
-/* ---- Time of day: the house light follows the visitor's clock (set on <html data-light>) ---- */
-.house-light {
-  position: fixed;
-  inset: 0;
-  z-index: 59;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.2s ease;
-}
-html[data-light] .house-light {
-  opacity: 1;
-}
-html[data-light='morning'] .house-light {
-  background: linear-gradient(160deg, rgb(221 232 217 / 7%), transparent 55%);
-}
-html[data-light='afternoon'] .house-light {
-  background: radial-gradient(70% 60% at 85% 0%, rgb(255 207 110 / 9%), transparent 70%);
-}
-html[data-light='evening'] .house-light {
-  background: linear-gradient(180deg, rgb(39 54 92 / 14%), transparent 60%);
-}
-html[data-light='night'] .house-light {
-  background: radial-gradient(60% 50% at 50% 0%, transparent, rgb(4 10 18 / 22%) 100%);
-}
-html[data-light='dawn'] .house-light {
-  background: linear-gradient(180deg, rgb(157 178 201 / 9%), transparent 60%);
-}
-@media (prefers-reduced-motion: reduce) {
-  .house-light {
-    transition: none;
-  }
-}
