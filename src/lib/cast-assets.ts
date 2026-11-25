@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { characters } from '../data/characters';
 
@@ -70,6 +71,16 @@ export function lineupCats(root: string = process.cwd()): LineupCat[] {
 const posInt = (v: unknown, max: number): v is number =>
   typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= max;
 
+/**
+ * `?v=<content hash>`: sprite sheets keep their file names when they are regenerated, and browsers and
+ * Cloudflare cache images for hours. Without the hash a cached old sheet meets the new frame count and
+ * the cat is drawn sliced between two frames (happened live on 2026-11-25).
+ */
+function versioned(root: string, url: string): string {
+  const v = createHash('sha1').update(readFileSync(join(root, 'public', url))).digest('hex').slice(0, 8);
+  return `${url}?v=${v}`;
+}
+
 /** Build-time: walk-cycle sprites that have both a sheet and a valid json. */
 export function walkSprites(root: string = process.cwd()): WalkSprite[] {
   const out: WalkSprite[] = [];
@@ -93,10 +104,10 @@ export function walkSprites(root: string = process.cwd()): WalkSprite[] {
     const src = pick(root, `walk-${id}`);
     const m = src ? meta(`walk-${id}`) : null;
     if (!src || !m) continue;
-    const sprite: WalkSprite = { id, src, frames: m.frames, frameWidth: m.frameWidth, frameHeight: m.frameHeight, fps: m.fps };
+    const sprite: WalkSprite = { id, src: versioned(root, src), frames: m.frames, frameWidth: m.frameWidth, frameHeight: m.frameHeight, fps: m.fps };
     const src2x = pick(root, `walk-${id}@2x`);
     const m2 = src2x ? meta(`walk-${id}@2x`) : null;
-    if (src2x && m2 && m2.frames === m.frames) sprite.src2x = src2x;
+    if (src2x && m2 && m2.frames === m.frames) sprite.src2x = versioned(root, src2x);
     out.push(sprite);
   }
   return out;

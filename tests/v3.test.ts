@@ -106,7 +106,7 @@ describe('real cast assets', () => {
   it('uses the @2x walk sheet through image-set when its frame count matches', () => {
     const j2 = JSON.stringify({ frames: 8, frameWidth: 192, frameHeight: 128, fps: 12 });
     const root = tempPublic({ 'walk-luka.webp': 'x', 'walk-luka.json': walkJson, 'walk-luka@2x.webp': 'x', 'walk-luka@2x.json': j2 });
-    expect(walkSprites(root)[0].src2x).toBe('/img/cast/walk-luka@2x.webp');
+    expect(walkSprites(root)[0].src2x).toBe('/img/cast/walk-luka@2x.webp?v=11f6ad8e');
     const bad = tempPublic({ 'walk-luka.webp': 'x', 'walk-luka.json': walkJson, 'walk-luka@2x.webp': 'x', 'walk-luka@2x.json': j2.replace('"frames":8', '"frames":9') });
     expect(walkSprites(bad)[0].src2x).toBeUndefined();
   });
@@ -136,8 +136,8 @@ describe('walking cats', () => {
       'walk-luka.json': walkJson,
     });
     expect(walkSprites(root)).toEqual([
-      { id: 'luka', src: '/img/cast/walk-luka.webp', frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 },
-      { id: 'caddy', src: '/img/cast/walk-caddy.png', frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 },
+      { id: 'luka', src: '/img/cast/walk-luka.webp?v=11f6ad8e', frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 },
+      { id: 'caddy', src: '/img/cast/walk-caddy.png?v=11f6ad8e', frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 },
     ]);
   });
 
@@ -155,7 +155,7 @@ describe('walking cats', () => {
     });
     expect(html).toContain('data-walkers');
     expect(html).toMatch(/aria-hidden="true"/);
-    expect(html).toMatch(/data-walker="budy"[^>]*style="--w:90px;--h:60px;--strip:720px;--frames:8;--gait:0\.667s;--sheet:url\(\/img\/cast\/walk-budy\.webp\)"/);
+    expect(html).toMatch(/data-walker="budy"[^>]*style="--w:90px;--h:60px;--strip:720px;--frames:8;--gait:0\.667s;--sheet:url\(\/img\/cast\/walk-budy\.webp\?v=11f6ad8e\)"/);
   });
 
   it('walk CSS uses steps(), transforms only, and switches off for reduced motion', () => {

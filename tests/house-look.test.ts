@@ -23,8 +23,9 @@ describe('house look (TTW_09): materials, living portraits, signatures', () => {
     expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'luka']);
     expect(Object.fromEntries(sprites.map((s) => [s.id, s.frames]))).toEqual({ luka: 29, budy: 30 });
     for (const s of sprites) {
-      expect(s.src).toMatch(/\.webp$/);
-      expect(s.src2x).toBeDefined();
+      // content-hash cache buster: a regenerated sheet must never meet a cached old one
+      expect(s.src).toMatch(/^\/img\/cast\/walk-(luka|budy)\.webp\?v=[0-9a-f]{8}$/);
+      expect(s.src2x).toMatch(/@2x\.webp\?v=[0-9a-f]{8}$/);
     }
     for (const id of ['luka', 'budy', 'caddy']) {
       expect(existsSync(`public/img/house/portrait-${id}.mp4`)).toBe(true);
@@ -87,5 +88,11 @@ describe('hero text (owner decision: never visible)', () => {
     const h = page('index.html');
     expect(h).toMatch(/<h1 class="sr-only"/);
     expect(h).toMatch(/\.pitch\[[^\]]*\]:not\(\.is-personal\) \.line\[[^\]]*\]\{[^}]*clip-path:inset\(50%\)/);
+  });
+});
+
+describe('household panel fills wide screens', () => {
+  it('puts portrait and details side by side from 60rem', () => {
+    expect(page('index.html')).toMatch(/@media\(min-width:60rem\)\{\.panel\[[^\]]*\]\{grid-template-columns:minmax\(18rem,30rem\) minmax\(0,1fr\)/);
   });
 });
