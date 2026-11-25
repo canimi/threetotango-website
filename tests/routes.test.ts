@@ -70,7 +70,7 @@ describe('built routes', () => {
       for (const id of ['luka', 'budy', 'caddy', 'nora']) expect(page()).toContain(`/img/cast/${id}-face.webp`);
       for (const id of ['luka', 'budy', 'caddy']) {
         expect(page()).toContain(`/img/house/portrait-${id}.webp`);
-        expect(page()).toContain(`data-src="/img/house/portrait-${id}.mp4"`);
+        expect(page()).toMatch(new RegExp(`data-src="/img/house/portrait-${id}\\.mp4\\?v=[0-9a-f]{8}"`));
       }
       expect(page()).toContain('/img/cast/nora-full.webp');
     });

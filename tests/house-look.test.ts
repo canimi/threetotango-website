@@ -36,7 +36,7 @@ describe('house look (TTW_09): materials, living portraits, signatures', () => {
   it('living portraits never preload video and only attach the source by script', () => {
     const h = page('cats/luka/index.html');
     expect(h).toMatch(/<video[^>]*preload="none"[^>]*poster="\/img\/house\/portrait-luka\.webp"/);
-    expect(h).toContain('data-src="/img/house/portrait-luka.mp4"');
+    expect(h).toMatch(/data-src="\/img\/house\/portrait-luka\.mp4\?v=[0-9a-f]{8}"/);
     expect(h).not.toMatch(/<source src="\/img\/house\/portrait-luka\.mp4"/);
   });
 
@@ -69,7 +69,7 @@ describe('owner fixes 2026-11-25 (hero, cats page, profile buttons, filters)', (
   it('/cats shows every member with a living portrait and big Meet / Chat buttons', () => {
     const h = page('cats/index.html');
     for (const id of ['luka', 'budy', 'caddy']) {
-      expect(h).toContain(`data-src="/img/house/portrait-${id}.mp4"`);
+      expect(h).toMatch(new RegExp(`data-src="/img/house/portrait-${id}\\.mp4\\?v=[0-9a-f]{8}"`));
       expect(h).toContain(`href="/chat?cat=${id}"`);
     }
     for (const n of ['Luka', 'Budy', 'Caddy', 'Nora']) expect(h).toMatch(new RegExp(`class="btn btn-lg"[^>]*>Meet ${n}<`));

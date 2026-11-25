@@ -7,6 +7,9 @@
 import { characters } from '../data/characters';
 import type { CharacterId } from '../lib/episodes';
 import { t } from '../i18n/t';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 
 interface Props {
   id: CharacterId;
@@ -19,6 +22,12 @@ interface Props {
 const { id, shape = 'arch', size = 'min(100%, 22rem)', eager = false, transitionName } = Astro.props;
 const c = characters[id];
 const loop = c.loop ?? null;
+// Content hash in the URL: the loops keep their file names when replaced (2K upscale, 2026-11-25),
+// and browsers/Cloudflare cache media for hours.
+const loopFile = loop ? join(process.cwd(), 'public', `${loop}.mp4`) : '';
+const loopSrc = loop
+  ? `${loop}.mp4` + (existsSync(loopFile) ? `?v=${createHash('sha1').update(readFileSync(loopFile)).digest('hex').slice(0, 8)}` : '')
+  : null;
 const still = c.painting ?? c.full;
 const alt = `${t('cats.portraitAlt')} ${c.name}`;
 ---
@@ -38,7 +47,7 @@ const alt = `${t('cats.portraitAlt')} ${c.name}`;
           aria-label={alt}
           style={transitionName ? `view-transition-name:${transitionName}` : undefined}
         >
-          <source data-src={`${loop}.mp4`} type="video/mp4" />
+          <source data-src={loopSrc} type="video/mp4" />
         </video>
       ) : (
         <img
