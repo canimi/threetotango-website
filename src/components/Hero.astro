@@ -1,7 +1,7 @@
 ---
 import { t } from '../i18n/t';
 import type { Episode } from '../lib/episodes';
-import { characters } from '../data/characters';
+import { characters, characterIds } from '../data/characters';
 import { playerData } from '../lib/player';
 import { basename } from '../lib/site-episodes';
 import CastLineup from './CastLineup.astro';
@@ -17,18 +17,54 @@ const shown = hero ?? episodes[0] ?? null;
 const heroSrc = hero?.heroMp4Path ? `/media/hero/${basename(hero.heroMp4Path)}` : null;
 const known = (e: Episode) => e.characters.filter((c) => Object.hasOwn(characters, c));
 
-// The slogan is set visibly; the brand prefix stays for search engines and screen readers.
-const [sloganA, rest] = t('hero.slogan').split('{em}');
-const [sloganEm, sloganB] = rest.split('{/em}');
+// Wall tiles: real thumbnails, repeated to fill; cast crops if the feed has none.
+const thumbs = [...new Set(episodes.map((e) => e.thumbnailUrl).filter(Boolean))];
+const tiles = thumbs.length ? thumbs : characterIds.map((id) => characters[id].full);
+const COLS = 6;
+const perCol = Math.max(4, Math.ceil(tiles.length / COLS));
+const columns = Array.from({ length: COLS }, (_, c) =>
+  Array.from({ length: perCol }, (_, i) => tiles[(c * 2 + i) % tiles.length]),
+);
+const EAGER = 12;
 ---
 
 <section class="hero" data-hero>
-  <div class="room" aria-hidden="true"></div>
+  <svg class="fx-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <filter id="wall-ripple" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.011" numOctaves="1" seed="7" result="noise" data-ripple-noise
+      ></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" data-ripple-map
+      ></feDisplacementMap>
+    </filter>
+  </svg>
+  <div class="wall" aria-hidden="true" data-wall>
+    {
+      columns.map((col, c) => (
+        <div class:list={['col', { rev: c % 2 === 1 }]} style={`--dur:${70 + c * 9}s`}>
+          {[0, 1].map((copy) => (
+            <div class="set">
+              {col.map((src, i) => (
+                <img
+                  src={src}
+                  width="270"
+                  height="480"
+                  alt=""
+                  decoding="async"
+                  loading={copy === 0 && c * perCol + i < EAGER ? 'eager' : 'lazy'}
+                  fetchpriority="low"
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+  <div class="veil" aria-hidden="true"></div>
 
   <div class="container grid">
     <div class="copy">
-      <p class="kicker">{t('hero.kicker')}</p>
-      <h1 class="slogan"><span class="sr-only">{t('hero.brandPrefix')}</span>{sloganA}<em>{sloganEm}</em>{sloganB}</h1>
+      <h1 class="sr-only">{t('hero.h1')}</h1>
       <div class="pitch" data-pitch data-guest-line={t('hero.guest.line')} data-guest-cta={t('hero.guest.cta')}>
         <p class="line" aria-live="polite" data-pitch-line>{t('hero.line')}</p>
       </div>
@@ -38,10 +74,8 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     {
       shown && (
         <figure class="frame-wrap">
-          <span class="sconce s1" aria-hidden="true"></span>
-          <span class="sconce s2" aria-hidden="true"></span>
           <a
-            class="frame gilt"
+            class="frame"
             href={`/episodes/${shown.slug}`}
             {...playerData(shown, known(shown))}
             aria-label={`${t('hero.frameLabel')}: ${shown.title}`}
@@ -82,7 +116,7 @@ const [sloganEm, sloganB] = rest.split('{/em}');
               {t('common.soundOn')}
             </button>
           )}
-          <figcaption><span class="plate">{t('hero.nowShowing')} · {shown.title}</span></figcaption>
+          <figcaption>{shown.title}</figcaption>
         </figure>
       )
     }
@@ -142,7 +176,7 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     });
   }
 
-  // Pause the muted preview while the hero is off screen.
+  // Pause the drifting wall (and the muted preview) while the hero is off screen.
   if (hero && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => {
       hero.classList.toggle('offscreen', !e.isIntersecting);
@@ -164,69 +198,7 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     padding-block: calc(var(--header-h) + var(--space-3)) var(--space-4);
     overflow: clip;
     isolation: isolate;
-    background: transparent;
-  }
-  /* A calm panelled wall with a dado rail and two brass sconces: the room the cats live in. */
-  .room {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-      linear-gradient(to bottom, transparent calc(78% - 1px), var(--c-panel-line) calc(78% - 1px) 78%, #335f4f 78% calc(78% + 6px), var(--c-panel-shade) calc(78% + 6px) calc(78% + 8px), transparent calc(78% + 8px)),
-      linear-gradient(to bottom, rgb(23 50 42 / 0%) 60%, var(--c-wall) 100%);
-  }
-  .room::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    inset-block-start: var(--header-h);
-    block-size: 1.5px;
-    background: linear-gradient(90deg, transparent, rgb(201 164 92 / 55%) 15%, rgb(201 164 92 / 55%) 85%, transparent);
-  }
-  /* Two brass sconces flank the framed episode, like the lamps beside a painting. */
-  .sconce {
-    position: absolute;
-    z-index: -1;
-    inset-block-start: 16%;
-    inline-size: 30px;
-    block-size: 64px;
-    pointer-events: none;
-  }
-  .sconce::before {
-    content: '';
-    position: absolute;
-    inset: -220px -200px;
-    background: radial-gradient(closest-side, rgb(255 207 110 / 24%), rgb(255 207 110 / 7%) 55%, transparent);
-  }
-  .sconce::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(180deg, #fbf1dc, var(--c-paper) 60%, #e7d4b0) center top / 30px 26px no-repeat,
-      linear-gradient(var(--c-brass), var(--c-brass)) center 26px / 4px 26px no-repeat,
-      radial-gradient(circle, var(--c-brass) 60%, transparent 62%) center 50px / 12px 12px no-repeat;
-    border-radius: 6px 6px 0 0;
-    filter: drop-shadow(0 0 10px rgb(255 207 110 / 60%));
-  }
-  .s1 {
-    inset-inline-end: calc(100% + 1.6rem);
-  }
-  .s2 {
-    inset-inline-start: calc(100% + 1.6rem);
-  }
-  .slogan {
-    max-inline-size: 18ch;
-    margin-block-end: var(--space-2);
-    color: var(--c-paper);
-    font: 600 clamp(2.2rem, 1.4rem + 2.9vw, 4.1rem) / 1.06 var(--font-serif);
-    letter-spacing: -0.018em;
-    text-shadow: 0 2px 30px rgb(var(--c-shadow) / 70%);
-  }
-  .slogan em {
-    font-style: italic;
-    color: var(--c-lamp);
+    background: var(--c-wall);
   }
   /* Smooth fade into the page colour. */
   .hero::after {
@@ -237,6 +209,49 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     z-index: -1;
     pointer-events: none;
     background: linear-gradient(to bottom, rgb(23 50 42 / 0%), rgb(23 50 42 / 80%) 55%, var(--c-wall) 88%);
+  }
+  .wall {
+    position: absolute;
+    inset: -4rem -2rem;
+    z-index: -2;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    transform: rotate(-4deg) scale(1.08);
+    /* The wall itself fades out well above the hero's bottom edge, so no tile pixel can ever reach
+       the last (fractional) device-pixel row and show as a dashed line on Android/high-DPR screens.
+       The wall overhangs the hero by 4rem; the extra 9rem covers the -4deg tilt at the corners. */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 4rem - 22rem), transparent calc(100% - 4rem - 12rem));
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 4rem - 22rem), transparent calc(100% - 4rem - 12rem));
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  .set {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .wall img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 9 / 16;
+    object-fit: cover;
+    border-radius: var(--radius-thumb);
+    background: var(--c-wall-2);
+  }
+  .veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgb(23 50 42 / 55%), rgb(23 50 42 / 20%) 30%, rgb(23 50 42 / 30%) 70%, var(--c-wall) 98%),
+      linear-gradient(100deg, rgb(23 50 42 / 96%) 0%, rgb(23 50 42 / 88%) 40%, rgb(23 50 42 / 45%) 75%, rgb(23 50 42 / 55%) 100%);
   }
   .grid {
     display: grid;
@@ -260,11 +275,34 @@ const [sloganEm, sloganB] = rest.split('{/em}');
   .is-personal .line {
     color: var(--c-lamp);
   }
+  /* Owner decision (repeated many times): no visible text on the hero. The pitch line stays for
+     screen readers only; it shows only after a visitor adds their own cat (personal greeting). */
+  .pitch:not(.is-personal) .line {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .pitch:not(.is-personal) {
+    margin: 0;
+  }
   .line {
     max-inline-size: 34ch;
     margin: 0;
-    color: var(--c-paper-2);
-    font: 600 clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem) / 1.35 var(--font-display);
+    color: var(--c-paper);
+    font: 600 clamp(1.25rem, 1rem + 0.8vw, 1.85rem) / 1.25 var(--font-display);
+    text-shadow: 0 2px 20px rgb(var(--c-shadow) / 70%);
+  }
+  .fx-defs {
+    position: absolute;
+    inline-size: 0;
+    block-size: 0;
+  }
+  /* Ripple is attached by pointer-fx only while the pointer moves. */
+  .wall.is-rippling {
+    filter: url(#wall-ripple);
   }
   .frame-wrap {
     position: relative;
@@ -272,22 +310,22 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     justify-self: center;
     inline-size: clamp(13rem, 3rem + 12vw, 20rem);
   }
-  /* The latest episode hangs on the wall in a gilt frame, like the paintings in Nora's house. */
   .frame {
-    --gilt-w: 14px;
     position: relative;
     display: block;
     aspect-ratio: 9 / 16;
+    border-radius: 30px;
     overflow: hidden;
+    background: var(--c-wall-2);
     box-shadow:
-      inset 0 0 0 1px rgb(110 82 32 / 80%),
-      inset 0 0 0 4px rgb(240 216 146 / 35%),
+      0 0 0 6px var(--c-paper),
       0 40px 80px -24px rgb(var(--c-shadow) / 95%),
-      0 0 140px -10px rgb(255 207 110 / 32%);
+      0 0 120px -10px rgb(255 207 110 / 35%);
+    transform: rotate(-3deg);
     transition: transform 0.25s ease;
   }
   .frame:hover {
-    transform: scale(1.012);
+    transform: rotate(-1.5deg) scale(1.015);
   }
   .frame video,
   .frame img {
@@ -298,8 +336,8 @@ const [sloganEm, sloganB] = rest.split('{/em}');
   }
   .play {
     position: absolute;
-    inset-inline-start: 1.6rem;
-    inset-block-end: 1.6rem;
+    inset-inline-start: 0.9rem;
+    inset-block-end: 0.9rem;
     display: grid;
     place-items: center;
     inline-size: 44px;
@@ -324,21 +362,32 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     font: 600 0.95rem var(--font-display);
     cursor: pointer;
     box-shadow: 0 10px 24px -8px rgb(var(--c-shadow) / 80%);
+    transform: rotate(3deg);
   }
   .sound[aria-pressed='true'] {
     background: var(--c-lamp);
   }
   figcaption {
-    margin-block-start: var(--space-2);
+    margin-block-start: var(--space-3);
     text-align: center;
-  }
-  figcaption .plate {
-    max-inline-size: 100%;
-    line-height: 1.35;
+    font: 600 1.15rem var(--font-display);
+    color: var(--c-paper);
   }
 
-  /* One orchestrated entrance. */
+  /* One orchestrated entrance, then only the slow drift. */
   @media (prefers-reduced-motion: no-preference) {
+    .col {
+      animation: drift var(--dur) linear infinite;
+    }
+    .col.rev {
+      animation-direction: reverse;
+    }
+    .offscreen .col {
+      animation-play-state: paused;
+    }
+    .wall {
+      animation: wall-in 0.5s ease-out both;
+    }
     .copy :global([data-lineup]) {
       animation: rise 0.55s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
@@ -347,6 +396,16 @@ const [sloganEm, sloganB] = rest.split('{/em}');
     }
     .frame-wrap {
       animation: drop 0.6s 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+    }
+  }
+  @keyframes drift {
+    to {
+      transform: translateY(calc(-50% - 7px));
+    }
+  }
+  @keyframes wall-in {
+    from {
+      opacity: 0;
     }
   }
   @keyframes rise {
@@ -358,7 +417,7 @@ const [sloganEm, sloganB] = rest.split('{/em}');
   @keyframes drop {
     from {
       opacity: 0;
-      transform: translateY(-40px);
+      transform: translateY(-40px) rotate(4deg);
     }
   }
 
@@ -367,6 +426,16 @@ const [sloganEm, sloganB] = rest.split('{/em}');
       min-block-size: 0;
       align-items: start;
       padding-block: calc(var(--header-h) + var(--space-3)) var(--space-4);
+    }
+    .wall {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .wall .col:nth-child(n + 4) {
+      display: none;
+    }
+    .veil {
+      background:
+        linear-gradient(to bottom, rgb(23 50 42 / 50%), rgb(23 50 42 / 35%) 30%, rgb(23 50 42 / 92%) 52%, var(--c-wall) 100%);
     }
     .frame-wrap {
       order: -1;
@@ -392,34 +461,14 @@ const [sloganEm, sloganB] = rest.split('{/em}');
       text-align: center;
       margin-block-end: var(--space-2);
     }
-    .kicker,
-    .slogan {
-      text-align: center;
-      margin-inline: auto;
-    }
     .line {
-      font-size: 1.05rem;
-    }
-    .slogan {
-      max-inline-size: none;
-      font-size: clamp(1.9rem, 1.2rem + 3.6vw, 2.6rem);
-    }
-    .sconce {
-      display: none;
-    }
-    .frame {
-      --gilt-w: 9px;
+      font-size: 1.2rem;
     }
   }
   @media (max-width: 47.99rem) {
     .pitch {
       justify-items: stretch;
       text-align: start;
-    }
-    .kicker,
-    .slogan {
-      text-align: start;
-      margin-inline: 0;
     }
   }
 </style>

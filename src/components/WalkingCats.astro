@@ -33,9 +33,11 @@ const style = (s: WalkSprite) => {
 }
 
 <script>
-  const CROSS_S = 20; // seconds to cross the full viewport
-  const SPAWN_MS = 15000; // a new cat every 15 s
+  const CROSS_S = 14; // seconds to cross the full viewport
+  const SPAWN_MS = 7500; // a cat every 7.5 s, alternating; each cat rests 1.5 s after its 14 s crossing
   const FIRST_MS = 2000;
+  // Ground covered by one sprite cycle, in rendered frame widths (Luka's sheet holds a full stride).
+  const STRIDE: Record<string, number> = { luka: 1.5, budy: 1.3 };
   const box = document.querySelector<HTMLElement>('[data-walkers]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (box && !reduce.matches) {
@@ -44,13 +46,17 @@ const style = (s: WalkSprite) => {
     let timer = 0;
     const walk = () => {
       if (document.hidden) return;
-      const cat = cats[i % cats.length];
-      i++;
+      // Next cat in turn that is not already on its way (never restart a cat mid-walk).
+      const idle = cats.map((_, k) => cats[(i + k) % cats.length]).find((c) => !c.classList.contains('go'));
+      if (!idle) return;
+      i = cats.indexOf(idle) + 1;
+      const cat = idle;
       const w = cat.offsetWidth;
-      // Travel speed in px/s; one full stride of the WAN 3.0 walk cycle covers ~0.8 of a rendered
-      // frame width of ground, so feet keep pace with the ground instead of skating.
+      // Travel speed in px/s; one sprite cycle (one real stride of the WAN 3.0 walk) covers about
+      // STRIDE × the rendered frame width of ground, so feet keep pace with the ground.
       const speed = (window.innerWidth + w) / CROSS_S;
-      cat.style.setProperty('--gait', ((w * 0.8) / speed).toFixed(3) + 's');
+      const stride = STRIDE[cat.dataset.walker ?? ''] ?? 0.8;
+      cat.style.setProperty('--gait', ((w * stride) / speed).toFixed(3) + 's');
       cat.classList.remove('go');
       void cat.offsetWidth; // restart the crossing animation on this one element
       cat.classList.add('go');
@@ -108,7 +114,7 @@ const style = (s: WalkSprite) => {
   }
   .walker.go {
     opacity: 1;
-    animation: cross 20s linear forwards;
+    animation: cross 14s linear forwards;
   }
   .walker.go i {
     animation: gait var(--gait) steps(var(--frames)) infinite;

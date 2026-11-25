@@ -80,7 +80,12 @@ const starring = (n: number) =>
                 ))}
               </div>
             )}
-            <a class="profile" href={`/cats/${id}`}>{t('household.meet')}</a>
+            <div class="actions">
+              <a class="btn btn-lg" href={`/cats/${id}`} data-meet={id}>{t('household.meet').replace('{name}', c.name)}</a>
+              {id !== 'nora' && (
+                <a class="btn btn-lg btn-ghost" href={`/chat?cat=${id}`}>{t('cats.chatWith').replace('{name}', c.name)}</a>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -291,8 +296,11 @@ const starring = (n: number) =>
     gap: var(--space-1);
     margin-block-end: var(--space-3);
   }
-  .profile {
-    font-weight: 600;
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-start: var(--space-3);
   }
   @media (max-width: 52rem) {
     .window {

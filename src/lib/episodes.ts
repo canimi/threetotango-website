@@ -71,8 +71,21 @@ export async function fetchEpisodes(
   }
 }
 
+const CATS: CharacterId[] = ['luka', 'budy', 'caddy'];
+
+/**
+ * Who is in an episode. The automatic tagger reads only the caption, which rarely names the cats,
+ * so most episodes come back untagged. The series is built on all three cats being in the house:
+ * an episode with no cat tagged counts as starring Luka, Budy and Caddy (Nora is kept if tagged).
+ */
+export function castOf(e: Episode): CharacterId[] {
+  const tagged = e.characters.filter((c): c is CharacterId => (CATS as string[]).includes(c) || c === 'nora');
+  if (tagged.some((c) => CATS.includes(c))) return tagged;
+  return [...CATS, ...tagged];
+}
+
 export function filterByCharacter(list: Episode[], c: CharacterId | 'all'): Episode[] {
-  return c === 'all' ? list : list.filter((e) => e.characters.includes(c));
+  return c === 'all' ? list : list.filter((e) => castOf(e).includes(c));
 }
 
 export function latestWithHero(list: Episode[]): Episode | null {

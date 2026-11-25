@@ -124,6 +124,11 @@ describe('filterByCharacter', () => {
   it("'all' returns all", () => {
     expect(filterByCharacter(list, 'all')).toHaveLength(2);
   });
+  it('treats an episode with no cat tagged as a whole-household episode (every cat is in every episode)', () => {
+    const untagged = [ep({ id: 'u', characters: [] }), ep({ id: 'n', characters: ['nora'] }), ...list];
+    expect(filterByCharacter(untagged, 'luka').map((e) => e.id)).toEqual(['u', 'n', 'b']);
+    expect(filterByCharacter(untagged, 'caddy').map((e) => e.id)).toEqual(['u', 'n']);
+  });
 });
 
 describe('latestWithHero', () => {

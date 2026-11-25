@@ -5,7 +5,7 @@ import EpisodeGrid from '../../components/EpisodeGrid.astro';
 import Intertitle from '../../components/Intertitle.astro';
 import { characters } from '../../data/characters';
 import { getEpisodes } from '../../lib/site-episodes';
-import type { CharacterId, Episode } from '../../lib/episodes';
+import { castOf, type CharacterId, type Episode } from '../../lib/episodes';
 import { breadcrumbLd, episodeDescription, episodeSummary, episodeTitle, videoLd } from '../../lib/seo';
 import { t } from '../../i18n/t';
 
@@ -23,14 +23,14 @@ const { episode: e, newer, older, all } = Astro.props as {
   older: Episode | null;
   all: Episode[];
 };
-const cast = e.characters.filter((c) => Object.hasOwn(characters, c)) as CharacterId[];
+const cast = castOf(e).filter((c) => Object.hasOwn(characters, c)) as CharacterId[];
 const summary = episodeSummary(e);
 const description = episodeDescription(e);
 
 // Related episodes: same cat first (the first cat in the cast, Nora last), topped up with the newest others.
 const main = cast.find((c) => c !== 'nora') ?? cast[0];
 const neighbours = new Set([e.slug, newer?.slug, older?.slug]);
-const sameCat = main ? all.filter((x) => !neighbours.has(x.slug) && x.characters.includes(main)) : [];
+const sameCat = main ? all.filter((x) => !neighbours.has(x.slug) && castOf(x).includes(main)) : [];
 const related = [...sameCat, ...all.filter((x) => !neighbours.has(x.slug) && !sameCat.includes(x))].slice(0, 4);
 const relatedTitle = main && sameCat.length ? `${t('seo.moreWith')} ${characters[main].name}` : t('seo.moreEpisodes');
 

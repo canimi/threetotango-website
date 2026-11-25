@@ -65,7 +65,7 @@
     "frameLabel": "Play the latest episode",
     "nowShowing": "Now showing",
     "h1": "Three To Tango: Nora lives her best life. Her three cats have other plans.",
-    "line": "The household has room for one more.",
+    "line": "A wordless 3D cat comedy. The household has room for one more.",
     "lineupLabel": "The cast",
     "meet": "Meet {name}",
     "bubbles": {
@@ -103,17 +103,14 @@
     "tangoCard": {
       "kicker": "Tango Me",
       "title": "Your cat, in our house"
-    },
-    "kicker": "A wordless 3D cat comedy",
-    "brandPrefix": "Three To Tango: ",
-    "slogan": "Nora lives her best life. Her three cats have {em}other plans.{/em}"
+    }
   },
   "household": {
     "title": "The household",
     "sub": "One human. Three cats. Zero chance of a quiet workday.",
     "loves": "Loves",
     "hates": "Hates",
-    "meet": "Full profile",
+    "meet": "Meet {name}",
     "tabsLabel": "Choose a member of the household",
     "starring": "Starring in {n} episodes",
     "starringOne": "Starring in 1 episode",

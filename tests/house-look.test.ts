@@ -18,11 +18,11 @@ describe('house look (TTW_09): materials, living portraits, signatures', () => {
     expect(page('index.html')).toContain('rel="preload" href="/fonts/fraunces-latin-600-normal.woff2"');
   });
 
-  it('ships the WAN 3.0 walk cycles (16 frames, @2x matching) and the living-portrait loops', () => {
+  it('ships the full-stride WAN 3.0 walk cycles for Luka and Budy only (Caddy does not walk), plus the living-portrait loops', () => {
     const sprites = walkSprites();
-    expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'caddy', 'luka']);
+    expect(sprites.map((s) => s.id).sort()).toEqual(['budy', 'luka']);
+    expect(Object.fromEntries(sprites.map((s) => [s.id, s.frames]))).toEqual({ luka: 29, budy: 30 });
     for (const s of sprites) {
-      expect(s.frames).toBe(16);
       expect(s.src).toMatch(/\.webp$/);
       expect(s.src2x).toBeDefined();
     }
@@ -55,5 +55,37 @@ describe('house look (TTW_09): materials, living portraits, signatures', () => {
   it('puts the tango steps on the home page and the floor under every footer', () => {
     expect(page('index.html')).toContain('How to tango (with three cats)');
     expect(page('gallery/index.html')).toContain('/img/house/footer-floor-1200.webp');
+  });
+});
+
+describe('owner fixes 2026-11-25 (hero, cats page, profile buttons, filters)', () => {
+  it('home has no gallery section and no visible slogan', () => {
+    const h = page('index.html');
+    expect(h).not.toContain('New in the gallery');
+    expect(h).not.toContain('class="slogan"');
+  });
+
+  it('/cats shows every member with a living portrait and big Meet / Chat buttons', () => {
+    const h = page('cats/index.html');
+    for (const id of ['luka', 'budy', 'caddy']) {
+      expect(h).toContain(`data-src="/img/house/portrait-${id}.mp4"`);
+      expect(h).toContain(`href="/chat?cat=${id}"`);
+    }
+    for (const n of ['Luka', 'Budy', 'Caddy', 'Nora']) expect(h).toMatch(new RegExp(`class="btn btn-lg"[^>]*>Meet ${n}<`));
+    expect(h).not.toContain('Full profile');
+  });
+
+  it('the household panel on home links each cat with a real button', () => {
+    const h = page('index.html');
+    expect(h).toMatch(/class="btn btn-lg"[^>]*>Meet Luka</);
+    expect(h).not.toContain('Full profile');
+  });
+});
+
+describe('hero text (owner decision: never visible)', () => {
+  it('keeps the h1 sr-only and hides the pitch line visually until a visitor adds their cat', () => {
+    const h = page('index.html');
+    expect(h).toMatch(/<h1 class="sr-only"/);
+    expect(h).toMatch(/\.pitch\[[^\]]*\]:not\(\.is-personal\) \.line\[[^\]]*\]\{[^}]*clip-path:inset\(50%\)/);
   });
 });

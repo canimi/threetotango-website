@@ -1,11 +1,15 @@
 ---
 import Base from '../../layouts/Base.astro';
-import CastPicker from '../../components/CastPicker.astro';
+import LivingPortrait from '../../components/LivingPortrait.astro';
+import { characters, characterIds } from '../../data/characters';
+import { filterByCharacter } from '../../lib/episodes';
 import { getEpisodes } from '../../lib/site-episodes';
 import { t } from '../../i18n/t';
 import { breadcrumbLd } from '../../lib/seo';
 
 const episodes = await getEpisodes();
+const starring = (n: number) =>
+  n === 0 ? t('household.starringNone') : n === 1 ? t('household.starringOne') : t('household.starring').replace('{n}', String(n));
 ---
 
 <Base
@@ -17,12 +21,114 @@ const episodes = await getEpisodes();
   <div class="container page">
     <h1>{t('cats.pageTitle')}</h1>
     <p class="lede intro">{t('cats.intro')}</p>
-    <CastPicker {episodes} />
+
+    <ul class="cast-grid" role="list" data-cast-grid>
+      {
+        characterIds.map((id) => {
+          const c = characters[id];
+          const n = filterByCharacter(episodes, id).length;
+          return (
+            <li class="member" style={`--accent:${c.color}`}>
+              <a class="portrait-link" href={`/cats/${id}`} tabindex="-1" aria-hidden="true">
+                <LivingPortrait id={id} shape="arch" size="100%" transitionName={`cast-${id}`} />
+              </a>
+              <h2>
+                {c.name}{' '}<span class="nick">{c.nickname}</span>
+              </h2>
+              <p class="line">{c.oneLiner}</p>
+              <dl class="traits">
+                <div>
+                  <dt>{t('household.loves')}</dt>
+                  <dd>{c.loves.slice(0, 3).join(', ')}</dd>
+                </div>
+                <div>
+                  <dt>{t('household.hates')}</dt>
+                  <dd>{c.hates.slice(0, 2).join(', ')}</dd>
+                </div>
+              </dl>
+              <p class="starring">{starring(n)}</p>
+              <div class="actions">
+                <a class="btn btn-lg" href={`/cats/${id}`} data-meet={id}>{t('household.meet').replace('{name}', c.name)}</a>
+                {id !== 'nora' && (
+                  <a class="btn btn-lg btn-ghost" href={`/chat?cat=${id}`}>{t('cats.chatWith').replace('{name}', c.name)}</a>
+                )}
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
   </div>
 </Base>
 
 <style>
   .intro {
     margin-block: 0 var(--space-4);
+  }
+  .cast-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+    gap: var(--space-4) var(--space-3);
+  }
+  .member {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .portrait-link {
+    display: block;
+    border-radius: 999px 999px 0 0;
+    transition: transform 0.25s ease;
+  }
+  .portrait-link:hover {
+    transform: translateY(-4px);
+  }
+  .member h2 {
+    margin: var(--space-2) 0 0;
+    font-size: clamp(1.6rem, 2.4vw, 2rem);
+  }
+  .nick {
+    display: block;
+    font: italic 400 1rem var(--font-serif);
+    color: var(--accent);
+  }
+  .line {
+    margin: 0;
+    color: var(--c-paper-2);
+  }
+  .traits {
+    margin: 0;
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.92rem;
+  }
+  .traits div {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .traits dt {
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .traits dd {
+    margin: 0;
+  }
+  .starring {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  .actions {
+    margin-block-start: auto;
+    padding-block-start: var(--space-2);
+    display: grid;
+    gap: 0.6rem;
+  }
+  .actions .btn {
+    justify-content: center;
+    text-align: center;
   }
 </style>

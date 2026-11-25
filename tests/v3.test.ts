@@ -26,15 +26,16 @@ function tempPublic(files: Record<string, string>): string {
 const walkJson = JSON.stringify({ frames: 8, frameWidth: 96, frameHeight: 64, fps: 12 });
 
 describe('v3 hero', () => {
-  it('shows the series slogan as the visible h1, with the brand prefix kept for screen readers', () => {
+  it('has no visible "Nora lives" headline, only a visually-hidden h1 with the brand line', () => {
     const h = home();
     const h1s = [...h.matchAll(/<h1\b([^>]*)>([\s\S]*?)<\/h1>/g)];
     expect(h1s).toHaveLength(1);
-    expect(h1s[0][1]).not.toMatch(/\bsr-only\b/);
-    const text = h1s[0][2].replace(/<[^>]+>/g, '');
-    expect(text).toContain('Three To Tango: Nora lives her best life. Her three cats have other plans.');
-    expect(h1s[0][2]).toMatch(/<em[^>]*>other plans\.<\/em>/);
+    expect(h1s[0][1]).toMatch(/class="[^"]*\bsr-only\b/);
+    expect(h1s[0][2]).toContain('Nora lives her best life. Her three cats have other plans.');
+    const body = h.slice(h.indexOf('<body')).replace(h1s[0][0], '');
+    expect(body).not.toContain('Nora lives');
   });
+
   it('renders the two hero cards: three cats that open their chat, plus the "+ Your cat" drop zone', () => {
     const h = home();
     expect(h).toContain('data-lineup');
@@ -47,8 +48,7 @@ describe('v3 hero', () => {
     expect(h).toMatch(/<input type="file" accept="image\/\*,\.heic"[^>]*data-drop-input/);
     expect(h).toMatch(/<a class="btn card-cta"[^>]*href="\/tango-me"[^>]*data-pitch-cta/);
     expect(h).toContain('+ Your cat');
-    expect(h).toContain('A wordless 3D cat comedy');
-    expect(h).toContain('The household has room for one more.');
+    expect(h).toContain('A wordless 3D cat comedy. The household has room for one more.');
     for (const b of ['🤨 a trap?', 'MEOW? Food?', '…zzz']) expect(h).toContain(b);
   });
 
@@ -164,17 +164,17 @@ describe('walking cats', () => {
     expect(css).toMatch(/@keyframes gait[^}]*\{[^}]*transform:translate[^}]*\}/);
   });
 
-  it('crosses in 20s, spawns every 15s (first after 2s), never blocks clicks, overhangs the header', () => {
+  it('crosses in 14s, spawns every 7.5s (first after 2s), never blocks clicks, overhangs the header', () => {
     const css = builtCss();
-    expect(css).toMatch(/cross 20s linear/);
+    expect(css).toMatch(/cross 14s linear/);
     expect(css).not.toMatch(/cross 7s/);
     expect(css).toMatch(/\.walkers\[[^\]]*\]\{[^}]*pointer-events:none/);
     expect(css).toMatch(/\.walkers\[[^\]]*\]\{[^}]*overflow-x:clip/);
     expect(css).toMatch(/\.walker\[[^\]]*\]\{[^}]*inset-block-end:-4px/);
     const src = readFileSync('src/components/WalkingCats.astro', 'utf8');
-    expect(src).toContain('SPAWN_MS = 15000');
+    expect(src).toContain('SPAWN_MS = 7500');
     expect(src).toContain('FIRST_MS = 2000');
-    expect(src).toContain('CROSS_S = 20');
+    expect(src).toContain('CROSS_S = 14');
     expect(src).toContain('document.hidden');
   });
 });
@@ -283,7 +283,8 @@ describe('pointer effects', () => {
     expect(src).toContain('.animate(');
     expect(builtCss()).toMatch(/\.ripple-ring\{[^}]*pointer-events:none/);
     expect(home()).toMatch(/<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/);
-    expect(home()).not.toContain('data-wall');
+    expect(home()).toContain('id="wall-ripple"');
+    expect(home()).toMatch(/feDisplacementMap[^>]*scale="0"/);
     expect(home()).toMatch(/data-magnetic/);
     expect(home()).toMatch(/data-tilt/);
   });

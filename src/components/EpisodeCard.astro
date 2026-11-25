@@ -1,5 +1,5 @@
 ---
-import type { Episode } from '../lib/episodes';
+import { castOf, type Episode } from '../lib/episodes';
 import { characters } from '../data/characters';
 import { playerData, isNew } from '../lib/player';
 import { t } from '../i18n/t';
@@ -11,7 +11,7 @@ interface Props {
   size?: 'rail' | 'grid' | 'mini';
 }
 const { episode: e, eager = false, size = 'grid' } = Astro.props;
-const known = e.characters.filter((c) => Object.hasOwn(characters, c));
+const known = castOf(e).filter((c) => Object.hasOwn(characters, c));
 const accent = known[0] ? characters[known[0]].color : 'var(--c-mustard)';
 const hasThumb = Boolean(e.thumbnailUrl);
 const fresh = isNew(e.publishedAt);

@@ -47,9 +47,8 @@ describe('site-wide chrome', () => {
 });
 
 describe('home redesign', () => {
-  it('has a calm panelled room behind the hero (no moving cover wall) and no "Watch latest" button', () => {
-    expect(home()).not.toContain('data-wall');
-    expect(home()).toContain('class="room"');
+  it('has the episode wall behind the hero and no "Watch latest" button', () => {
+    expect(home()).toContain('data-wall');
     expect(home()).not.toContain('Watch latest');
     expect(home()).toContain('Sound on');
   });
